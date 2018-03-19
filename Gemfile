@@ -34,8 +34,8 @@ source 'https://rubygems.org'
 ruby '2.4.3'
 
 gem 'rake', '12.3.0'
-gem 'sinatra', '2.0.0', require: 'sinatra/base'
-gem 'sinatra-contrib', '2.0.0', require: false
+gem 'sinatra', '2.0.1', require: 'sinatra/base'
+gem 'sinatra-contrib', '2.0.1', require: false
 gem 'sinatra-logger', '0.3.2'
 gem 'sinatra-active-model-serializers', '0.1.0'
 gem 'sinatra-cross_origin', '0.4.0'
