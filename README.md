@@ -1,12 +1,11 @@
+<p align="center"><img src="https://github.com/sonata-nfv/tng-api-gtw/wiki/images/sonata-5gtango-logo-500px.png" /></p>
+
 # 5GTANGO Gatekeeper Service Platform specific components
-This repository is for the 5GTANGO Gatekeeper Service Platform specific components.
 
 [![Build Status](https://jenkins.sonata-nfv.eu/buildStatus/icon?job=tng-gtk-sp/master)](https://jenkins.sonata-nfv.eu/job/tng-gtk-sp/master)
 [![Join the chat at https://gitter.im/5gtango/tango-schema](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/5gtango/tango-schema)
 
-<p align="center"><img src="https://github.com/sonata-nfv/tng-api-gtw/wiki/images/sonata-5gtango-logo-500px.png" /></p>
-
-This component holds all the micro-services of the Gatekeeper that will be available only to the Service Platform (and not to the V&ampersendV Platform).
+This repository is for the 5GTANGO Gatekeeper Service Platform specific components, which closely follows its [V&V Platform counterpart](https://github.com/sonata-nfv/tng-gtk-vnv) and complements the [common part](https://github.com/sonata-nfv/tng-gtk-common).
 
 ## Installing / Getting started
 
