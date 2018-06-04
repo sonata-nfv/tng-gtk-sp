@@ -1,7 +1,7 @@
-# 5GTANGO API Gateway
-This is the 5GTANGO Gatekeeper Service Platform specific components repository .
+# 5GTANGO Gatekeeper Service Platform specific components
+This repository is for the 5GTANGO Gatekeeper Service Platform specific components.
 
-[![Build Status](https://jenkins.sonata-nfv.eu/buildStatus/icon?job=tng-api-gtw/master)](https://jenkins.sonata-nfv.eu/job/tng-api-gtw/master)
+[![Build Status](https://jenkins.sonata-nfv.eu/buildStatus/icon?job=tng-gtk-sp/master)](https://jenkins.sonata-nfv.eu/job/tng-gtk-sp/master)
 [![Join the chat at https://gitter.im/5gtango/tango-schema](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/5gtango/tango-schema)
 
 <p align="center"><img src="https://github.com/sonata-nfv/tng-api-gtw/wiki/images/sonata-5gtango-logo-500px.png" /></p>
@@ -10,7 +10,7 @@ This component holds all the micro-services of the Gatekeeper that will be avail
 
 ## Installing / Getting started
 
-This component is implemented in [ruby](https://www.ruby-lang.org/en/) (we're using version **2.4.3**). To have it up and running, please do the follwoing:
+This component is implemented in [ruby](https://www.ruby-lang.org/en/) (we're using version **2.4.3**). To have it up and running from code, please do the following:
 
 ```shell
 $ git clone https://github.com/sonata-nfv/tng-gtk-sp.git # Clone this repository
