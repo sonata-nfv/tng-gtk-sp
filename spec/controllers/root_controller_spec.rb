@@ -29,27 +29,24 @@
 ## the Horizon 2020 and 5G-PPP programmes. The authors would like to
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
+# frozen_string_literal: true
 # encoding: utf-8
-require 'rack/test'
-require 'rspec'
-require 'webmock/rspec'
+require_relative '../spec_helper'
 
-ENV['RACK_ENV'] = 'test'
+RSpec.describe RootController, type: :controller do
+  include Rack::Test::Methods
+  def app() RootController end
 
-require File.dirname(__FILE__) + '/../controllers/application_controller'
-require File.dirname(__FILE__) + '/../controllers/requests_controller'
-require File.dirname(__FILE__) + '/../controllers/root_controller'
-
-RSpec.configure do |config|
-  config.include Rack::Test::Methods
-  config.mock_with :rspec do |configuration|
-    configuration.syntax = :expect
+  describe 'Accepts access to root (/)' do
+    it 'returning 200' do
+      get '/'
+      expect(last_response.status).to eq(200)
+    end
   end
-  config.order = 'random'
-  #config.color_enabled = true
-  config.tty = true
-  config.formatter = :documentation
-  config.profile_examples = 3
+  describe 'Not found routes return custom error' do
+    it 'returning 404' do
+      get '/a-route-not-to-be-found'
+      expect(last_response.status).to eq(404)
+    end
+  end
 end
-
-WebMock.disable_net_connect!() #allow_localhost: true)

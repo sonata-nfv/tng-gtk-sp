@@ -30,26 +30,23 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-require 'rack/test'
-require 'rspec'
-require 'webmock/rspec'
+require 'sinatra/base'
+require 'sinatra/config_file'
+require 'sinatra/cross_origin'
+require 'sinatra/logger'
 
-ENV['RACK_ENV'] = 'test'
+class ApplicationController < Sinatra::Base
+  register Sinatra::ConfigFile
+  register Sinatra::CrossOrigin
+  register Sinatra::Logger
 
-require File.dirname(__FILE__) + '/../controllers/application_controller'
-require File.dirname(__FILE__) + '/../controllers/requests_controller'
-require File.dirname(__FILE__) + '/../controllers/root_controller'
-
-RSpec.configure do |config|
-  config.include Rack::Test::Methods
-  config.mock_with :rspec do |configuration|
-    configuration.syntax = :expect
-  end
-  config.order = 'random'
-  #config.color_enabled = true
-  config.tty = true
-  config.formatter = :documentation
-  config.profile_examples = 3
+  msg = self.name
+  LOGGER_LEVEL= ENV.fetch('LOGGER_LEVEL', 'info')
+  set :began_at, Time.now.utc
+  set :bind, '0.0.0.0'
+  set :environment, ENV.fetch('RACK_ENV', :development)
+  enable :cross_origin
+  enable :logging
+  set :logger, Logger.new(STDERR)
+  set :logger_level, LOGGER_LEVEL.to_sym
 end
-
-WebMock.disable_net_connect!() #allow_localhost: true)

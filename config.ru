@@ -30,26 +30,12 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-require 'rack/test'
-require 'rspec'
-require 'webmock/rspec'
-
-ENV['RACK_ENV'] = 'test'
-
-require File.dirname(__FILE__) + '/../controllers/application_controller'
-require File.dirname(__FILE__) + '/../controllers/requests_controller'
-require File.dirname(__FILE__) + '/../controllers/root_controller'
-
-RSpec.configure do |config|
-  config.include Rack::Test::Methods
-  config.mock_with :rspec do |configuration|
-    configuration.syntax = :expect
-  end
-  config.order = 'random'
-  #config.color_enabled = true
-  config.tty = true
-  config.formatter = :documentation
-  config.profile_examples = 3
-end
-
-WebMock.disable_net_connect!() #allow_localhost: true)
+require 'sinatra/base'
+require './controllers/application_controller.rb'
+require './controllers/requests_controller.rb'
+require './controllers/pings_controller.rb'
+require './controllers/root_controller.rb'
+Dir.glob('./services/*.rb').each { |file| require file }
+map('/requests') { run RequestsController } 
+map('/pings') { run PingsController }
+map('/') { run RootController }
