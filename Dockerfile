@@ -39,7 +39,7 @@ WORKDIR /app
 COPY Gemfile /app
 RUN bundle install
 COPY . /app
-EXPOSE 5300
+EXPOSE 5000
 ENV DATABASE_URL postgres://tangodefault:tango@postgres:5432 #/myrailsdb
 ENV POSTGRES_PASSWORD tango
 ENV POSTGRES_USER tangodefault
@@ -47,5 +47,5 @@ ENV DATABASE_HOST postgres
 ENV DATABASE_PORT 5432
 ENV MQSERVER_URL=amqp://guest:guest@broker:5672
 ENV CATALOGUES_URL http://sp.int.sonata-nfv.eu:4002/catalogues
-ENV PORT 5300
+ENV PORT 5000
 CMD ["bundle", "exec", "rackup", "-p", "5300", "--host", "0.0.0.0"]
