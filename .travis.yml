@@ -35,7 +35,7 @@ rvm:
   - "2.4.3"
 env:
   global:
-    - DATABASE_URL=postgres://postgres@postgres:5432/gatekeeper
+    - DATABASE_URL=postgresql://postgres@postgres:5432/gatekeeper
     - MQSERVER_URL=amqp://guest:guest@broker:5672
     - CATALOGUES_URL=http://tng-cat:4011/catalogues/api/v2
     - RACK_ENV=test 
