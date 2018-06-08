@@ -30,22 +30,34 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-FROM ruby:2.4.3-slim-stretch
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev && \
-	  rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /app/lib/local-gems
-WORKDIR /app
-COPY Gemfile /app
-RUN bundle install
-COPY . /app
-EXPOSE 5300
-ENV DATABASE_URL postgres://tangodefault:tango@postgres:5432 #/myrailsdb
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST postgres
-ENV DATABASE_PORT 5432
-ENV MQSERVER_URL=amqp://guest:guest@broker:5672
-ENV CATALOGUES_URL http://sp.int.sonata-nfv.eu:4002/catalogues
-ENV PORT 5300
-CMD ["bundle", "exec", "rackup", "-p", "5300", "--host", "0.0.0.0"]
+require 'net/http'
+require 'ostruct'
+require 'json'
+
+class FetchNSDService  
+  ERROR_NS_UUID_IS_MANDATORY='Network Service UUID parameter is mandatory'
+  NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch services'
+  CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
+  
+  def self.call(service_uuid)
+    msg=self.name+'#'+__method__.to_s
+    STDERR.puts "#{msg}: service_uuid=#{service_uuid}"
+    raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) if CATALOGUE_URL == ''
+    raise ArgumentError.new(ERROR_NS_UUID_IS_MANDATORY) if service_uuid.empty?
+    
+    uri = URI(catalogue_url+'/network-services/'+service_uuid)
+    req = Net::HTTP::Get.new(uri)
+    req['Accept'] = 'application/json' #req['Content-Type'] = 
+    res = Net::HTTP.start(uri.hostname, uri.port) { |http| http.request(req) }
+    case res
+    when Net::HTTPSuccess
+      service = JSON.parse(res.body, object_class: OpenStruct)
+      STDERR.puts "#{msg}: nsd=#{service[:nsd]}"
+      service
+    else
+      raise ArgumentError.new("Fetching service with UUID '#{service_uuid}' got #{res.value}")
+    end
+  end
+end
+
+

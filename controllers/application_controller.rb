@@ -30,22 +30,23 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-FROM ruby:2.4.3-slim-stretch
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev && \
-	  rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /app/lib/local-gems
-WORKDIR /app
-COPY Gemfile /app
-RUN bundle install
-COPY . /app
-EXPOSE 5300
-ENV DATABASE_URL postgres://tangodefault:tango@postgres:5432 #/myrailsdb
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST postgres
-ENV DATABASE_PORT 5432
-ENV MQSERVER_URL=amqp://guest:guest@broker:5672
-ENV CATALOGUES_URL http://sp.int.sonata-nfv.eu:4002/catalogues
-ENV PORT 5300
-CMD ["bundle", "exec", "rackup", "-p", "5300", "--host", "0.0.0.0"]
+require 'sinatra/base'
+require 'sinatra/config_file'
+require 'sinatra/cross_origin'
+require 'sinatra/logger'
+
+class ApplicationController < Sinatra::Base
+  register Sinatra::ConfigFile
+  register Sinatra::CrossOrigin
+  register Sinatra::Logger
+
+  msg = self.name
+  LOGGER_LEVEL= ENV.fetch('LOGGER_LEVEL', 'info')
+  set :began_at, Time.now.utc
+  set :bind, '0.0.0.0'
+  set :environment, ENV.fetch('RACK_ENV', :development)
+  enable :cross_origin
+  enable :logging
+  set :logger, Logger.new(STDERR)
+  set :logger_level, LOGGER_LEVEL.to_sym
+end

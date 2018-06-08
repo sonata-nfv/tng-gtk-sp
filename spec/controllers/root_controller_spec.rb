@@ -29,23 +29,24 @@
 ## the Horizon 2020 and 5G-PPP programmes. The authors would like to
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
+# frozen_string_literal: true
 # encoding: utf-8
-FROM ruby:2.4.3-slim-stretch
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev && \
-	  rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /app/lib/local-gems
-WORKDIR /app
-COPY Gemfile /app
-RUN bundle install
-COPY . /app
-EXPOSE 5300
-ENV DATABASE_URL postgres://tangodefault:tango@postgres:5432 #/myrailsdb
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST postgres
-ENV DATABASE_PORT 5432
-ENV MQSERVER_URL=amqp://guest:guest@broker:5672
-ENV CATALOGUES_URL http://sp.int.sonata-nfv.eu:4002/catalogues
-ENV PORT 5300
-CMD ["bundle", "exec", "rackup", "-p", "5300", "--host", "0.0.0.0"]
+require_relative '../spec_helper'
+
+RSpec.describe RootController, type: :controller do
+  include Rack::Test::Methods
+  def app() RootController end
+
+  describe 'Accepts access to root (/)' do
+    it 'returning 200' do
+      get '/'
+      expect(last_response.status).to eq(200)
+    end
+  end
+  describe 'Not found routes return custom error' do
+    it 'returning 404' do
+      get '/a-route-not-to-be-found'
+      expect(last_response.status).to eq(404)
+    end
+  end
+end

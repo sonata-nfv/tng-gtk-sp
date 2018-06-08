@@ -30,22 +30,43 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-FROM ruby:2.4.3-slim-stretch
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev && \
-	  rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /app/lib/local-gems
-WORKDIR /app
-COPY Gemfile /app
-RUN bundle install
-COPY . /app
-EXPOSE 5300
-ENV DATABASE_URL postgres://tangodefault:tango@postgres:5432 #/myrailsdb
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST postgres
-ENV DATABASE_PORT 5432
-ENV MQSERVER_URL=amqp://guest:guest@broker:5672
-ENV CATALOGUES_URL http://sp.int.sonata-nfv.eu:4002/catalogues
-ENV PORT 5300
-CMD ["bundle", "exec", "rackup", "-p", "5300", "--host", "0.0.0.0"]
+require 'pg'
+require 'activerecord'
+require 'sinatra/activerecord'
+require 'json'
+
+class StorageService  
+  ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
+  ERROR_DATABASE_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
+  
+  postgres_url = ENV['DATABASE_URL']
+  raise Exception.new(ERROR_DATABASE_URL_NOT_FOUND) if postgres_url.to_s.empty?
+  ActiveRecord::Base.establish_connection(postgres_url)
+
+  # Set up database tables and columns
+  ActiveRecord::Schema.define do
+    create_table :owners, force: true do |t|
+      t.string :name
+    end
+    create_table :pets, force: true do |t|
+      t.string :name
+      t.references :owner
+    end
+  end
+  
+  def initialize
+    
+  end
+  
+  def self.call(params)
+    ENV POSTGRES_PASSWORD sonata
+    ENV POSTGRES_USER sonatatest
+    ENV DATABASE_HOST postgres
+    ENV DATABASE_PORT 5432
+    ENV MQSERVER amqp://guest:guest@broker:5672
+    ENV CATALOGUES_URL http://sp.int.sonata-nfv.eu:4002/catalogues
+    # Connect to database.
+    uri = URI.parse(ENV['DATABASE_URL'])
+    postgres = PG.connect(uri.hostname, uri.port, nil, nil, uri.path[1..-1], uri.user, uri.password)
+  end
+end

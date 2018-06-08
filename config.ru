@@ -30,22 +30,12 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-FROM ruby:2.4.3-slim-stretch
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev && \
-	  rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /app/lib/local-gems
-WORKDIR /app
-COPY Gemfile /app
-RUN bundle install
-COPY . /app
-EXPOSE 5300
-ENV DATABASE_URL postgres://tangodefault:tango@postgres:5432 #/myrailsdb
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST postgres
-ENV DATABASE_PORT 5432
-ENV MQSERVER_URL=amqp://guest:guest@broker:5672
-ENV CATALOGUES_URL http://sp.int.sonata-nfv.eu:4002/catalogues
-ENV PORT 5300
-CMD ["bundle", "exec", "rackup", "-p", "5300", "--host", "0.0.0.0"]
+require 'sinatra/base'
+require './controllers/application_controller.rb'
+require './controllers/requests_controller.rb'
+require './controllers/pings_controller.rb'
+require './controllers/root_controller.rb'
+Dir.glob('./services/*.rb').each { |file| require file }
+map('/requests') { run RequestsController } 
+map('/pings') { run PingsController }
+map('/') { run RootController }
