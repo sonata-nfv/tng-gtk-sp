@@ -45,7 +45,7 @@ ENV DATABASE_URL=postgres://tangodefault:tango@postgres:5432/gatekeeper
 #ENV POSTGRES_USER tangodefault
 #ENV DATABASE_HOST postgres
 #ENV DATABASE_PORT 5432
-ENV MQSERVER_URL=amqp://guest:guest@broker:5672
+ENV MQSERVER_URL=amqp://guest:guest@son-broker:5672
 ENV CATALOGUES_URL=http://tng-cat:4011/catalogues/api/v2
 ENV PORT 5000
 CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]

@@ -34,8 +34,13 @@ language: ruby
 rvm:
   - "2.4.3"
 env:
-  - DATABASE_URL=postgres://tangodefault:tango@postgres:5432/gatekeeper
+  - DATABASE_URL=postgres://postgres@postgres:5432/gatekeeper
   - MQSERVER_URL=amqp://guest:guest@broker:5672
   - CATALOGUES_URL=http://tng-cat:4011/catalogues/api/v2
   - RACK_ENV=test 
+services:
+  - postgresql
+  - rabbitmq
+before_script:
+  - psql -c 'create database gatekeeper;' -U postgres
 script: bundle install && bundle exec rake db:create && bundle exec rake db:migrate && bundle exec rspec spec/
