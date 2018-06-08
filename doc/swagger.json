@@ -1,0 +1,104 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "description": "5GTANGO, an H2020 5GPPP project",
+    "version": "0.0.1",
+    "title": "5GTANGO SP Gatekeeper component REST API",
+    "termsOfService": "https://5gtango.eu/",
+    "license": {
+        "name": "Apache License 2.0",
+        "url": "https://github.com/sonata-nfv/tng-gtk-common/blob/master/LICENSE"
+    }
+  },
+  "host": "tng-gtk-sp:5000",
+  "basePath": "/",
+  "tags": [
+      { "name": "root access", "description": "Gatekeeper Common API root access"},
+      { "name": "requests management", "description": "Gatekeeper SP API requests (Life-cycle)"}
+  ],
+  "paths": {
+    "/": {
+      "get": {
+        "tags": ["root access"],
+        "summary": "Returns something usefull on access to root",
+        "operationId": "returnRootAccess",
+        "consumes": ["*/*"],
+        "produces": ["text/html; charset=utf-8"],
+        "parameters": [],
+        "responses": {
+          "200": { "description": "OK"}
+        }
+      }
+    },
+    "/pings": {
+      "get": {
+        "tags": ["pings"],
+        "summary": "Returns time since started",
+        "operationId": "returnPong",
+        "consumes": ["*/*"],
+        "produces": ["application/json"],
+        "parameters": [],
+        "responses": {
+          "200": { "description": "OK"}
+        }
+      }
+    },
+    "/requests": {
+      "post": {
+          "summary": "Creates a request",
+          "consumes": ["application/json"],
+          "produces": ["application/json"],
+          "parameters": [
+            {
+              "in": "body",
+              "name": "request",
+              "description": "The UUID of the entity to which the request is related to (Service or Slice)",
+              "schema": {
+                "$ref": "#/definitions/RequestData" 
+              }
+            }
+          ],
+          "responses": {
+              "201": { "description": "OK"},
+              "400": {"description": "Bad Request"}
+          }
+        }
+      }
+  },
+  "definitions": {
+    "RequestData": {
+      "type": "object",
+      "properties": {
+        "uuid": {
+          "type": "string",
+          "description": "The UUID of the entity to which the request is related to (Service or Slice) -- mandatory for CREATION"
+        },
+        "instance_uuid": {
+          "type": "string",
+          "description": "The UUID of the instance of the entity to which the request is related to (Service or Slice) -- mandatory for UPDATE and TERMINATION"
+        },
+        "egresses": {
+          "type": "array",
+          "description": "List of egress points to be taken into consideration during the instantiation",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ingresses": {
+          "type": "array",
+          "description": "List of ingress points to be taken into consideration during the instantiation",
+          "items": {
+            "type": "string"
+          }
+        },
+        "blacklist": {
+          "type": "array",
+          "description": "List of sites where not to instantiate",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+    }
+  }
+}
