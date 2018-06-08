@@ -33,8 +33,9 @@
 # encoding: utf-8
 require 'rspec/core/rake_task'
 require 'ci/reporter/rake/rspec'
-require './gtk_pkg'
-
+require 'sinatra/activerecord/rake'
+require './controllers/application_controller'
+require './controllers/requests_controller'
 task default: ['ci:all']
 
 desc 'Run Unit Tests'
@@ -46,3 +47,9 @@ end
 #   rake ci:all
 desc 'Runs all test tasks'
 task 'ci:all' => ['ci:setup:rspec', 'specs']
+
+namespace :db do
+  task :load_config do
+    require './controllers/requests_controller'
+  end
+end

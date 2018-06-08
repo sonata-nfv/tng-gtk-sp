@@ -35,10 +35,17 @@ require 'rspec'
 require 'webmock/rspec'
 
 ENV['RACK_ENV'] = 'test'
-
-require File.dirname(__FILE__) + '/../controllers/application_controller'
-require File.dirname(__FILE__) + '/../controllers/requests_controller'
-require File.dirname(__FILE__) + '/../controllers/root_controller'
+#$LOAD_PATH << '../models'
+require_relative File.dirname(__FILE__) + '/../models/request'
+require_relative File.dirname(__FILE__) + '/../controllers/application_controller'
+require_relative File.dirname(__FILE__) + '/../controllers/requests_controller'
+require_relative File.dirname(__FILE__) + '/../controllers/root_controller'
+require_relative File.dirname(__FILE__) + '/../controllers/pings_controller'
+require_relative File.dirname(__FILE__) + '/../services/message_publishing_service'
+require_relative File.dirname(__FILE__) + '/../services/process_request_service'
+require_relative File.dirname(__FILE__) + '/../services/fetch_nsd_service'
+require_relative File.dirname(__FILE__) + '/../services/fetch_vnfds_service'
+require_relative File.dirname(__FILE__) + '/../services/fetch_user_data_service'
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
