@@ -103,6 +103,13 @@ Explain your code style and show how to check it.
 
 If the api is external, link to api documentation. If not describe your api including authentication methods as well as explaining all the endpoints with their required parameters.
 
+### Requests
+
+#### Creating requests
+
+```shell
+$ http POST pre-int-sp-ath.5gtango.eu:32002/api/v3/requests uuid=2ec2b09b-9d2c-4cfd-86c5-664f8ff7c4ca egresses=[] ingresses=[] blacklist=[]
+```
 
 ## Database
 
