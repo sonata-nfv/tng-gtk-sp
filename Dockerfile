@@ -40,7 +40,7 @@ COPY Gemfile /app
 RUN bundle install
 COPY . /app
 EXPOSE 5000
-ENV DATABASE_URL=postgres://tangodefault:tango@postgres:5432/gatekeeper
+ENV DATABASE_URL=postgresql://tangodefault:tango@postgres:5432/gatekeeper
 #ENV POSTGRES_PASSWORD tango
 #ENV POSTGRES_USER tangodefault
 #ENV DATABASE_HOST postgres
