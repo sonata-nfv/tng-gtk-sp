@@ -42,7 +42,7 @@ common_settings: &common_settings
 
 development:
   <<: *common_settings
-  url: postgres://postgres:sonatatest@localhost:5432/gatekeeper
+  url: postgresql://postgres:sonatatest@localhost:5432/gatekeeper
 
 test:
   <<: *common_settings
