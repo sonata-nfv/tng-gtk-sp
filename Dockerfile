@@ -32,7 +32,7 @@
 # encoding: utf-8
 FROM ruby:2.4.3-slim-stretch
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev && \
+    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev libpq-dev && \
 	  rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /app/lib/local-gems
 WORKDIR /app
