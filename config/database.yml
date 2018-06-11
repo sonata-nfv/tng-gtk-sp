@@ -30,21 +30,35 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-language: ruby
-rvm:
-  - "2.4.3"
-addons:
-  postgresql: "9.4"
-env:
-  global:
-    - DATABASE_URL=postgresql://postgres@postgres:5432/gatekeeper
-    - MQSERVER_URL=amqp://guest:guest@broker:5672
-    - CATALOGUES_URL=http://tng-cat:4011/catalogues/api/v2
-    - RACK_ENV=test 
-services:
-  - postgresql
-  - rabbitmq
-before_script:
-  - cp config/database.yml.travis config/database.yml
-  - psql -c 'create database gatekeeper;' -U postgres
-script: bundle install && bundle exec rake db:create && bundle exec rake db:migrate && bundle exec rspec spec/
+common_settings: &common_settings
+  #adapter: postgresql
+  #user: postgres
+  #host: localhost
+  #port: 5432
+  #database: sonata
+  pool: 5
+  encoding: unicode
+  url: <%= ENV['DATABASE_URL'] %>
+
+development:
+  <<: *common_settings
+  url: postgresql://postgres:sonatatest@localhost:5432/gatekeeper
+
+test:
+  <<: *common_settings
+  database: sonata_test
+
+integration:
+  <<: *common_settings
+  #host: <%= ENV['DATABASE_HOST'] || 'postgres' %>
+  #port: <%= ENV['DATABASE_PORT'] || 5432 %>
+  #database: <%= ENV['DATABASE_NAME'] || 'gatekeeper' %>
+  #username: <%= ENV['POSTGRES_USER'] || 'postgres' %>
+  #password: <%= ENV['POSTGRES_PASSWORD'] || 'sonatatest' %>
+
+qualification:
+  <<: *common_settings
+
+demonstration:
+  <<: *common_settings
+
