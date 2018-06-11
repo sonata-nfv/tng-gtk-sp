@@ -32,10 +32,11 @@
 # encoding: utf-8
 language: ruby
 rvm:
-  - "2.4.3"
+  - 2.4.3
 addons:
   postgresql: "9.4"
 env:
+  - DB=pgsql
   global:
     - DATABASE_URL=postgresql://postgres@postgres:5432/gatekeeper
     - MQSERVER_URL=amqp://guest:guest@broker:5672
@@ -48,3 +49,5 @@ before_script:
   - cp config/database.yml.travis config/database.yml
   - psql -c 'create database gatekeeper;' -U postgres
 script: bundle install && bundle exec rake db:create && bundle exec rake db:migrate && bundle exec rspec spec/
+#  - RAILS_ENV=test bundle exec rake db:migrate --trace
+#  - bundle exec rake db:test:prepare
