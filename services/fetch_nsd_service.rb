@@ -48,7 +48,7 @@ class FetchNSDService
     STDERR.puts "#{msg}: params=#{params}"
     begin
       if params.key?(:uuid)
-        service_uuid = params.delete :uuid
+        uuid = params.delete :uuid
         uri = URI.parse(CATALOGUES_URL+'/network-services/'+uuid)
         # mind that there cany be more params, so we might need to pass params as well
       else
@@ -59,7 +59,7 @@ class FetchNSDService
       request = Net::HTTP::Get.new(uri)
       request['content-type'] = 'application/json'
       response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
-      #STDERR.puts "#{msg}: querying response=#{response}"
+      STDERR.puts "#{msg}: response=#{response}"
       return JSON.parse(response.read_body, quirks_mode: true, symbolize_names: true) if response.is_a?(Net::HTTPSuccess)
     rescue Exception => e
       STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
