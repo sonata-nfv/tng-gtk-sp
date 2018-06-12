@@ -37,7 +37,7 @@ require 'yaml'
 
 class ProcessRequestService  
   ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
-  ERROR_VNF_CATALOGUE_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
+  ERROR_VNF_CATALOGUES_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
 
   def self.call(params)
     msg=self.name+'.'+__method__.to_s

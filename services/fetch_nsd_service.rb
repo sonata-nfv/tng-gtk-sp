@@ -36,23 +36,23 @@ require 'json'
 
 class FetchNSDService  
   ERROR_NS_UUID_IS_MANDATORY='Network Service UUID parameter is mandatory'
-  NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch services'
-  CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
+  NO_CATALOGUES_URL_DEFINED_ERROR='The CATALOGUES_URL ENV variable needs to defined and pointing to the Catalogue where to fetch services'
+  CATALOGUES_URL = ENV.fetch('CATALOGUES_URL', '')
   
   def self.call(params)
     msg=self.name+'#'+__method__.to_s
-    if CATALOGUE_URL == ''
-      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, NO_CATALOGUE_URL_DEFINED_ERROR]
+    if CATALOGUES_URL == ''
+      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, NO_CATALOGUES_URL_DEFINED_ERROR]
       return nil 
     end
     STDERR.puts "#{msg}: params=#{params}"
     begin
       if params.key?(:uuid)
         service_uuid = params.delete :uuid
-        uri = URI.parse(CATALOGUE_URL+'/network-services/'+uuid)
+        uri = URI.parse(CATALOGUES_URL+'/network-services/'+uuid)
         # mind that there cany be more params, so we might need to pass params as well
       else
-        uri = URI.parse(CATALOGUE_URL+'/network-services')
+        uri = URI.parse(CATALOGUES_URL+'/network-services')
         uri.query = URI.encode_www_form(sanitize(params))
       end
       #STDERR.puts "#{msg}: querying uri=#{uri}"
