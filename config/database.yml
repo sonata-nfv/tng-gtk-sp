@@ -46,7 +46,7 @@ development:
 
 test:
   <<: *common_settings
-  database: sonata_test
+  #database: sonata_test
 
 integration:
   <<: *common_settings
