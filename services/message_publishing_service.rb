@@ -37,7 +37,7 @@ require 'bunny'
 
 class MessagePublishingService  
   ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
-  ERROR_VNF_CATALOGUE_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
+  ERROR_VNF_CATALOGUES_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
   MQSERVER_URL = ENV.fetch('MQSERVER_URL', '')
   @@queues = {
     create_service: 'service.instances.create',

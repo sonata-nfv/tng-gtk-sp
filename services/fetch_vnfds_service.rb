@@ -36,13 +36,13 @@ require 'json'
 
 class FetchVNFDsService
   ERROR_VNF_UUID_IS_MANDATORY='VNF UUID parameter is mandatory'
-  ERROR_CATALOGUE_URL_NOT_FOUND='Catalogue URL not found in the ENV.'
-  CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
+  ERROR_CATALOGUES_URL_NOT_FOUND='Catalogue URL not found in the ENV.'
+  CATALOGUES_URL = ENV.fetch('CATALOGUES_URL', '')
   
   def self.call(vnfds)
     # vnf_uuids is mandatory
     raise ArgumentError.new(ERROR_VNF_UUID_IS_MANDATORY) if vnfds.empty?
-    raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) if CATALOGUE_URL == ''
+    raise ArgumentError.new(NO_CATALOGUES_URL_DEFINED_ERROR) if CATALOGUES_URL == ''
     
     vnfs = []
     vnfds.each do |vnf|
