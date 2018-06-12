@@ -33,20 +33,38 @@
 require 'sinatra/base'
 require 'sinatra/config_file'
 require 'sinatra/cross_origin'
-require 'sinatra/logger'
+require 'logger'
+#require 'sinatra/logger'
+require 'sinatra/activerecord'
 
 class ApplicationController < Sinatra::Base
   register Sinatra::ConfigFile
   register Sinatra::CrossOrigin
-  register Sinatra::Logger
+  #register Sinatra::Logger
 
   msg = self.name
   LOGGER_LEVEL= ENV.fetch('LOGGER_LEVEL', 'info')
   set :began_at, Time.now.utc
   set :bind, '0.0.0.0'
+  set :environments, %w(development pre-int integration demo qualification staging)
   set :environment, ENV.fetch('RACK_ENV', :development)
   enable :cross_origin
   enable :logging
   set :logger, Logger.new(STDERR)
   set :logger_level, LOGGER_LEVEL.to_sym
+  
+  #The environment variable DATABASE_URL should be in the following format:
+  # => postgres://{user}:{password}@{host}:{port}/path
+  configure :production, :development do
+  	db = URI.parse(ENV['DATABASE_URL'] || 'postgres://localhost:5432/gatekeeper')
+
+  	ActiveRecord::Base.establish_connection(
+  			:adapter => db.scheme == 'postgres' ? 'postgresql' : db.scheme,
+  			:host     => db.host,
+  			:username => db.user,
+  			:password => db.password,
+  			:database => db.path[1..-1],
+  			:encoding => 'utf8'
+  	)
+  end
 end
