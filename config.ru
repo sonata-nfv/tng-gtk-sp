@@ -35,6 +35,7 @@ require './controllers/application_controller.rb'
 require './controllers/requests_controller.rb'
 require './controllers/pings_controller.rb'
 require './controllers/root_controller.rb'
+require './models/request'
 Dir.glob('./services/*.rb').each { |file| require file }
 map('/requests') { run RequestsController } 
 map('/pings') { run PingsController }

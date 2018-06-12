@@ -32,9 +32,7 @@
 # encoding: utf-8
 require 'sinatra'
 require 'json'
-require 'sinatra/activerecord'
-#require_relative '../services/fetch_nsd_service'
-#require_relative '../services/fetch_vnfds_service'
+#require 'logger'
 
 class RequestsController < ApplicationController
   #register Sinatra::ActiveRecordExtension
@@ -52,7 +50,6 @@ class RequestsController < ApplicationController
   eos
   ERROR_SERVICE_UUID_IS_MISSING="Service UUID is a mandatory parameter (absent from the '%s' request)"
   ERROR_REQUEST_NOT_FOUND="Request with UUID '%s' was not found"
-  #         params['callback'] = kpis_url+'/service-instantiation-time'
   
   before { content_type :json}
 
