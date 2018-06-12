@@ -38,7 +38,7 @@ gem 'rake', '12.3.0'
 gem 'sinatra', '2.0.2', require: 'sinatra/base'
 gem 'sinatra-contrib', '2.0.2', require: false
 gem 'sinatra-logger', '0.3.2'
-gem 'sinatra-active-model-serializers', '0.1.0'
+#gem 'sinatra-active-model-serializers', '0.1.0'
 gem 'sinatra-cross_origin', '0.4.0'
 
 gem 'pg', '0.21.0'
