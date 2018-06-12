@@ -51,12 +51,14 @@ class RequestsController < ApplicationController
      \tingresses: the list of required ingresses (defaults to [])
   eos
   ERROR_SERVICE_UUID_IS_MISSING="Service UUID is a mandatory parameter (absent from the '%s' request)"
+  ERROR_REQUEST_NOT_FOUND="Request with UUID '%s' was not found"
   #         params['callback'] = kpis_url+'/service-instantiation-time'
   
   before { content_type :json}
 
   # Accept service instantiation requests
   post '/?' do
+    msg=self.name+'.post'
     halt_with_code_body(400, ERROR_REQUEST_CONTENT_TYPE.to_json) unless request.content_type =~ /^application\/json/
 
     body = request.body.read
@@ -76,8 +78,61 @@ class RequestsController < ApplicationController
     end
   end
   
+  # GETs a request, given an uuid
+  get '/:uuid/?' do
+    msg='RequestsController.get (single)'
+    STDERR.puts "#{msg}: entered with uuid='#{params[:uuid]}'"
+    captures=params.delete('captures') if params.key? 'captures'
+    begin
+      request = Request.find(params[:uuid])
+      STDERR.puts "#{msg}: request='#{request}'"
+      halt_with_code_body(200, request.to_json) unless request.to_s.empty?
+    rescue Exception => e
+      halt_with_code_body(404, {error: e.message}.to_json)
+    end
+    halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:uuid]}.to_json)
+  end
+
+  # GET many requests
+  get '/?' do
+    msg='RequestsController.get (many)'
+    captures=params.delete('captures') if params.key? 'captures'
+    STDERR.puts "#{msg}: entered with params='#{params}'"
+    
+    # get rid of :page_size and :page_number
+    page_number, page_size, sanitized_params = sanitize(params)
+    STDERR.puts "#{msg}: page_number, page_size, sanitized_params=#{page_number}, #{page_size}, #{sanitized_params}"
+    begin
+      requests = Request.where(sanitized_params).limit(page_size).offset(page_number)
+      STDERR.puts "#{msg}: requests='#{requests}'"
+      headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
+      halt 200, requests.to_json
+    rescue ActiveRecord::RecordNotFound => e
+      halt 200, '[]'
+    end
+  end
+  
   private
   def halt_with_code_body(code, body)
     halt code, {'Content-Type'=>'application/json', 'Content-Length'=>body.length.to_s}, body
   end
+  
+  def validated_fields(params_keys)
+    valid_fields = [:service_uuid, :status, :created_at, :updated_at]
+    logger.info(log_msg) {" keyed_params.keys - valid_fields = #{keyed_params.keys - valid_fields}"}
+    json_error 400, "GtkSrv: wrong parameters #{params}" unless keyed_params.keys - valid_fields == []
+  end
+  
+  def sanitize(params)
+    params[:page_number] ||= ENV.fetch('DEFAULT_PAGE_NUMBER', 0)
+    params[:page_size]   ||= ENV.fetch('DEFAULT_PAGE_SIZE', 100)
+    page_number = params.delete(:page_number).to_i
+    page_size = params.delete(:page_size).to_i
+    return page_number, page_size, params
+  end
+  
+  def symbolized_hash(hash)
+    Hash[hash.map{|(k,v)| [k.to_sym,v]}]
+  end
+  
 end

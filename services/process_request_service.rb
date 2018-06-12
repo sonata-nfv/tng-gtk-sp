@@ -40,7 +40,7 @@ class ProcessRequestService
   ERROR_VNF_CATALOGUE_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
 
   def self.call(params)
-    msg=self.name+'#'+__method__.to_s
+    msg=self.name+'.'+__method__.to_s
     request_type = params.key?(:request_type) ? params.delete(:request_type) : 'CREATE_SERVICE'
     STDERR.puts "#{msg}: params=#{params}"
     
@@ -53,14 +53,13 @@ class ProcessRequestService
   
   private
   def self.create_service(params)
-    msg=self.name+'#'+__method__.to_s
+    msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: params=#{params}"
     begin
       stored_service = FetchNSDService.call(params[:uuid])
       stored_functions = FetchVNFDsService.call(stored_service[:nsd][:network_functions])
-      instantiation_request = Request.create(params) do |request|
-        request.began_at=Time.now.utc
-      end
+      params[:began_at] = Time.now.utc
+      instantiation_request = Request.create(params)
       user_data = FetchUserDataService.call( params[:customer_uuid], stored_service[:username], params[:sla_id])
       message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], user_data)
       STDERR.puts "#{msg}: message=\n#{message}"
@@ -72,7 +71,7 @@ class ProcessRequestService
   end
   
   def self.build_message(service, functions, egresses, ingresses, user_data)
-    msg=self.name+'#'+__method__.to_s
+    msg=self.name+'.'+__method__.to_s
     #STDERR.puts "#{msg}: service=#{service}\n\tfunctions=#{functions}"
     message = {}
     nsd = service[:nsd]

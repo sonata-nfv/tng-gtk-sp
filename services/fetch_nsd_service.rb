@@ -39,24 +39,32 @@ class FetchNSDService
   NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch services'
   CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
   
-  def self.call(service_uuid)
+  def self.call(params)
     msg=self.name+'#'+__method__.to_s
-    STDERR.puts "#{msg}: service_uuid=#{service_uuid}"
-    raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) if CATALOGUE_URL == ''
-    raise ArgumentError.new(ERROR_NS_UUID_IS_MANDATORY) if service_uuid.empty?
-    
-    uri = URI(catalogue_url+'/network-services/'+service_uuid)
-    req = Net::HTTP::Get.new(uri)
-    req['Accept'] = 'application/json' #req['Content-Type'] = 
-    res = Net::HTTP.start(uri.hostname, uri.port) { |http| http.request(req) }
-    case res
-    when Net::HTTPSuccess
-      service = JSON.parse(res.body, object_class: OpenStruct)
-      STDERR.puts "#{msg}: nsd=#{service[:nsd]}"
-      service
-    else
-      raise ArgumentError.new("Fetching service with UUID '#{service_uuid}' got #{res.value}")
+    if CATALOGUE_URL == ''
+      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, NO_CATALOGUE_URL_DEFINED_ERROR]
+      return nil 
     end
+    STDERR.puts "#{msg}: params=#{params}"
+    begin
+      if params.key?(:uuid)
+        service_uuid = params.delete :uuid
+        uri = URI.parse(CATALOGUE_URL+'/network-services/'+uuid)
+        # mind that there cany be more params, so we might need to pass params as well
+      else
+        uri = URI.parse(CATALOGUE_URL+'/network-services')
+        uri.query = URI.encode_www_form(sanitize(params))
+      end
+      #STDERR.puts "#{msg}: querying uri=#{uri}"
+      request = Net::HTTP::Get.new(uri)
+      request['content-type'] = 'application/json'
+      response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
+      #STDERR.puts "#{msg}: querying response=#{response}"
+      return JSON.parse(response.read_body, quirks_mode: true, symbolize_names: true) if response.is_a?(Net::HTTPSuccess)
+    rescue Exception => e
+      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+    end
+    raise ArgumentError.new("Fetching service with params #{params}, got #{response}")
   end
 end
 

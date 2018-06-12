@@ -36,9 +36,55 @@ require_relative '../spec_helper'
 RSpec.describe RequestsController, type: :controller do
   include Rack::Test::Methods
   def app() RequestsController end
+  let(:uuid_1) {SecureRandom.uuid}
+  let(:requestid_1) {SecureRandom.uuid}
+  let(:requestid_2) {SecureRandom.uuid}
 
-  describe '.call' do
+  describe 'Accepts service instantiation requests' 
+  describe 'Accepts service intance queries' do
+    let(:service_1_metadata) {{uuid: uuid_1, nsd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
+    let(:service_2_metadata) {{uuid: uuid_2, nsd: {vendor: '5gtango', name: 'whatever', version: '0.0.2'}}}
+    let(:request_1) {{
+      id: requestid_1, created_at:"2018-06-07T16:28:39.571Z",updated_at:"2018-06-07T16:28:39.571Z",
+      uuid:uuid_1,status:"NEW",request_type:"CREATE_SERVICE",instance_uuid: '',ingresses:[],egresses:[],began_at:"2018-06-07T16:28:39.557Z",
+      callback:'',blacklist:[],customer_uuid:'',sla_uuid:''
+    }}
+    let(:services_metadata) {[service_1_metadata, service_2_metadata]}
+  
+    context 'with UUID given' do
+      it 'and returns the existing request' do
+        allow(Request).to receive(:find).with(requestid_1).and_return(request_1)
+        get '/'+requestid_1
+        expect(last_response).to be_ok
+        expect(last_response.body).to eq(request_1.to_json)
+      end
+      it 'and rejects non-existing request' do
+        allow(Request).to receive(:find).with(requestid_2).and_raise(ActiveRecord::RecordNotFound)
+        get '/'+requestid_2
+        expect(last_response).to be_not_found
+      end
+    end
+    context 'without UUID given' do
+      let(:uuid_2) {SecureRandom.uuid}
+      let(:request_2) {{
+        id: requestid_2, created_at:"2018-06-07T16:28:39.571Z",updated_at:"2018-06-07T16:28:39.571Z",
+        uuid:uuid_2,status:"NEW",request_type:"CREATE_SERVICE",instance_uuid: '',ingresses:[],egresses:[],began_at:"2018-06-07T16:28:39.557Z",
+        callback:'',blacklist:[],customer_uuid:'',sla_uuid:''
+      }}
+      let(:requests) {[ request_1, request_2]}
+      it 'adding default parameters for page size and number' do
+        allow(Request).to receive_message_chain(:where, :limit, :offset).and_return(requests)
+        get '/'
+        expect(last_response).to be_ok
+        expect(last_response.body).to eq(requests.to_json)
+      end
+  
+      it 'returning Ok (200) and an empty array when no service is found' do
+        allow(Request).to receive_message_chain(:where, :limit, :offset).and_raise(ActiveRecord::RecordNotFound)
+        get '/'
+        expect(last_response).to be_ok
+        expect(last_response.body).to eq([].to_json)
+      end
+    end
   end
-  it 'Processes the request'
-  it 'Returns the stored request'
 end
