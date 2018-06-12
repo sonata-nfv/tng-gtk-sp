@@ -73,10 +73,15 @@ pipeline {
             echo 'Promoting containers to integration'
           }
         }
-        stage('tng-gtk-common') {
+        stage('tng-gtk-sp') {
           steps {
             sh 'docker tag registry.sonata-nfv.eu:5000/tng-gtk-sp:latest registry.sonata-nfv.eu:5000/tng-gtk-sp:int'
             sh 'docker push  registry.sonata-nfv.eu:5000/tng-gtk-sp:int'
+            sh 'rm -rf tng-devops || true'
+            sh 'git clone https://github.com/sonata-nfv/tng-devops.git'
+            dir(path: 'tng-devops') {
+              sh 'ansible-playbook roles/sp.yml -i environments -e "target=int-sp"'
+            }
           }
         }
       }

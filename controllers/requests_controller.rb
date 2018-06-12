@@ -61,7 +61,7 @@ class RequestsController < ApplicationController
     body = request.body.read
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
     params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-    halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:service_uuid)
+    halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:uuid)
     
     begin
       saved_request = ProcessRequestService.call(params.merge({user_data: request.env['5gtango.user.data']}))
@@ -69,7 +69,7 @@ class RequestsController < ApplicationController
     rescue ArgumentError => e
       halt_with_code_body(404, {error: e.message}.to_json)
     rescue JSON::ParserError => e
-      halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:service_uuid]}.to_json)
+      halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:uuid]}.to_json)
     rescue StandardError => e
       halt_with_code_body(500, ERROR_CONNECTING_TO_CATALOGUE)
     end
