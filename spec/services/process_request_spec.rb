@@ -80,7 +80,7 @@ RSpec.describe ProcessRequestService do
       developer: {username: nil, email: nil, phone: nil}
     }}
     it 'returns the stored request' do
-      allow(FetchNSDService).to receive(:call).with(service_instantiation_request[:uuid]).and_return(service)
+      allow(FetchNSDService).to receive(:call).with(uuid: service_instantiation_request[:uuid]).and_return(service)
       allow(FetchVNFDsService).to receive(:call).with(service[:nsd][:network_functions]).and_return(full_functions)
       allow(Request).to receive(:create).with(service_instantiation_request).and_return(saved_service_instantiation_request)
       allow(FetchUserDataService).to receive(:call).with(customer_uuid, service[:username], sla_id).and_return(user_data)

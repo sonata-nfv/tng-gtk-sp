@@ -56,7 +56,7 @@ class ProcessRequestService
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: params=#{params}"
     begin
-      stored_service = FetchNSDService.call(params[:uuid])
+      stored_service = FetchNSDService.call(uuid: params[:uuid])
       stored_functions = FetchVNFDsService.call(stored_service[:nsd][:network_functions])
       params[:began_at] = Time.now.utc
       instantiation_request = Request.create(params)
