@@ -55,7 +55,7 @@ class RequestsController < ApplicationController
 
   # Accept service instantiation requests
   post '/?' do
-    msg=self.name+'.post'
+    msg='RequestsController.post'
     halt_with_code_body(400, ERROR_REQUEST_CONTENT_TYPE.to_json) unless request.content_type =~ /^application\/json/
 
     body = request.body.read
