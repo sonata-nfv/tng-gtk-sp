@@ -55,15 +55,18 @@ class FetchService
       request = Net::HTTP::Get.new(uri)
       request['content-type'] = 'application/json'
       response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
-      body = response.read_body
       STDERR.puts "#{msg}: response=#{response.inspect}"
-      return JSON.parse(body, quirks_mode: true, symbolize_names: true) if response.is_a?(Net::HTTPSuccess)
-      raise ArgumentError.new("Service #{params} not found ('#{response})")
+      if response.kind_of?(Net::HTTPSuccess)
+        #JSON.parse response.body
+        body = response.read_body
+        STDERR.puts "#{msg}: body=#{body}"
+        return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      end
     rescue Exception => e
       STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
       raise ArgumentError.new("Fetching service with params #{params}, got #{response}")
     end
-    raise ArgumentError.new("Fetching service with params #{params}, got #{response}")
+    raise ArgumentError.new("#{response.message}")
   end
   
   private
