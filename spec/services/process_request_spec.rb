@@ -49,9 +49,10 @@ RSpec.describe ProcessRequestService do
       instance_uuid: nil, ingresses: [], egresses: [], began_at: "2018-06-07 16:24:15", 
       callback: nil, blacklist: [], customer_uuid: customer_uuid, sla_uuid: sla_id
     }}
-    let(:full_functions) {[{
+    let(:function) {{
       uuid: SecureRandom.uuid, vnfd: { vendor: functions[0]['vnf_vendor'], name: functions[0]['vnf_name'], version: functions[0]['vnf_version']}
-    }]}
+    }}
+    let(:full_functions) {[function]}
     let(:message) {{
       'NSD'=> { 
         'vendor'=> service[:nsd][:vendor], 'name'=> service[:nsd][:name], 'version'=> service[:nsd][:version], 
@@ -81,7 +82,7 @@ RSpec.describe ProcessRequestService do
     }}
     it 'returns the stored request' do
       allow(FetchNSDService).to receive(:call).with(uuid: service_instantiation_request[:uuid]).and_return(service)
-      allow(FetchVNFDsService).to receive(:call).with(service[:nsd][:network_functions]).and_return(full_functions)
+      allow(FetchVNFDsService).to receive(:call).with(service[:nsd][:network_functions][0]).and_return(function)
       allow(Request).to receive(:create).with(service_instantiation_request).and_return(saved_service_instantiation_request)
       allow(FetchUserDataService).to receive(:call).with(customer_uuid, service[:username], sla_id).and_return(user_data)
       allow(MessagePublishingService).to receive(:call).with(message, :create_service, saved_service_instantiation_request[:id]).and_return(message)

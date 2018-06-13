@@ -33,16 +33,26 @@
 require 'net/http'
 require 'ostruct'
 require 'json'
+require_relative './fetch_service'
 
-class FetchVNFDsService
+class FetchVNFDsService < FetchService
+  NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch functions'
+  CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
+  if CATALOGUE_URL == ''
+    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'FetchVNFDService', NO_CATALOGUE_URL_DEFINED_ERROR]
+    raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
+  end
+  site CATALOGUE_URL+'/vnfs'
+  
+=begin
   ERROR_VNF_UUID_IS_MANDATORY='VNF UUID parameter is mandatory'
-  ERROR_CATALOGUES_URL_NOT_FOUND='Catalogue URL not found in the ENV.'
-  CATALOGUES_URL = ENV.fetch('CATALOGUES_URL', '')
+  ERROR_CATALOGUE_URL_NOT_FOUND='Catalogue URL not found in the ENV.'
+  CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
   
   def self.call(vnfds)
     # vnf_uuids is mandatory
     raise ArgumentError.new(ERROR_VNF_UUID_IS_MANDATORY) if vnfds.empty?
-    raise ArgumentError.new(NO_CATALOGUES_URL_DEFINED_ERROR) if CATALOGUES_URL == ''
+    raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) if CATALOGUE_URL == ''
     
     vnfs = []
     vnfds.each do |vnf|
@@ -59,4 +69,5 @@ class FetchVNFDsService
     end
     vnfs
   end
+=end
 end

@@ -37,7 +37,7 @@ require 'yaml'
 
 class ProcessRequestService  
   ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
-  ERROR_VNF_CATALOGUES_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
+  ERROR_VNF_CATALOGUE_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
 
   def self.call(params)
     msg=self.name+'.'+__method__.to_s
@@ -57,7 +57,7 @@ class ProcessRequestService
     STDERR.puts "#{msg}: params=#{params}"
     begin
       stored_service = FetchNSDService.call(uuid: params[:uuid])
-      stored_functions = FetchVNFDsService.call(stored_service[:nsd][:network_functions])
+      stored_functions = fetch_functions(stored_service[:nsd][:network_functions])
       params[:began_at] = Time.now.utc
       instantiation_request = Request.create(params)
       user_data = FetchUserDataService.call( params[:customer_uuid], stored_service[:username], params[:sla_id])
@@ -128,5 +128,12 @@ class ProcessRequestService
     @ingresses = params.delete[:ingresses] if params[:ingresses]
     @user_data = FetchUserDataService.call(request.env['5gtango.user.data'])
     params
+  end
+  
+  def self.fetch_functions(list_of_trios)
+    list = []
+    list_of_trios.each do |trio|
+      list << FetchVNFDsService.call(trio)
+    end
   end
 end

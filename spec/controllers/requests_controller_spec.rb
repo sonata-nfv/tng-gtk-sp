@@ -42,14 +42,11 @@ RSpec.describe RequestsController, type: :controller do
 
   describe 'Accepts service instantiation requests' 
   describe 'Accepts service intance queries' do
-    let(:service_1_metadata) {{uuid: uuid_1, nsd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
-    let(:service_2_metadata) {{uuid: uuid_2, nsd: {vendor: '5gtango', name: 'whatever', version: '0.0.2'}}}
     let(:request_1) {{
       id: requestid_1, created_at:"2018-06-07T16:28:39.571Z",updated_at:"2018-06-07T16:28:39.571Z",
       uuid:uuid_1,status:"NEW",request_type:"CREATE_SERVICE",instance_uuid: '',ingresses:[],egresses:[],began_at:"2018-06-07T16:28:39.557Z",
       callback:'',blacklist:[],customer_uuid:'',sla_uuid:''
     }}
-    let(:services_metadata) {[service_1_metadata, service_2_metadata]}
   
     context 'with UUID given' do
       it 'and returns the existing request' do
