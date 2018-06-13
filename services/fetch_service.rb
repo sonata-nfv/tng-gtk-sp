@@ -33,17 +33,51 @@
 require 'net/http'
 require 'ostruct'
 require 'json'
-require_relative './fetch_service'
 
-class FetchNSDService < FetchService
-  
+class FetchService  
+  ERROR_NS_UUID_IS_MANDATORY='Network Service UUID parameter is mandatory'
   NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch services'
   CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
-  if CATALOGUE_URL == ''
-    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'FetchNSDService', NO_CATALOGUE_URL_DEFINED_ERROR]
-    raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
+  
+  def self.site(url) @@site = url end 
+  
+  def self.call(params)
+    msg=self.name+'#'+__method__.to_s
+    if CATALOGUE_URL == ''
+      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, NO_CATALOGUE_URL_DEFINED_ERROR]
+      raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
+    end
+    STDERR.puts "#{msg}: params=#{params}"
+    begin
+      if params.key?(:uuid)
+        uuid = params.delete :uuid
+        uri = URI.parse(@@site+'/'+uuid)
+        # mind that there cany be more params, so we might need to pass params as well
+      else
+        uri = URI.parse(@@site)
+        uri.query = URI.encode_www_form(sanitize(params))
+      end
+      #STDERR.puts "#{msg}: querying uri=#{uri}"
+      request = Net::HTTP::Get.new(uri)
+      request['content-type'] = 'application/json'
+      response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
+      body = response.read_body
+      STDERR.puts "#{msg}: response=#{response.inspect}"
+      return JSON.parse(body, quirks_mode: true, symbolize_names: true) if response.is_a?(Net::HTTPSuccess)
+      raise ArgumentError.new("Service #{params} not found ('#{response})")
+    rescue Exception => e
+      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+      raise ArgumentError.new("Fetching service with params #{params}, got #{response}")
+    end
+    raise ArgumentError.new("Fetching service with params #{params}, got #{response}")
   end
-  site CATALOGUE_URL+'/network-services'
+  
+  private
+  def self.sanitize(params)
+    params[:page_number] ||= ENV.fetch('DEFAULT_PAGE_NUMBER', 0)
+    params[:page_size]   ||= ENV.fetch('DEFAULT_PAGE_SIZE', 100)
+    params
+  end
 end
 
 
