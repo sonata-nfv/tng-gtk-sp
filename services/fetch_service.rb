@@ -36,17 +36,11 @@ require 'json'
 
 class FetchService  
   ERROR_NS_UUID_IS_MANDATORY='Network Service UUID parameter is mandatory'
-  NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch services'
-  CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
   
   def self.site(url) @@site = url end 
   
   def self.call(params)
     msg=self.name+'#'+__method__.to_s
-    if CATALOGUE_URL == ''
-      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, NO_CATALOGUE_URL_DEFINED_ERROR]
-      raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
-    end
     STDERR.puts "#{msg}: params=#{params}"
     begin
       if params.key?(:uuid)

@@ -81,7 +81,7 @@ RSpec.describe ProcessRequestService do
       developer: {username: nil, email: nil, phone: nil}
     }}
     it 'returns the stored request' do
-      allow(FetchNSDService).to receive(:call).with(uuid: service_instantiation_request[:uuid]).and_return(service)
+      allow(FetchNSDService).to receive(:call).with(service_uuid: service_instantiation_request[:uuid]).and_return(service)
       allow(FetchVNFDsService).to receive(:call).with(service[:nsd][:network_functions][0]).and_return(function)
       allow(Request).to receive(:create).with(service_instantiation_request).and_return(saved_service_instantiation_request)
       allow(FetchUserDataService).to receive(:call).with(customer_uuid, service[:username], sla_id).and_return(user_data)
@@ -89,6 +89,4 @@ RSpec.describe ProcessRequestService do
       expect(described_class.call(service_instantiation_request)).to eq(saved_service_instantiation_request)
     end
   end
-  #stub_request(:get, catalogue_url+'/network-services/'+uuid_1).
-  #  to_return(status: 200, body: service_1_metadata.to_json, headers: headers)
 end
