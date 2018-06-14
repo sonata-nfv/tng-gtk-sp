@@ -65,7 +65,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: message=\n#{message}"
       publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
     rescue => e
-      ArgumentError.new(e.message)
+      raise ArgumentError.new(e.message)
     end
     instantiation_request
   end

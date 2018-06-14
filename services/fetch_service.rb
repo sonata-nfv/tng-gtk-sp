@@ -42,6 +42,7 @@ class FetchService
   def self.call(params)
     msg=self.name+'#'+__method__.to_s
     STDERR.puts "#{msg}: params=#{params}"
+    original_params = params.dup
     begin
       if params.key?(:uuid)
         uuid = params.delete :uuid
@@ -51,22 +52,25 @@ class FetchService
         uri = URI.parse(@@site)
         uri.query = URI.encode_www_form(sanitize(params))
       end
-      #STDERR.puts "#{msg}: querying uri=#{uri}"
+      STDERR.puts "#{msg}: uri=#{uri}"
       request = Net::HTTP::Get.new(uri)
       request['content-type'] = 'application/json'
       response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
       STDERR.puts "#{msg}: response=#{response.inspect}"
-      if response.kind_of?(Net::HTTPSuccess)
-        #JSON.parse response.body
+      case response
+      when Net::HTTPSuccess
         body = response.read_body
         STDERR.puts "#{msg}: body=#{body}"
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      when Net::HTTPNotFound
+        raise ArgumentError.new("Entity chosen with params #{original_params} was not found")
+      else
+        raise ArgumentError.new("#{response.message}")
       end
-    rescue Exception => e
+    rescue StandardError => e
       STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
-      raise ArgumentError.new("Fetching service with params #{params}, got #{response}")
+      raise ArgumentError.new("Fetching entity with params #{original_params}, got #{response}")
     end
-    raise ArgumentError.new("#{response.message}")
   end
   
   private
