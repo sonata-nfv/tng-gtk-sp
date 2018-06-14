@@ -48,6 +48,12 @@ test:
   <<: *common_settings
   #database: sonata_test
 
+pre-int:
+  <<: *common_settings
+
+demo:
+  <<: *common_settings
+
 integration:
   <<: *common_settings
   host: <%= ENV['DATABASE_HOST'] || 'son-postgres' %>
@@ -59,6 +65,6 @@ integration:
 qualification:
   <<: *common_settings
 
-demonstration:
+staging:
   <<: *common_settings
 

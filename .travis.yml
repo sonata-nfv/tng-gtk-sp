@@ -48,6 +48,10 @@ services:
 before_script:
   - cp config/database.yml.travis config/database.yml
   - psql -c 'create database gatekeeper;' -U postgres
-script: bundle install && bundle exec rake db:create && bundle exec rake db:migrate && bundle exec rspec spec/
+script: 
+  - bundle install
+  - bundle exec rake db:create
+  - bundle exec rake db:migrate
+  - RACK_ENV=test bundle exec rspec spec/
 #  - RAILS_ENV=test bundle exec rake db:migrate --trace
 #  - bundle exec rake db:test:prepare
