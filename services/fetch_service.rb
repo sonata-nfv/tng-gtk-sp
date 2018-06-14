@@ -67,10 +67,33 @@ class FetchService
       else
         raise ArgumentError.new("#{response.message}")
       end
-    rescue StandardError => e
+    rescue Exception => e
       STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
-      raise ArgumentError.new("Fetching entity with params #{original_params}, got #{response}")
     end
+    nil
+=begin
+    msg=self.name+'#'+__method__.to_s
+    STDERR.puts "#{msg}: params=#{params}"
+    begin
+      if params.key?(:uuid)
+        service_uuid = params.delete :service_uuid
+        uri = URI.parse(CATALOGUE_URL+'/network-services/'+service_uuid)
+        # mind that there ccany be more params, so we might need to pass params as well
+      else
+        uri = URI.parse(CATALOGUE_URL+'/network-services')
+        uri.query = URI.encode_www_form(sanitize(params))
+      end
+      STDERR.puts "#{msg}: querying uri=#{uri}"
+      request = Net::HTTP::Get.new(uri)
+      request['content-type'] = 'application/json'
+      response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
+      STDERR.puts "#{msg}: querying response=#{response}"
+      return JSON.parse(response.read_body, quirks_mode: true, symbolize_names: true) if response.is_a?(Net::HTTPSuccess)
+    rescue Exception => e
+      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+    end
+    nil
+=end    
   end
   
   private
