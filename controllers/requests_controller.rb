@@ -65,7 +65,7 @@ class RequestsController < ApplicationController
     
     begin
       saved_request = ProcessRequestService.call(params.merge({user_data: request.env['5gtango.user.data']}))
-      halt_with_code_body(400, {error: "Error saving request"}.to_json) if saved_request.to_s.empty? 
+      #halt_with_code_body(400, {error: "Error saving request"}.to_json) if saved_request.to_s.empty? 
       halt_with_code_body(201, saved_request.to_json)
     rescue ArgumentError => e
       halt_with_code_body(404, {error: e.message}.to_json)

@@ -54,17 +54,17 @@ class ApplicationController < Sinatra::Base
   set :logger_level, LOGGER_LEVEL.to_sym
   
   #The environment variable DATABASE_URL should be in the following format:
-  # => postgres://{user}:{password}@{host}:{port}/path
-  configure :development, :test, :'pre-int', :integration, :demo, :qualification, :staging do
-  	db = URI.parse(ENV['DATABASE_URL'] || 'postgresql://localhost:5432/gatekeeper')
+  # => postgres://{user}:{password}@{host}:{port}/path_to_database
+  #configure :development, :test, :'pre-int', :integration, :demo, :qualification, :staging do
+  	#db = URI.parse(ENV['DATABASE_URL'] || 'postgresql://localhost:5432/gatekeeper')
 
-  	ActiveRecord::Base.establish_connection(
-  			:adapter => db.scheme == 'postgres' ? 'postgresql' : db.scheme,
-  			:host     => db.host,
-  			:username => db.user,
-  			:password => db.password,
-  			:database => db.path[1..-1],
-  			:encoding => 'utf8'
-  	)
-  end
+  	#ActiveRecord::Base.establish_connection(
+  	#		:adapter => db.scheme == 'postgres' ? 'postgresql' : db.scheme,
+  	#		:host     => db.host,
+  	#		:username => db.user,
+  	#		:password => db.password,
+  	#		:database => db.path[1..-1],
+  	#		:encoding => 'utf8'
+  	#)
+    #end
 end
