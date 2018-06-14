@@ -56,7 +56,7 @@ class ApplicationController < Sinatra::Base
   #The environment variable DATABASE_URL should be in the following format:
   # => postgres://{user}:{password}@{host}:{port}/path
   configure :production, :development do
-  	db = URI.parse(ENV['DATABASE_URL'] || 'postgres://localhost:5432/gatekeeper')
+  	db = URI.parse(ENV['DATABASE_URL'] || 'postgresql://localhost:5432/gatekeeper')
 
   	ActiveRecord::Base.establish_connection(
   			:adapter => db.scheme == 'postgres' ? 'postgresql' : db.scheme,
