@@ -41,6 +41,8 @@ require_relative File.dirname(__FILE__) + '/../controllers/application_controlle
 require_relative File.dirname(__FILE__) + '/../controllers/requests_controller'
 require_relative File.dirname(__FILE__) + '/../controllers/root_controller'
 require_relative File.dirname(__FILE__) + '/../controllers/pings_controller'
+require_relative File.dirname(__FILE__) + '/../controllers/services_controller'
+require_relative File.dirname(__FILE__) + '/../controllers/functions_controller'
 require_relative File.dirname(__FILE__) + '/../services/message_publishing_service'
 require_relative File.dirname(__FILE__) + '/../services/process_request_service'
 require_relative File.dirname(__FILE__) + '/../services/fetch_service'
