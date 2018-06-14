@@ -40,11 +40,11 @@ COPY Gemfile /app
 RUN bundle install
 COPY . /app
 EXPOSE 5000
-ENV DATABASE_URL=postgresql://tangodefault:tango@postgres:5432/gatekeeper
-#ENV POSTGRES_PASSWORD tango
-#ENV POSTGRES_USER tangodefault
-#ENV DATABASE_HOST postgres
-#ENV DATABASE_PORT 5432
+ENV POSTGRES_PASSWORD tango
+ENV POSTGRES_USER tangodefault
+ENV DATABASE_HOST son-postgres
+ENV DATABASE_PORT 5432
+#ENV DATABASE_URL=postgresql://tangodefault:tango@son-postgres:5432/gatekeeper
 ENV MQSERVER_URL=amqp://guest:guest@son-broker:5672
 ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
 ENV PORT 5000
