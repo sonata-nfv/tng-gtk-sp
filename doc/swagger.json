@@ -63,7 +63,167 @@
               "400": {"description": "Bad Request"}
           }
         }
+    },
+    "/services": {
+      "get": {
+        "tags": ["service management"],
+        "summary": "Query services",
+        "operationId": "serviceQuerying",
+        "consumes": ["*/*"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "The number of records to be included in a page",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "description": "The number of the page of records to be shown (starting in 0)",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "default": 0
+          }
+        ],
+        "responses": {
+            "200": { 
+              "description": "OK",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/ServicesGetMetadataReturn"
+                }
+              },
+            },
+            "400": {"description": "Bad Request"}
+        }
+      },
+      "options": {
+        "tags": ["service management"],
+        "summary": "Options for services",
+        "operationId": "serviceOptions",
+        "consumes": ["*/*"],
+        "produces": ["application/json"],
+        "parameters": [],
+        "responses": {
+            "200": { "description": "OK"},
+            "400": {"description": "Bad Request"}
+        }
       }
+    },
+    "/services/{service_uuid}": {
+      "get": {
+        "tags": ["service management"],
+        "summary": "Query a specific service meta-data",
+        "parameters": [
+          {
+            "name": "service_uuid",
+            "in": "path",
+            "description": "UUID of the service which meta-data is required",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "consumes": ["*/*"],
+        "produces": ["application/json"],
+        "responses": {
+          "200": { 
+            "description": "OK",
+            "schema":{ "$ref":"#/definitions/ServicesGetMetadataReturn"}
+          },
+          "400": { "description": "Bad request"},
+          "404": { "description": "Not found"}
+        }
+      }
+    },
+    "/functions": {
+      "get": {
+        "tags": ["function management"],
+        "summary": "Query functions",
+        "operationId": "functionQuerying",
+        "consumes": ["*/*"],
+        "produces": ["application/json"],
+        "parameters": [
+          {
+            "name": "page_size",
+            "in": "query",
+            "description": "The number of records to be included in a page",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0
+          },
+          {
+            "name": "page_number",
+            "in": "query",
+            "description": "The number of the page of records to be shown (starting in 0)",
+            "required": false,
+            "type": "integer",
+            "format": "int32",
+            "minimum": 0,
+            "default": 0
+          }
+        ],
+        "responses": {
+            "200": { 
+              "description": "OK",
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/FunctionsGetMetadataReturn"
+                }
+              },
+            },
+            "400": {"description": "Bad Request"}
+        }
+      },
+      "options": {
+        "tags": ["function management"],
+        "summary": "Options for functions",
+        "operationId": "functionOptions",
+        "consumes": ["*/*"],
+        "produces": ["application/json"],
+        "parameters": [],
+        "responses": {
+            "200": { "description": "OK"},
+            "400": {"description": "Bad Request"}
+        }
+      }
+    },
+    "/functions/{function_uuid}": {
+      "get": {
+        "tags": ["function management"],
+        "summary": "Query a specific function meta-data",
+        "parameters": [
+          {
+            "name": "functionuuid",
+            "in": "path",
+            "description": "UUID of the function which meta-data is required",
+            "required": true,
+            "type": "string",
+            "format": "uuid"
+          }
+        ],
+        "consumes": ["*/*"],
+        "produces": ["application/json"],
+        "responses": {
+          "200": { 
+            "description": "OK",
+            "schema":{ "$ref":"#/definitions/FunctionsGetMetadataReturn"}
+          },
+          "400": { "description": "Bad request"},
+          "404": { "description": "Not found"}
+        }
+      }
+    }
   },
   "definitions": {
     "RequestData": {
@@ -98,7 +258,35 @@
             "type": "string"
           }
         }
+      }
+    },
+    "ServicesGetMetadataReturn": {
+      "required": [ "service_uuid", "nsd" ],
+      "properties": {
+        "service_uuid": {
+          "type": "string",
+          "description": "UUID of the service."
+        },
+        "nsd": {
+          "type": "string",
+          "description": "Service descriptor"
+        }
       },
+      "type": "object"
+    },
+    "FunctionsGetMetadataReturn": {
+      "required": [ "function_uuid", "vnfd" ],
+      "properties": {
+        "function_uuid": {
+          "type": "string",
+          "description": "UUID of the function."
+        },
+        "nsd": {
+          "type": "string",
+          "description": "Function descriptor"
+        }
+      },
+      "type": "object"
     }
   }
 }
