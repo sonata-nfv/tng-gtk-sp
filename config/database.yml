@@ -31,18 +31,18 @@
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
 common_settings: &common_settings
-  #adapter: postgresql
-  #user: postgres
-  #host: localhost
-  #port: 5432
-  #database: sonata
+  adapter: postgresql
+  user: postgres
+  host: localhost
+  port: 5432
+  database: gatekeeper
   pool: 5
   encoding: unicode
-  url: <%= ENV['DATABASE_URL'] %>
+  #url: <%= ENV['DATABASE_URL'] %>
 
 development:
   <<: *common_settings
-  url: postgresql://postgres:sonatatest@localhost:5432/gatekeeper
+  #url: postgresql://postgres:sonatatest@localhost:5432/gatekeeper
 
 test:
   <<: *common_settings
@@ -50,11 +50,11 @@ test:
 
 integration:
   <<: *common_settings
-  #host: <%= ENV['DATABASE_HOST'] || 'postgres' %>
-  #port: <%= ENV['DATABASE_PORT'] || 5432 %>
-  #database: <%= ENV['DATABASE_NAME'] || 'gatekeeper' %>
-  #username: <%= ENV['POSTGRES_USER'] || 'postgres' %>
-  #password: <%= ENV['POSTGRES_PASSWORD'] || 'sonatatest' %>
+  host: <%= ENV['DATABASE_HOST'] || 'son-postgres' %>
+  port: <%= ENV['DATABASE_PORT'] || 5432 %>
+  database: <%= ENV['DATABASE_NAME'] || 'gatekeeper' %>
+  username: <%= ENV['POSTGRES_USER'] || 'postgres' %>
+  password: <%= ENV['POSTGRES_PASSWORD'] || 'sonatatest' %>
 
 qualification:
   <<: *common_settings

@@ -34,8 +34,7 @@
 require_relative '../spec_helper'
 
 RSpec.describe RequestsController, type: :controller do
-  include Rack::Test::Methods
-  def app() RequestsController end
+  def app() described_class end
   let(:uuid_1) {SecureRandom.uuid}
   let(:requestid_1) {SecureRandom.uuid}
   let(:requestid_2) {SecureRandom.uuid}

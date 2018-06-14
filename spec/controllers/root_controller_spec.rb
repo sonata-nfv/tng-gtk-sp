@@ -34,8 +34,7 @@
 require_relative '../spec_helper'
 
 RSpec.describe RootController, type: :controller do
-  include Rack::Test::Methods
-  def app() RootController end
+  def app() described_class end
 
   describe 'Accepts access to root (/)' do
     it 'returning 200' do
