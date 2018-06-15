@@ -32,22 +32,29 @@
 # frozen_string_literal: true
 # encoding: utf-8
 require_relative '../spec_helper'
+require 'uri'
 
 RSpec.describe FetchNSDService do
   describe '.call' do
     let(:site)  {FetchNSDService.class_variable_get(:@@site)}
     let(:uuid_1) {SecureRandom.uuid}
     let(:service_1_metadata) {{uuid: uuid_1, nsd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
-    let(:headers) {{'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>'example.com', 'User-Agent'=>'Ruby'}}
-    
+    let(:headers) do
+      uri = URI(site)
+      {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>"#{uri.host}:#{uri.port}", 'User-Agent'=>'Ruby'}
+    end
     context 'with UUID' do
       it 'returns the requested service meta-data when it exists' do
         stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 200, body: service_1_metadata.to_json, headers: {})
         expect(described_class.call(uuid: uuid_1)).to eq(service_1_metadata)
       end
-      it 'raises ArgumentError exception when the requested service does not exist' do
+      it 'returns {} when the requested service does not exist' do
         stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 404, body: '{}', headers: {})
-        expect{described_class.call(uuid: uuid_1)}.to raise_error(Exception)
+        expect(described_class.call(uuid: uuid_1)).to be_empty
+      end
+      it 'returns nil when tother errors occur' do
+        stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 500, body: '', headers: {})
+        expect(described_class.call(uuid: uuid_1)).to be_nil
       end
     end
     context 'without UUID' do
@@ -81,6 +88,14 @@ RSpec.describe FetchNSDService do
           with(headers: headers).
           to_return(status: 200, body: services_metadata.to_json, headers: {'content-type' => 'application/json'})
         expect(described_class.call({page_size: default_page_size, page_number: default_page_number})).to eq(services_metadata)
+      end
+      it 'returns [] when the requested services do not exist' do
+        stub_request(:get, site+'/').with(headers: headers).to_return(status: 404, body: '[]', headers: {})
+        expect(described_class.call(uuid: uuid_1)).to eq(nil)
+      end
+      it 'returns nil when tother errors occur' do
+        stub_request(:get, site+'/').with(headers: headers).to_return(status: 500, body: '', headers: {})
+        expect(described_class.call(uuid: uuid_1)).to be_nil
       end
     end
   end

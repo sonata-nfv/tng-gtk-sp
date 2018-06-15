@@ -36,10 +36,14 @@ require_relative '../spec_helper'
 RSpec.describe ProcessRequestService do
   describe '.call' do
     let(:uuid) {SecureRandom.uuid}
+    let(:uuid_2) {SecureRandom.uuid}
     let(:customer_uuid) {SecureRandom.uuid}
     let(:sla_id) {SecureRandom.uuid}
     let(:service_instantiation_request) {{
       uuid: uuid, egresses:[], ingresses: [], blacklist: [], customer_uuid: customer_uuid, sla_id: sla_id
+    }}
+    let(:service_instantiation_request_2) {{
+      uuid: uuid_2, egresses:[], ingresses: [], blacklist: [], customer_uuid: customer_uuid, sla_id: sla_id
     }}
     let(:functions) {[{ 'vnf_id'=> 'my_vnf', 'vnf_name'=> 'myvnf', 'vnf_vendor'=>'eu.5gtango', 'vnf_version'=> '0.1'}]}
     let(:service) {{uuid: uuid, nsd: { vendor: 'eu.5gtango', name: 'my_service', version: '0.1', network_functions: functions}, username: nil}}
@@ -80,10 +84,15 @@ RSpec.describe ProcessRequestService do
       }, 
       developer: {username: nil, email: nil, phone: nil}
     }}
+    it 'returns nil when no request is found' do
+      allow(FetchNSDService).to receive(:call).with(uuid: uuid_2).and_return({})
+      expect(described_class.call(service_instantiation_request_2)).to eq(nil)
+    end
     it 'returns the stored request' do
       allow(FetchNSDService).to receive(:call).with(uuid: service_instantiation_request[:uuid]).and_return(service)
-      allow(FetchVNFDsService).to receive(:call).with(service[:nsd][:network_functions][0]).and_return(function)
+      allow(FetchVNFDsService).to receive(:call).with(service[:nsd][:network_functions][0].deep_symbolize_keys).and_return(function)
       allow(Request).to receive(:create).with(service_instantiation_request).and_return(saved_service_instantiation_request)
+      # instantiation_request={:id=>"be9ff802-da73-4927-8433-11649b726d00", :created_at=>"2018-06-07 16:24:15", :updated_at=>"2018-06-07 16:24:15", :uuid=>"6cbc5bc8-e591-4056-9174-b437cd4227cc", :status=>"NEW", :request_type=>"CREATE_SERVICE", :instance_uuid=>nil, :ingresses=>[], :egresses=>[], :began_at=>"2018-06-07 16:24:15", :callback=>nil, :blacklist=>[], :customer_uuid=>"7af2a274-6739-4833-ba1c-715d2679e7d7", :sla_uuid=>"f0a94d30-32e2-41e4-bce1-f0529750b23b"}
       allow(FetchUserDataService).to receive(:call).with(customer_uuid, service[:username], sla_id).and_return(user_data)
       allow(MessagePublishingService).to receive(:call).with(message, :create_service, saved_service_instantiation_request[:id]).and_return(message)
       expect(described_class.call(service_instantiation_request)).to eq(saved_service_instantiation_request)

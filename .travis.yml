@@ -30,28 +30,29 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-language: ruby
-rvm:
-  - 2.4.3
-addons:
-  postgresql: "9.4"
-env:
-  - DB=pgsql
-  global:
-    - DATABASE_URL=postgresql://postgres@localhost:5432/gatekeeper
-    - MQSERVER_URL=amqp://guest:guest@broker:5672
-    - CATALOGUES_URL=http://tng-cat:4011/catalogues/api/v2
-    - RACK_ENV=test 
 services:
   - postgresql
   - rabbitmq
+language: ruby
+rvm:
+  - 2.4.3
+cache: bundler
+addons:
+    postgresql: '9.6'
+env:
+  #  - DB=pgsql
+  global:
+    - DATABASE_URL=postgresql://postgres@localhost:5432/gatekeeper
+    - MQSERVER_URL=amqp://guest:guest@broker:5672
+    - CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
+#    - RACK_ENV=test 
 before_script:
-  - cp config/database.yml.travis config/database.yml
-  - psql -c 'create database gatekeeper;' -U postgres
-script: 
-  - bundle install
+#  - cp config/database.yml.travis config/database.yml
+#  - psql -c 'create database gatekeeper;' -U postgres
   - bundle exec rake db:create
   - bundle exec rake db:migrate
-  - RACK_ENV=test bundle exec rspec spec/
-#  - RAILS_ENV=test bundle exec rake db:migrate --trace
-#  - bundle exec rake db:test:prepare
+script: 
+#  - bundle install
+#  - bundle exec rake db:create
+#  - bundle exec rake db:migrate
+  - bundle exec rspec spec

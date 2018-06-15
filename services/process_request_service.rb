@@ -57,12 +57,18 @@ class ProcessRequestService
     STDERR.puts "#{msg}: params=#{params}"
     begin
       stored_service = FetchNSDService.call(uuid: params[:uuid])
+      STDERR.puts "#{msg}: stored_service=#{stored_service} (#{stored_service.class})"
+      return nil if (stored_service == {} || stored_service == nil)
+      STDERR.puts "#{msg}: functions=#{stored_service[:nsd][:network_functions]}"
       stored_functions = fetch_functions(stored_service[:nsd][:network_functions])
+      STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
       params[:began_at] = Time.now.utc
       instantiation_request = Request.create(params)
+      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request}"
       user_data = FetchUserDataService.call( params[:customer_uuid], stored_service[:username], params[:sla_id])
+      STDERR.puts "#{msg}: user_data=#{user_data}"
       message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], user_data)
-      STDERR.puts "#{msg}: message=\n#{message}"
+      STDERR.puts "#{msg}: message=#{message}"
       publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
     rescue => e
       raise ArgumentError.new(e.message)
@@ -72,15 +78,18 @@ class ProcessRequestService
   
   def self.build_message(service, functions, egresses, ingresses, user_data)
     msg=self.name+'.'+__method__.to_s
-    #STDERR.puts "#{msg}: service=#{service}\n\tfunctions=#{functions}"
+    STDERR.puts "#{msg}: service=#{service}\n\tfunctions=#{functions}"
     message = {}
     nsd = service[:nsd]
     nsd[:uuid] = service[:uuid]
     message['NSD']=nsd
-    nsd[:network_functions].each_with_index do |vnf, index|
+    #STDERR.puts "#{msg}: message['NSD']=#{message['NSD']}"
+    functions.each_with_index do |vnf, index|
       vnfd = functions[index][:vnfd]
+      #STDERR.puts "#{msg}: vnfd=#{vnfd}"
       vnfd[:uuid] = functions[index][:uuid]
       message["VNFD#{index}"]=vnfd 
+      #STDERR.puts "#{msg}: message['VNFD#{index}']=#{message["VNFD#{index}"]}"
     end
     STDERR.puts "#{msg}: message=#{message}"
     message['egresses'] = egresses
@@ -131,9 +140,13 @@ class ProcessRequestService
   end
   
   def self.fetch_functions(list_of_trios)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: list_of_trios=#{list_of_trios}"
     list = []
     list_of_trios.each do |trio|
-      list << FetchVNFDsService.call(trio)
+      STDERR.puts "#{msg}: trio=#{trio}"
+      list << FetchVNFDsService.call(trio.deep_symbolize_keys)
     end
+    list
   end
 end
