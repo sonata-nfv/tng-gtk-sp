@@ -41,7 +41,7 @@ RSpec.describe FetchNSDService do
     let(:service_1_metadata) {{uuid: uuid_1, nsd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
     let(:headers) do
       uri = URI(site)
-      {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>uri.host, 'User-Agent'=>'Ruby'}
+      {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>"#{uri.host}:#{uri.port}", 'User-Agent'=>'Ruby'}
     end
     context 'with UUID' do
       it 'returns the requested service meta-data when it exists' do
