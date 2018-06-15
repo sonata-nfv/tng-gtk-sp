@@ -39,15 +39,15 @@ RSpec.describe FetchNSDService do
     let(:uuid_1) {SecureRandom.uuid}
     let(:service_1_metadata) {{uuid: uuid_1, nsd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
     let(:headers) {{'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>'example.com', 'User-Agent'=>'Ruby'}}
-    
+
     context 'with UUID' do
       it 'returns the requested service meta-data when it exists' do
         stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 200, body: service_1_metadata.to_json, headers: {})
         expect(described_class.call(uuid: uuid_1)).to eq(service_1_metadata)
       end
-      it 'raises ArgumentError exception when the requested service does not exist' do
+      it 'raises Exception exception when the requested service does not exist' do
         stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 404, body: '{}', headers: {})
-        expect{described_class.call(uuid: uuid_1)}.to raise_error(Exception)
+        expect(described_class.call(uuid: uuid_1)).to be_empty
       end
     end
     context 'without UUID' do

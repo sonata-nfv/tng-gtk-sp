@@ -63,9 +63,9 @@ class FetchService
         STDERR.puts "#{msg}: body=#{body}"
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
       when Net::HTTPNotFound
-        raise ArgumentError.new("Entity chosen with params #{original_params} was not found")
+        return {} # ArgumentError.new("Entity chosen with params #{original_params} was not found")
       else
-        raise ArgumentError.new("#{response.message}")
+        return nil # ArgumentError.new("#{response.message}")
       end
     rescue Exception => e
       STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
