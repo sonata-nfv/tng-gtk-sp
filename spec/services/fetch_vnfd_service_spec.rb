@@ -59,7 +59,7 @@ RSpec.describe FetchVNFDsService do
       let(:call_params) {[param_1, param_2]}
       let(:headers) do
         uri = URI(site)
-        {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>uri.host, 'User-Agent'=>'Ruby'}
+        {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>"#{uri.host}:#{uri.port}", 'User-Agent'=>'Ruby'}
       end
 
       it 'returns the requested functions meta-data when no restriction is passed' do
