@@ -42,7 +42,7 @@ RSpec.describe FunctionsController, type: :controller do
   let(:headers) do
     uri = URI(site)
     {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 
-      'Host'=>"#{uri.host}", 'User-Agent'=>'Ruby'} #:#{uri.port}
+      'Host'=>"#{uri.host}:#{uri.port}", 'User-Agent'=>'Ruby'}
   end
 
   context 'with UUID given' do

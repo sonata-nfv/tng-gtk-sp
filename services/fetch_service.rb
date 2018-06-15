@@ -70,9 +70,10 @@ class FetchService
       case response
       when Net::HTTPSuccess
         body = response.read_body
-        STDERR.puts "#{msg}: body=#{body}"
+        STDERR.puts "#{msg}: 200 (Ok) body=#{body}"
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
       when Net::HTTPNotFound
+        STDERR.puts "#{msg}: 404 Not found) body=#{body}"
         return {} # ArgumentError.new("Entity chosen with params #{original_params} was not found")
       else
         return nil # ArgumentError.new("#{response.message}")
