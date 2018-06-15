@@ -32,24 +32,13 @@
 # frozen_string_literal: true
 # encoding: utf-8
 require_relative '../spec_helper'
+require 'uri'
 
 RSpec.describe FetchVNFDsService do
   describe '.call' do
     let(:site)  {FetchVNFDsService.class_variable_get(:@@site)}
     let(:uuid_1) {SecureRandom.uuid}
     let(:function_1_metadata) {{uuid: uuid_1, vnfd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
-=begin    
-    context 'with UUID' do
-      it 'returns the requested service meta-data when it exists' do
-        stub_request(:get, catalogue_url+'/network-services/'+uuid_1).to_return(status: 200, body: service_1_metadata.to_json, headers: {})
-        expect(described_class.call(uuid: uuid_1)).to eq(service_1_metadata)
-      end
-      it 'raises ArgumentError exception when the requested service does not exist' do
-        stub_request(:get, catalogue_url+'/network-services/'+uuid_1).to_return(status: 404, body: '{}', headers: {})
-        expect{described_class.call(uuid: uuid_1)}.to raise_error(Exception)
-      end
-    end
-=end
     context 'without UUID' do
       let(:uuid_2) {SecureRandom.uuid}
       let(:function_2_metadata) {{uuid: uuid_2, vnfd: {vendor: '5gtango', name: 'whatever', version: '0.0.2'}}}
@@ -68,10 +57,14 @@ RSpec.describe FetchVNFDsService do
       let(:param_1) {{vendor: vendor_1, name: name_1, version: version_1}}
       let(:param_2) {{vendor: vendor_2, name: name_2, version: version_2}}
       let(:call_params) {[param_1, param_2]}
+      let(:headers) do
+        uri = URI(site)
+        {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>uri.host, 'User-Agent'=>'Ruby'}
+      end
+
       it 'returns the requested functions meta-data when no restriction is passed' do
         stub_request(:get, site+'?'+page_number+'&'+page_size+'&vendor='+vendor_1+'&name='+name_1+'&version='+version_1).
-          with(headers: {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>'example.com', 'User-Agent'=>'Ruby'}).
-          to_return(status: 200, body: [function_1_metadata].to_json, headers: headers)
+          with(headers: headers).to_return(status: 200, body: [function_1_metadata].to_json, headers: headers)
         expect(described_class.call(param_1)).to eq([function_1_metadata])
       end
       

@@ -48,9 +48,13 @@ RSpec.describe FetchNSDService do
         stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 200, body: service_1_metadata.to_json, headers: {})
         expect(described_class.call(uuid: uuid_1)).to eq(service_1_metadata)
       end
-      it 'raises Exception exception when the requested service does not exist' do
+      it 'returns {} when the requested service does not exist' do
         stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 404, body: '{}', headers: {})
         expect(described_class.call(uuid: uuid_1)).to be_empty
+      end
+      it 'returns nil when tother errors occur' do
+        stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 500, body: '', headers: {})
+        expect(described_class.call(uuid: uuid_1)).to be_nil
       end
     end
     context 'without UUID' do
@@ -84,6 +88,14 @@ RSpec.describe FetchNSDService do
           with(headers: headers).
           to_return(status: 200, body: services_metadata.to_json, headers: {'content-type' => 'application/json'})
         expect(described_class.call({page_size: default_page_size, page_number: default_page_number})).to eq(services_metadata)
+      end
+      it 'returns [] when the requested services do not exist' do
+        stub_request(:get, site+'/').with(headers: headers).to_return(status: 404, body: '[]', headers: {})
+        expect(described_class.call(uuid: uuid_1)).to eq(nil)
+      end
+      it 'returns nil when tother errors occur' do
+        stub_request(:get, site+'/').with(headers: headers).to_return(status: 500, body: '', headers: {})
+        expect(described_class.call(uuid: uuid_1)).to be_nil
       end
     end
   end
