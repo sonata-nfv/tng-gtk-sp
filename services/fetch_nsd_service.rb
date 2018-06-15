@@ -43,7 +43,7 @@ class FetchNSDService < FetchService
     STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'FetchNSDService', NO_CATALOGUE_URL_DEFINED_ERROR]
     raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
   end
-  site CATALOGUE_URL+'/network-services'
+  self.site=CATALOGUE_URL+'/network-services'
 end
 
 

@@ -36,12 +36,14 @@ require 'uri'
 
 RSpec.describe FetchNSDService do
   describe '.call' do
-    let(:site)  {FetchNSDService.class_variable_get(:@@site)}
+    let(:site)  {described_class.site}
     let(:uuid_1) {SecureRandom.uuid}
     let(:service_1_metadata) {{uuid: uuid_1, nsd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
     let(:headers) do
       uri = URI(site)
-      {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 'Host'=>"#{uri.host}:#{uri.port}", 'User-Agent'=>'Ruby'}
+      STDERR.puts "site=#{site}, uri=#{uri}"
+      {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 
+        'Host'=>"#{uri.host}:#{uri.port}", 'User-Agent'=>'Ruby'}
     end
     context 'with UUID' do
       it 'returns the requested service meta-data when it exists' do
@@ -52,7 +54,7 @@ RSpec.describe FetchNSDService do
         stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 404, body: '{}', headers: {})
         expect(described_class.call(uuid: uuid_1)).to be_empty
       end
-      it 'returns nil when tother errors occur' do
+      it 'returns nil when other errors occur' do
         stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 500, body: '', headers: {})
         expect(described_class.call(uuid: uuid_1)).to be_nil
       end
@@ -65,12 +67,12 @@ RSpec.describe FetchNSDService do
       let(:default_page_number) {ENV.fetch('DEFAULT_PAGE_NUMBER', '0')}
       it 'returns the requested services meta-data when no restriction is passed' do
         stub_request(:get, site+'?page_number='+default_page_number+'&page_size='+default_page_size).
-          with(headers: headers).to_return(status: 200, body: services_metadata.to_json, headers: headers)
+          with(headers: headers).to_return(status: 200, body: services_metadata.to_json, headers: {})
         expect(described_class.call({})).to eq(services_metadata)
       end
       it 'calls the Catalogue with default params' do      
         stub_request(:get, site+'?page_number='+default_page_number+'&page_size='+default_page_size).
-          with(headers: headers).to_return(status: 200, body: services_metadata.to_json, headers: headers)
+          with(headers: headers).to_return(status: 200, body: services_metadata.to_json, headers: {})
         expect(described_class.call({})).to eq(services_metadata)
       end
       it 'calls the Catalogue with default page_size when only page_number is passed' do      
@@ -80,7 +82,7 @@ RSpec.describe FetchNSDService do
       end
       it 'calls the Catalogue with default page_number when only page_size is passed' do      
         stub_request(:get, site+'?page_number='+default_page_number+'&page_size=1').
-          with(headers: headers).to_return(status: 200, body: [service_1_metadata].to_json, headers: headers)
+          with(headers: headers).to_return(status: 200, body: [service_1_metadata].to_json, headers: {})
         expect(described_class.call({page_size: 1})).to eq([service_1_metadata])
       end
       it 'calls the Catalogue with default page_number and page_size, returning existing services' do      
@@ -93,7 +95,7 @@ RSpec.describe FetchNSDService do
         stub_request(:get, site+'/').with(headers: headers).to_return(status: 404, body: '[]', headers: {})
         expect(described_class.call(uuid: uuid_1)).to eq(nil)
       end
-      it 'returns nil when tother errors occur' do
+      it 'returns nil when other errors occur' do
         stub_request(:get, site+'/').with(headers: headers).to_return(status: 500, body: '', headers: {})
         expect(described_class.call(uuid: uuid_1)).to be_nil
       end

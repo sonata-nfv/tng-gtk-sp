@@ -29,19 +29,44 @@
 ## the Horizon 2020 and 5G-PPP programmes. The authors would like to
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
+# frozen_string_literal: true
 # encoding: utf-8
-require 'net/http'
-require 'ostruct'
-require 'json'
-require_relative './fetch_service'
+require_relative '../spec_helper'
 
-class FetchVNFDsService < FetchService
-  NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch functions'
-  CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
-  if CATALOGUE_URL == ''
-    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'FetchVNFDService', NO_CATALOGUE_URL_DEFINED_ERROR]
-    raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
+RSpec.describe FunctionsController, type: :controller do
+  def app() described_class end
+  let(:uuid_1) {SecureRandom.uuid}
+  let(:function_1_metadata) {{uuid: uuid_1, vnfd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
+  let(:uuid_2) {SecureRandom.uuid}
+
+  context 'with UUID given' do
+    it 'returns the existing function' do
+      allow(FetchVNFDsService).to receive(:call).with(uudi: uuid_1).and_return(function_1_metadata)
+      get '/'+uuid_1
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq(request_1.to_json)
+    end
+    it 'rejects non-existing function' do
+      allow(FetchVNFDsService).to receive(:call).with(uudi: uuid_2).and_return({})
+      get '/'+uuid_2
+      expect(last_response).to be_not_found
+    end
   end
-  self.site=CATALOGUE_URL+'/vnfs'
-  STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'FetchVNFDService', "self.site=#{self.site}"]
+  context 'without UUID given' do
+    let(:function_2_metadata) {{uuid: uuid_2, vnfd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
+    let(:functions) {[ function_1_metadata, function_2_metadata]}
+    it 'adding default parameters for page size and number' do
+      allow(FetchVNFDsService).to receive(:call).with({}).and_return(functions)
+      get '/'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq(functions.to_json)
+    end
+
+    it 'returning Ok (200) and an empty array when no service is found' do
+      allow(FetchVNFDsService).to receive(:call).with({}).and_return([])
+      get '/'
+      expect(last_response).to be_ok
+      expect(last_response.body).to eq([].to_json)
+    end
+  end
 end
