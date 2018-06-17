@@ -41,14 +41,15 @@ RSpec.describe FunctionsController, type: :controller do
 
   context 'with UUID given' do
     it 'returns the existing function' do
-      allow(FetchVNFDsService).to receive(:call).with(uudi: uuid_1).and_return(function_1_metadata)
+      allow(FetchVNFDsService).to receive(:call).with(uuid: uuid_1).and_return(function_1_metadata)
       get '/'+uuid_1
       expect(last_response).to be_ok
-      expect(last_response.body).to eq(request_1.to_json)
+      expect(last_response.body).to eq(function_1_metadata.to_json)
     end
     it 'rejects non-existing function' do
-      allow(FetchVNFDsService).to receive(:call).with(uudi: uuid_2).and_return({})
+      allow(FetchVNFDsService).to receive(:call).with(uuid: uuid_2).and_return({})
       get '/'+uuid_2
+      STDERR.puts "last_response=#{last_response.inspect}"
       expect(last_response).to be_not_found
     end
   end

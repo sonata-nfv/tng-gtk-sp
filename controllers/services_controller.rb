@@ -42,14 +42,14 @@ class ServicesController < ApplicationController
   
   get '/?' do 
     captures=params.delete('captures') if params.key? 'captures'
-    result = FetchServicesService.call(symbolized_hash(params))
-    halt 404, {}, {error: "No services fiting the provided parameters ('#{params}') were found"}.to_json if result.to_s.empty? # covers nil
+    result = FetchNSDService.call(symbolized_hash(params))
+    halt 404, {}, {error: "No packages fiting the provided parameters ('#{params}') were found"}.to_json if result.to_s.empty? # covers nil
     halt 200, {}, result.to_json
   end
   
   get '/:service_uuid/?' do 
     captures=params.delete('captures') if params.key? 'captures'
-    result = FetchServicesService.call(symbolized_hash(params))
+    result = FetchNSDService.call(symbolized_hash(params))
     halt 404, {}, {error: ERROR_SERVICE_NOT_FOUND % params[:service_uuid]}.to_json if result.to_s.empty? # covers nil
     halt 200, {}, result.to_json
   end

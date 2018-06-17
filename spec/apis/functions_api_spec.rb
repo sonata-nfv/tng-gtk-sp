@@ -33,50 +33,39 @@
 # encoding: utf-8
 require_relative '../spec_helper'
 
-RSpec.describe FunctionsController, type: :controller do
-  def app() described_class end
+RSpec.describe 'Functions API', type: :api do
+  def app() FunctionsController end
   let(:site)  {FetchVNFDsService.site}
   let(:uuid_1) {SecureRandom.uuid}
   let(:function_1_metadata) {{uuid: uuid_1, vnfd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
   let(:uuid_2) {SecureRandom.uuid}
-  let(:headers) do
-    uri = URI(site)
-    {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'application/json', 
-      'Host'=>"#{uri.host}:#{uri.port}", 'User-Agent'=>'Ruby'}
-  end
 
   context 'with UUID given' do
+    #describe "API authentication" , :type => :api do
+    #  let!(:user) { FactoryGirl.create(:user) }
+    #  it "making a request without cookie token " do
+    #    get "/api/v1/items/1",:formate =>:json
+    #    last_response.status.should eql(401)
+    #    error = {:error=>'You need to sign in or sign up before continuing.'}
+    #    last_response.body.should  eql(error.to_json)
+    #  end
+    #end
+=begin
     it 'returns the existing function' do
-      stub_request(:get, site+'/'+uuid_1).with(headers: headers).to_return(status: 200, body: function_1_metadata.to_json, headers: headers)
+      stub_request(:get, site+'/'+uuid_1).to_return(status: 200, body: function_1_metadata.to_json, headers: {})
       get '/'+uuid_1
-      expect(last_response).to be_ok
-      expect(last_response.body).to eq(function_1_metadata.to_json)
+      STDERR.puts "response=#{response.inspect}"
+      expect(response).to have_http_status(:success)
+      #expect(response).to be_success
+      #json = JSON.parse(response.body)
+      expect(response.body).to include(function_1_metadata.to_json)
     end
     it 'rejects non-existing function' do
-      stub_request(:get, site+'/'+uuid_2).with(headers: headers).to_return(status: 404, body: '', headers: headers)
+      stub_request(:get, site+'/'+uuid_2).to_return(status: 404, body: '', headers: {})
       get '/'+uuid_2
-      STDERR.puts "last_response=#{last_response.inspect}"
-      expect(last_response).to be_not_found
+      STDERR.puts "response=#{response.inspect}"
+      expect(esponse).to eq(404)
     end
-  end
-=begin
-  context 'without UUID given' do
-    let(:function_2_metadata) {{uuid: uuid_2, vnfd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
-    let(:functions) {[ function_1_metadata, function_2_metadata]}
-    it 'adding default parameters for page size and number' do
-      stub_request(:get, site+'?page_number='+default_page_number+'&page_size='+default_page_size).
-        with(headers: headers).to_return(status: 200, body: services_metadata.to_json, headers: headers)
-      get '/'
-      expect(last_response).to be_ok
-      expect(last_response.body).to eq(functions.to_json)
-    end
-
-    it 'returning Ok (200) and an empty array when no service is found' do
-      allow(FetchVNFDsService).to receive(:call).with({}).and_return([])
-      get '/'
-      expect(last_response).to be_ok
-      expect(last_response.body).to eq([].to_json)
-    end
-  end
 =end
+  end
 end

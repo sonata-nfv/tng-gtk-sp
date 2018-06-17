@@ -38,6 +38,7 @@ RSpec.describe FetchVNFDsService do
   describe '.call' do
     let(:site)  {described_class.site}
     let(:uuid_1) {SecureRandom.uuid}
+    let(:uuid_2) {SecureRandom.uuid}
     let(:function_1_metadata) {{uuid: uuid_1, vnfd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
     let(:headers) do
       uri = URI(site)
@@ -46,13 +47,15 @@ RSpec.describe FetchVNFDsService do
     end
     context 'with UUID' do
       it 'returns the requested function meta-data' do
-        stub_request(:get, site+'/'+uuid_1).
-          with(headers: headers).to_return(status: 200, body: function_1_metadata.to_json, headers: headers)
+        stub_request(:get, site+'/'+uuid_1).to_return(status: 200, body: function_1_metadata.to_json, headers: {})
         expect(described_class.call(uuid: uuid_1)).to eq(function_1_metadata)
+      end
+      it 'returns {} when the requested function does not exist' do
+        stub_request(:get, site+'/'+uuid_2).to_return(status: 404, body: '', headers: {})
+        expect(described_class.call(uuid: uuid_2)).to eq({})
       end
     end
     context 'without UUID' do
-      let(:uuid_2) {SecureRandom.uuid}
       let(:function_2_metadata) {{uuid: uuid_2, vnfd: {vendor: '5gtango', name: 'whatever', version: '0.0.2'}}}
       let(:functions_metadata) {[function_1_metadata, function_2_metadata]}
       let(:headers) {{'content-type' => 'application/json'}}
