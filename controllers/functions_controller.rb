@@ -41,16 +41,22 @@ class FunctionsController < ApplicationController
   before { content_type :json}
   
   get '/?' do 
+    msg='FunctionsController.get (many)'
     captures=params.delete('captures') if params.key? 'captures'
+    STDERR.puts "#{msg}: params=#{params}"
     result = FetchVNFDsService.call(symbolized_hash(params))
+    STDERR.puts "#{msg}: result=#{result}"
     halt 404, {}, {error: "No functions fiting the provided parameters ('#{params}') were found"}.to_json if result.to_s.empty? # covers nil
     halt 200, {}, result.to_json
   end
   
-  get '/:service_uuid/?' do 
+  get '/:function_uuid/?' do 
+    msg='FunctionsController.get (single)'
     captures=params.delete('captures') if params.key? 'captures'
-    result = FetchVNFDsService.call(symbolized_hash(params))
-    halt 404, {}, {error: ERROR_FUNCTION_NOT_FOUND % params[:service_uuid]}.to_json if result.to_s.empty? # covers nil
+    STDERR.puts "#{msg}: params['function_uuid']='#{params['function_uuid']}'"
+    result = FetchVNFDsService.call(uuid: params['function_uuid'])
+    STDERR.puts "#{msg}: result=#{result}"
+    halt 404, {}, {error: ERROR_FUNCTION_NOT_FOUND % params['function_uuid']}.to_json if result == {}
     halt 200, {}, result.to_json
   end
   

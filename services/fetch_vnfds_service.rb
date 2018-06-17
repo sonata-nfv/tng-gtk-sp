@@ -42,32 +42,6 @@ class FetchVNFDsService < FetchService
     STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'FetchVNFDService', NO_CATALOGUE_URL_DEFINED_ERROR]
     raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
   end
-  site CATALOGUE_URL+'/vnfs'
-  
-=begin
-  ERROR_VNF_UUID_IS_MANDATORY='VNF UUID parameter is mandatory'
-  ERROR_CATALOGUE_URL_NOT_FOUND='Catalogue URL not found in the ENV.'
-  CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
-  
-  def self.call(vnfds)
-    # vnf_uuids is mandatory
-    raise ArgumentError.new(ERROR_VNF_UUID_IS_MANDATORY) if vnfds.empty?
-    raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) if CATALOGUE_URL == ''
-    
-    vnfs = []
-    vnfds.each do |vnf|
-      uri = URI(catalogue_url+'/vnfs?vendor='+vnf[:vendor]+'&name='+vnf[:name]+'&version='+vnf[:version])
-      req = Net::HTTP::Get.new(uri)
-      req['Accept'] = 'application/json'
-      res = Net::HTTP.start(uri.hostname, uri.port) { |http| http.request(req) }
-      case res
-      when Net::HTTPSuccess
-        vnfs << JSON.parse(res.body, object_class: OpenStruct)
-      else
-        raise ArgumentError.new("Fetching function with UUID '#{uuid}' got #{res.value}")
-      end
-    end
-    vnfs
-  end
-=end
+  self.site=CATALOGUE_URL+'/vnfs'
+  STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'FetchVNFDService', "self.site=#{self.site}"]
 end

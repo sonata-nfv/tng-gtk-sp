@@ -36,20 +36,30 @@ require 'json'
 
 class FetchService  
   ERROR_NS_UUID_IS_MANDATORY='Network Service UUID parameter is mandatory'
-  
-  def self.site(url) @@site = url end 
+
+  class << self
+    attr_accessor :site
+  end
+
+  def site=(value)
+    self.class.site = value
+  end
+
+  def site
+    self.class.site
+  end
   
   def self.call(params)
     msg=self.name+'#'+__method__.to_s
-    STDERR.puts "#{msg}: params=#{params}"
+    STDERR.puts "#{msg}: params=#{params} site=#{self.site}"
     original_params = params.dup
     begin
       if params.key?(:uuid)
         uuid = params.delete :uuid
-        uri = URI.parse(@@site+'/'+uuid)
+        uri = URI.parse(self.site+'/'+uuid)
         # mind that there cany be more params, so we might need to pass params as well
       else
-        uri = URI.parse(@@site)
+        uri = URI.parse(self.site)
         uri.query = URI.encode_www_form(sanitize(params))
       end
       STDERR.puts "#{msg}: uri=#{uri}"
@@ -60,9 +70,10 @@ class FetchService
       case response
       when Net::HTTPSuccess
         body = response.read_body
-        STDERR.puts "#{msg}: body=#{body}"
+        STDERR.puts "#{msg}: 200 (Ok) body=#{body}"
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
       when Net::HTTPNotFound
+        STDERR.puts "#{msg}: 404 Not found) body=#{body}"
         return {} # ArgumentError.new("Entity chosen with params #{original_params} was not found")
       else
         return nil # ArgumentError.new("#{response.message}")
@@ -71,29 +82,6 @@ class FetchService
       STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
     end
     nil
-=begin
-    msg=self.name+'#'+__method__.to_s
-    STDERR.puts "#{msg}: params=#{params}"
-    begin
-      if params.key?(:uuid)
-        service_uuid = params.delete :service_uuid
-        uri = URI.parse(CATALOGUE_URL+'/network-services/'+service_uuid)
-        # mind that there ccany be more params, so we might need to pass params as well
-      else
-        uri = URI.parse(CATALOGUE_URL+'/network-services')
-        uri.query = URI.encode_www_form(sanitize(params))
-      end
-      STDERR.puts "#{msg}: querying uri=#{uri}"
-      request = Net::HTTP::Get.new(uri)
-      request['content-type'] = 'application/json'
-      response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
-      STDERR.puts "#{msg}: querying response=#{response}"
-      return JSON.parse(response.read_body, quirks_mode: true, symbolize_names: true) if response.is_a?(Net::HTTPSuccess)
-    rescue Exception => e
-      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
-    end
-    nil
-=end    
   end
   
   private
@@ -104,4 +92,30 @@ class FetchService
   end
 end
 
+=begin
+class A
+  class << self
+    attr_accessor :class_var
+  end
 
+  def set_class_var(value)
+    self.class.class_var = value
+  end
+
+  def get_class_var
+    self.class.class_var
+  end
+end
+
+class B < A; end
+
+A.class_var = 'a'
+B.class_var = 'b'
+puts A.class_var # => a
+puts B.class_var # => b
+
+A.new.set_class_var 'aa'
+B.new.set_class_var 'bb'
+puts A.new.get_class_var # => aa
+puts B.new.get_class_var # => bb
+=end

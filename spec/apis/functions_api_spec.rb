@@ -29,21 +29,43 @@
 ## the Horizon 2020 and 5G-PPP programmes. The authors would like to
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
+# frozen_string_literal: true
 # encoding: utf-8
-require 'net/http'
-require 'ostruct'
-require 'json'
-require_relative './fetch_service'
+require_relative '../spec_helper'
 
-class FetchNSDService < FetchService
-  
-  NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch services'
-  CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
-  if CATALOGUE_URL == ''
-    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'FetchNSDService', NO_CATALOGUE_URL_DEFINED_ERROR]
-    raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
+RSpec.describe 'Functions API', type: :api do
+  def app() FunctionsController end
+  let(:site)  {FetchVNFDsService.site}
+  let(:uuid_1) {SecureRandom.uuid}
+  let(:function_1_metadata) {{uuid: uuid_1, vnfd: {vendor: '5gtango', name: 'whatever', version: '0.0.1'}}}
+  let(:uuid_2) {SecureRandom.uuid}
+
+  context 'with UUID given' do
+    #describe "API authentication" , :type => :api do
+    #  let!(:user) { FactoryGirl.create(:user) }
+    #  it "making a request without cookie token " do
+    #    get "/api/v1/items/1",:formate =>:json
+    #    last_response.status.should eql(401)
+    #    error = {:error=>'You need to sign in or sign up before continuing.'}
+    #    last_response.body.should  eql(error.to_json)
+    #  end
+    #end
+=begin
+    it 'returns the existing function' do
+      stub_request(:get, site+'/'+uuid_1).to_return(status: 200, body: function_1_metadata.to_json, headers: {})
+      get '/'+uuid_1
+      STDERR.puts "response=#{response.inspect}"
+      expect(response).to have_http_status(:success)
+      #expect(response).to be_success
+      #json = JSON.parse(response.body)
+      expect(response.body).to include(function_1_metadata.to_json)
+    end
+    it 'rejects non-existing function' do
+      stub_request(:get, site+'/'+uuid_2).to_return(status: 404, body: '', headers: {})
+      get '/'+uuid_2
+      STDERR.puts "response=#{response.inspect}"
+      expect(esponse).to eq(404)
+    end
+=end
   end
-  self.site=CATALOGUE_URL+'/network-services'
 end
-
-
