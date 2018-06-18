@@ -63,6 +63,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: functions=#{stored_service[:nsd][:network_functions]}"
       stored_functions = fetch_functions(stored_service[:nsd][:network_functions])
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
+      return stored_functions if stored_functions == nil 
       params[:began_at] = Time.now.utc
       instantiation_request = Request.create(params)
       STDERR.puts "#{msg}: instantiation_request=#{instantiation_request}"
@@ -70,7 +71,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: complete_user_data=#{complete_user_data}"
       message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], complete_user_data)
       STDERR.puts "#{msg}: message=#{message}"
-      publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
+      publishing_response = MessagePublishingService.call(message.to_s, :create_service, instantiation_request[:id])
     rescue ActiveRecord::StatementInvalid => e
       raise StantardError.new(e.message)
     rescue => e
@@ -81,7 +82,8 @@ class ProcessRequestService
   
   def self.build_message(service, functions, egresses, ingresses, blacklist, user_data)
     msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: service=#{service}\n\tfunctions=#{functions}"
+    STDERR.puts "#{msg}: service=#{service}"
+    STDERR.puts "#{msg}: functions=#{functions}"
     message = {}
     nsd = service[:nsd]
     nsd[:uuid] = service[:uuid]
@@ -132,16 +134,6 @@ class ProcessRequestService
     }
   end
 
-#  def augment_params(body)
-#    params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-#    @egresses = []
-#    @ingresses = []
-    
-#    @egresses = params.delete[:egresses] if params[:egresses]
-#    @ingresses = params.delete[:ingresses] if params[:ingresses]
-#    @user_data = FetchUserDataService.call(request.env['5gtango.user.data'])
-#    params
-#  end
   def self.complete_params(params)
     complement = {}
     [:egresses, :ingresses, :blacklist].each do |element|
@@ -150,13 +142,19 @@ class ProcessRequestService
     params.merge(complement)
   end
   
-  def self.fetch_functions(list_of_trios)
+  def self.fetch_functions(list_of_functions)
     msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: list_of_trios=#{list_of_trios}"
+    STDERR.puts "#{msg}: list_of_functions=#{list_of_functions}"
     list = []
-    list_of_trios.each do |trio|
-      STDERR.puts "#{msg}: trio=#{trio}"
-      list << FetchVNFDsService.call(trio.deep_symbolize_keys)
+    list_of_functions.each do |function|
+      STDERR.puts "#{msg}: function=#{function}"
+      function.delete(:vnf_id)
+      found_function = FetchVNFDsService.call(function.deep_symbolize_keys)
+      if found_function == []
+        STDERR.puts "#{msg}: Function #{function} not found"
+        return nil
+      end
+      list << found_function[0]
     end
     list
   end

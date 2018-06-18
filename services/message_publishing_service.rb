@@ -33,6 +33,7 @@
 require 'net/http'
 require 'ostruct'
 require 'json'
+require 'yaml'
 require 'bunny'
 
 class MessagePublishingService  
