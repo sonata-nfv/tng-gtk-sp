@@ -60,8 +60,9 @@ class ProcessRequestService
       stored_service = FetchNSDService.call(uuid: params[:uuid])
       STDERR.puts "#{msg}: stored_service=#{stored_service} (#{stored_service.class})"
       return stored_service if (stored_service == {} || stored_service == nil)
-      STDERR.puts "#{msg}: functions=#{stored_service[:nsd][:network_functions]}"
-      stored_functions = fetch_functions(stored_service[:nsd][:network_functions])
+      functions_to_fetch = stored_service[:nsd][:network_functions]
+      STDERR.puts "#{msg}: functions_to_fetch=#{functions_to_fetch}"
+      stored_functions = fetch_functions(functions_to_fetch)
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
       return stored_functions if stored_functions == nil 
       params[:began_at] = Time.now.utc
@@ -71,7 +72,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: complete_user_data=#{complete_user_data}"
       message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], complete_user_data)
       STDERR.puts "#{msg}: message=#{message}"
-      publishing_response = MessagePublishingService.call(message.to_s, :create_service, instantiation_request[:id])
+      publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
     rescue ActiveRecord::StatementInvalid => e
       raise StantardError.new(e.message)
     rescue => e
@@ -101,7 +102,8 @@ class ProcessRequestService
     message['ingresses'] = ingresses
     message['blacklist'] = blacklist
     message['user_data'] = user_data
-    deep_stringify_keys(message).to_yaml
+    STDERR.puts "#{msg}: deep_stringify_keys(message).to_yaml=#{deep_stringify_keys(message).to_yaml}"
+    deep_stringify_keys(message).to_yaml.to_s
   end
   
   def self.transform_hash(original, options={}, &block)
@@ -148,13 +150,13 @@ class ProcessRequestService
     list = []
     list_of_functions.each do |function|
       STDERR.puts "#{msg}: function=#{function}"
-      function.delete(:vnf_id)
-      found_function = FetchVNFDsService.call(function.deep_symbolize_keys)
-      if found_function == []
+      found_function = FetchVNFDsService.call({vendor: function[:vnf_vendor], name: function[:vnf_name], version: function[:vnf_version]})
+      STDERR.puts "#{msg}: found_function=#{found_function}"
+      if found_function == [] or found_function == nil
         STDERR.puts "#{msg}: Function #{function} not found"
         return nil
       end
-      list << found_function[0]
+      list << found_function
     end
     list
   end

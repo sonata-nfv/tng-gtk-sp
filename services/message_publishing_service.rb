@@ -59,6 +59,7 @@ class MessagePublishingService
     self.send(:"consume_#{queue_symbol.to_s}", queue: queue)
     published = topic.publish( message, content_type:'text/yaml', routing_key: queue.name, correlation_id: correlation_id, reply_to: queue.name, app_id: 'son-gkeeper')
     STDERR.puts "#{msg}: published=#{published}"
+    published
   end  
   
   private
