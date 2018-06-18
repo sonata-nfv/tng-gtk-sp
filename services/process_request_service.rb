@@ -74,7 +74,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: message=#{message}"
       publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
     rescue ActiveRecord::StatementInvalid => e
-      raise StantardError.new(e.message)
+      raise StandardError.new(e.message)
     rescue => e
       raise ArgumentError.new(e.message)
     end
