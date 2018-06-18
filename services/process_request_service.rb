@@ -56,9 +56,10 @@ class ProcessRequestService
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: params=#{params}"
     begin
+      complete_params = complete_params(params)
       stored_service = FetchNSDService.call(uuid: params[:uuid])
       STDERR.puts "#{msg}: stored_service=#{stored_service} (#{stored_service.class})"
-      return nil if (stored_service == {} || stored_service == nil)
+      return stored_service if (stored_service == {} || stored_service == nil)
       STDERR.puts "#{msg}: functions=#{stored_service[:nsd][:network_functions]}"
       stored_functions = fetch_functions(stored_service[:nsd][:network_functions])
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
@@ -67,7 +68,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: instantiation_request=#{instantiation_request}"
       user_data = FetchUserDataService.call( params[:customer_uuid], stored_service[:username], params[:sla_id])
       STDERR.puts "#{msg}: user_data=#{user_data}"
-      message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], user_data)
+      message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], user_data)
       STDERR.puts "#{msg}: message=#{message}"
       publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
     rescue => e
@@ -76,7 +77,7 @@ class ProcessRequestService
     instantiation_request
   end
   
-  def self.build_message(service, functions, egresses, ingresses, user_data)
+  def self.build_message(service, functions, egresses, ingresses, blacklist, user_data)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: service=#{service}\n\tfunctions=#{functions}"
     message = {}
@@ -94,6 +95,7 @@ class ProcessRequestService
     STDERR.puts "#{msg}: message=#{message}"
     message['egresses'] = egresses
     message['ingresses'] = ingresses
+    message['blacklist'] = blacklist
     message['user_data'] = user_data
     deep_stringify_keys(message).to_yaml
   end
@@ -137,6 +139,13 @@ class ProcessRequestService
     @ingresses = params.delete[:ingresses] if params[:ingresses]
     @user_data = FetchUserDataService.call(request.env['5gtango.user.data'])
     params
+  end
+  def self.complete_params(params)
+    complement = {}
+    [:egresses, :ingresses, :blacklist].each do |element|
+      complement[element] = [] unless params.key?(element)
+    end
+    params.merge(complement)
   end
   
   def self.fetch_functions(list_of_trios)

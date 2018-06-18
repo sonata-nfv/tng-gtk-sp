@@ -64,7 +64,8 @@ class RequestsController < ApplicationController
     halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:uuid)
     
     begin
-      saved_request = ProcessRequestService.call(params.merge({user_data: request.env['5gtango.user.data']}))
+      saved_request = ProcessRequestService.call(params.deep_symbolize_keys.merge({user_data: request.env['5gtango.user.data']}))
+      halt_with_code_body(404, {error: "Service UUID '#{params[:uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if saved_request.to_s.empty? 
       halt_with_code_body(201, saved_request.to_json)
     rescue ArgumentError => e

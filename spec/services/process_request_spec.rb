@@ -50,7 +50,7 @@ RSpec.describe ProcessRequestService do
     let(:saved_service_instantiation_request) {{
       id: "be9ff802-da73-4927-8433-11649b726d00", created_at: "2018-06-07 16:24:15", updated_at: "2018-06-07 16:24:15", 
       uuid: uuid, status: "NEW", request_type: "CREATE_SERVICE", 
-      instance_uuid: nil, ingresses: [], egresses: [], began_at: "2018-06-07 16:24:15", 
+      instance_uuid: nil, ingresses: [], egresses: [], blacklist: [], began_at: "2018-06-07 16:24:15", 
       callback: nil, blacklist: [], customer_uuid: customer_uuid, sla_uuid: sla_id
     }}
     let(:function) {{
@@ -69,6 +69,7 @@ RSpec.describe ProcessRequestService do
       },
       'egresses'=> [],
       'ingresses'=> [],
+      'blacklist'=> [],
       'user_data'=> {
         'customer'=>{
           'uuid'=>customer_uuid, 'email'=>"sonata.admin@email.com", 'phone'=>nil, 
@@ -84,9 +85,9 @@ RSpec.describe ProcessRequestService do
       }, 
       developer: {username: nil, email: nil, phone: nil}
     }}
-    it 'returns nil when no request is found' do
+    it 'returns {} when no request is found' do
       allow(FetchNSDService).to receive(:call).with(uuid: uuid_2).and_return({})
-      expect(described_class.call(service_instantiation_request_2)).to eq(nil)
+      expect(described_class.call(service_instantiation_request_2)).to eq({})
     end
     it 'returns the stored request' do
       allow(FetchNSDService).to receive(:call).with(uuid: service_instantiation_request[:uuid]).and_return(service)
