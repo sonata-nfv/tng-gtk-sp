@@ -97,45 +97,47 @@ class ProcessRequestService
       message["VNFD#{index}"]=vnfd 
       #STDERR.puts "#{msg}: message['VNFD#{index}']=#{message["VNFD#{index}"]}"
     end
-    STDERR.puts "#{msg}: message=#{message}"
     message['egresses'] = egresses
     message['ingresses'] = ingresses
     message['blacklist'] = blacklist
     message['user_data'] = user_data
-    STDERR.puts "#{msg}: deep_stringify_keys(message).to_yaml=#{deep_stringify_keys(message).to_yaml}"
-    deep_stringify_keys(message).to_yaml.to_s
+    STDERR.puts "#{msg}: message=#{message}"
+    #STDERR.puts "#{msg}: deep_stringify_keys(message).to_yaml=#{deep_stringify_keys(message).to_yaml}"
+    recursive_stringify_keys(message).to_yaml.to_s
   end
   
-  def self.transform_hash(original, options={}, &block)
-    original.inject({}){|result, (key,value)|
-      value = if (options[:deep] && Hash === value) 
-                transform_hash(value, options, &block)
-              else 
-                if Array === value
-                  value.map{|v| transform_hash(v, options, &block)}
-                else
-                  value
-                end
-              end
-      block.call(result,key,value)
-      result
-    }
+  # https://stackoverflow.com/questions/8379596/how-do-i-convert-a-ruby-hash-so-that-all-of-its-keys-are-symbols
+  def recursive_symbolize_keys(h)
+    case h
+    when Hash
+      Hash[
+        h.map do |k, v|
+          [ k.respond_to?(:to_sym) ? k.to_sym : k, recursive_symbolize_keys(v) ]
+        end
+      ]
+    when Enumerable
+      h.map { |v| recursive_symbolize_keys(v) }
+    else
+      h
+    end
   end
-
-  # Convert keys to strings
-  def self.stringify_keys(hash)
-    transform_hash(hash) {|hash, key, value|
-      hash[key.to_s] = value
-    }
+  
+  # adpated from the above
+  def self.recursive_stringify_keys(h)
+    case h
+    when Hash
+      Hash[
+        h.map do |k, v|
+          [ k.respond_to?(:to_s) ? k.to_s : k, recursive_stringify_keys(v) ]
+        end
+      ]
+    when Enumerable
+      h.map { |v| recursive_stringify_keys(v) }
+    else
+      h
+    end
   end
-
-  # Convert keys to strings, recursively
-  def self.deep_stringify_keys(hash)
-    transform_hash(hash, :deep => true) {|hash, key, value|
-      hash[key.to_s] = value
-    }
-  end
-
+  
   def self.complete_params(params)
     complement = {}
     [:egresses, :ingresses, :blacklist].each do |element|

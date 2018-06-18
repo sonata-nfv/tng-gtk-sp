@@ -63,7 +63,7 @@ class MessagePublishingService
   end  
   
   private
-  def consume_create_service(queue:)
+  def self.consume_create_service(queue:)
     msg=self.name+'#'+__method__.to_s
     STDERR.puts "#{msg}: entered"
     queue.subscribe do |delivery_info, properties, payload|
