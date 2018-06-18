@@ -60,9 +60,11 @@ class ProcessRequestService
       stored_service = FetchNSDService.call(uuid: params[:uuid])
       STDERR.puts "#{msg}: stored_service=#{stored_service} (#{stored_service.class})"
       return stored_service if (stored_service == {} || stored_service == nil)
-      STDERR.puts "#{msg}: functions=#{stored_service[:nsd][:network_functions]}"
-      stored_functions = fetch_functions(stored_service[:nsd][:network_functions])
+      functions_to_fetch = stored_service[:nsd][:network_functions]
+      STDERR.puts "#{msg}: functions_to_fetch=#{functions_to_fetch}"
+      stored_functions = fetch_functions(functions_to_fetch)
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
+      return stored_functions if stored_functions == nil 
       params[:began_at] = Time.now.utc
       instantiation_request = Request.create(params)
       STDERR.puts "#{msg}: instantiation_request=#{instantiation_request}"
@@ -81,7 +83,8 @@ class ProcessRequestService
   
   def self.build_message(service, functions, egresses, ingresses, blacklist, user_data)
     msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: service=#{service}\n\tfunctions=#{functions}"
+    STDERR.puts "#{msg}: service=#{service}"
+    STDERR.puts "#{msg}: functions=#{functions}"
     message = {}
     nsd = service[:nsd]
     nsd[:uuid] = service[:uuid]
@@ -99,7 +102,8 @@ class ProcessRequestService
     message['ingresses'] = ingresses
     message['blacklist'] = blacklist
     message['user_data'] = user_data
-    deep_stringify_keys(message).to_yaml
+    STDERR.puts "#{msg}: deep_stringify_keys(message).to_yaml=#{deep_stringify_keys(message).to_yaml}"
+    deep_stringify_keys(message).to_yaml.to_s
   end
   
   def self.transform_hash(original, options={}, &block)
@@ -132,16 +136,6 @@ class ProcessRequestService
     }
   end
 
-#  def augment_params(body)
-#    params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-#    @egresses = []
-#    @ingresses = []
-    
-#    @egresses = params.delete[:egresses] if params[:egresses]
-#    @ingresses = params.delete[:ingresses] if params[:ingresses]
-#    @user_data = FetchUserDataService.call(request.env['5gtango.user.data'])
-#    params
-#  end
   def self.complete_params(params)
     complement = {}
     [:egresses, :ingresses, :blacklist].each do |element|
@@ -150,13 +144,19 @@ class ProcessRequestService
     params.merge(complement)
   end
   
-  def self.fetch_functions(list_of_trios)
+  def self.fetch_functions(list_of_functions)
     msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: list_of_trios=#{list_of_trios}"
+    STDERR.puts "#{msg}: list_of_functions=#{list_of_functions}"
     list = []
-    list_of_trios.each do |trio|
-      STDERR.puts "#{msg}: trio=#{trio}"
-      list << FetchVNFDsService.call(trio.deep_symbolize_keys)
+    list_of_functions.each do |function|
+      STDERR.puts "#{msg}: function=#{function}"
+      found_function = FetchVNFDsService.call({vendor: function[:vnf_vendor], name: function[:vnf_name], version: function[:vnf_version]})
+      STDERR.puts "#{msg}: found_function=#{found_function}"
+      if found_function == [] or found_function == nil
+        STDERR.puts "#{msg}: Function #{function} not found"
+        return nil
+      end
+      list << found_function
     end
     list
   end
