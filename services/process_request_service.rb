@@ -66,11 +66,13 @@ class ProcessRequestService
       params[:began_at] = Time.now.utc
       instantiation_request = Request.create(params)
       STDERR.puts "#{msg}: instantiation_request=#{instantiation_request}"
-      user_data = FetchUserDataService.call( params[:customer_uuid], stored_service[:username], params[:sla_id])
-      STDERR.puts "#{msg}: user_data=#{user_data}"
-      message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], user_data)
+      complete_user_data = FetchUserDataService.call( params[:customer_uuid], stored_service[:username], params[:sla_id])
+      STDERR.puts "#{msg}: complete_user_data=#{complete_user_data}"
+      message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], complete_user_data)
       STDERR.puts "#{msg}: message=#{message}"
       publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
+    rescue ActiveRecord::StatementInvalid => e
+      raise StantardError.new(e.message)
     rescue => e
       raise ArgumentError.new(e.message)
     end
@@ -130,16 +132,16 @@ class ProcessRequestService
     }
   end
 
-  def augment_params(body)
-    params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-    @egresses = []
-    @ingresses = []
+#  def augment_params(body)
+#    params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
+#    @egresses = []
+#    @ingresses = []
     
-    @egresses = params.delete[:egresses] if params[:egresses]
-    @ingresses = params.delete[:ingresses] if params[:ingresses]
-    @user_data = FetchUserDataService.call(request.env['5gtango.user.data'])
-    params
-  end
+#    @egresses = params.delete[:egresses] if params[:egresses]
+#    @ingresses = params.delete[:ingresses] if params[:ingresses]
+#    @user_data = FetchUserDataService.call(request.env['5gtango.user.data'])
+#    params
+#  end
   def self.complete_params(params)
     complement = {}
     [:egresses, :ingresses, :blacklist].each do |element|

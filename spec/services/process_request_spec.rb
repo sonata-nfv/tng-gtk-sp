@@ -39,6 +39,7 @@ RSpec.describe ProcessRequestService do
     let(:uuid_2) {SecureRandom.uuid}
     let(:customer_uuid) {SecureRandom.uuid}
     let(:sla_id) {SecureRandom.uuid}
+    let(:user_data) {'whatever user'}
     let(:service_instantiation_request) {{
       uuid: uuid, egresses:[], ingresses: [], blacklist: [], customer_uuid: customer_uuid, sla_id: sla_id
     }}

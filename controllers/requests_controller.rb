@@ -64,7 +64,7 @@ class RequestsController < ApplicationController
     halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:uuid)
     
     begin
-      saved_request = ProcessRequestService.call(params.deep_symbolize_keys.merge({user_data: request.env['5gtango.user.data']}))
+      saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
       halt_with_code_body(404, {error: "Service UUID '#{params[:uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if saved_request.to_s.empty? 
       halt_with_code_body(201, saved_request.to_json)
@@ -73,7 +73,7 @@ class RequestsController < ApplicationController
     rescue JSON::ParserError => e
       halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:uuid]}.to_json)
     rescue StandardError => e
-      halt_with_code_body(500, ERROR_CONNECTING_TO_CATALOGUE)
+      halt_with_code_body(500, e.message)
     end
   end
   
