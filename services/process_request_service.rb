@@ -156,7 +156,7 @@ class ProcessRequestService
         STDERR.puts "#{msg}: Function #{function} not found"
         return nil
       end
-      list << found_function
+      list << found_function.first
     end
     list
   end
