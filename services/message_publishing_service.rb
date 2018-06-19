@@ -95,9 +95,9 @@ class MessagePublishingService
         # if this is a final answer, there'll be an NSR
         service_instance = parsed_payload['nsr']
         if service_instance && service_instance.key?('id')
-          service_instance_uuid = parsed_payload['nsr']['id']
-          STDERR.puts "#{msg}: request['service_instance_uuid'] #{request['service_instance_uuid']} turned into #{service_instance_uuid}"
-          request['service_instance_uuid'] = service_instance_uuid
+          instance_uuid = parsed_payload['nsr']['id']
+          STDERR.puts "#{msg}: request['instance_uuid'] #{request['instance_uuid']} turned into #{instance_uuid}"
+          request['instance_uuid'] = instance_uuid
         end
 
         request.save
