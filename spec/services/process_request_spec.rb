@@ -39,6 +39,7 @@ RSpec.describe ProcessRequestService do
     let(:uuid_2) {SecureRandom.uuid}
     let(:customer_uuid) {SecureRandom.uuid}
     let(:sla_id) {SecureRandom.uuid}
+    let(:policy_id) {SecureRandom.uuid}
     let(:service_instantiation_request) {{
       uuid: uuid, egresses:[], ingresses: [], blacklist: [], customer_uuid: customer_uuid, sla_id: sla_id
     }}
@@ -52,7 +53,7 @@ RSpec.describe ProcessRequestService do
       id: "be9ff802-da73-4927-8433-11649b726d00", created_at: "2018-06-07 16:24:15", updated_at: "2018-06-07 16:24:15", 
       uuid: uuid, status: "NEW", request_type: "CREATE_SERVICE", 
       instance_uuid: nil, ingresses: [], egresses: [], blacklist: [], began_at: "2018-06-07 16:24:15", 
-      callback: nil, customer_uuid: customer_uuid, sla_uuid: sla_id
+      callback: nil, customer_uuid: customer_uuid, sla_id: sla_id, policy_id: policy_id
     }}
     let(:function_trio) {{ 
       vendor: network_function_trio[:vnf_vendor],
@@ -82,7 +83,7 @@ RSpec.describe ProcessRequestService do
       'user_data'=> {
         'customer'=>{
           'uuid'=>customer_uuid, 'email'=>"sonata.admin@email.com", 'phone'=>nil, 
-          'keys'=>{'public'=>nil, 'private'=>nil}, 'sla_uuid'=>sla_id
+          'keys'=>{'public'=>nil, 'private'=>nil}, 'sla_id'=>sla_id, 'policy_id'=>policy_id
         }, 
         'developer'=>{'username'=>nil, 'email'=>nil, 'phone'=>nil}
       }
@@ -90,7 +91,7 @@ RSpec.describe ProcessRequestService do
     let(:user_data) {{
       customer: {
         uuid: customer_uuid, email: 'sonata.admin@email.com', phone: nil, 
-        keys: {public: nil, private: nil}, sla_uuid: sla_id
+        keys: {public: nil, private: nil}, sla_id: sla_id, policy_id: policy_id
       }, 
       developer: {username: nil, email: nil, phone: nil}
     }}

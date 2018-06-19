@@ -44,7 +44,8 @@ class CreateRequests < ActiveRecord::Migration[5.2]
       t.string :callback
       t.string :blacklist
       t.uuid :customer_uuid
-      t.uuid :sla_uuid
+      t.uuid :sla_id
+      t.uuid :policy_id
     end
     #add_column :requests, :service_uuid, :uuid, default: 'uuid_generate_v4()'
   end
