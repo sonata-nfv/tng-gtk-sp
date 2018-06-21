@@ -111,6 +111,13 @@ class RequestsController < ApplicationController
     end
   end
   
+  options '/?' do
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET,DELETE'      
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With'
+    halt 200
+  end
+  
   private
   def halt_with_code_body(code, body)
     halt code, {'Content-Type'=>'application/json', 'Content-Length'=>body.length.to_s}, body
