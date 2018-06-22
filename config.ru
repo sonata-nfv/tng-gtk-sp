@@ -42,5 +42,7 @@ Dir.glob('./services/*.rb').each { |file| require file }
 map('/requests') { run RequestsController } 
 map('/functions') { run FunctionsController } 
 map('/services') { run ServicesController } 
+#map('/configurations/infra') { run ConfigurationsInfraController } 
+map('/records') { run RecordsController } 
 map('/pings') { run PingsController }
 map('/') { run RootController }

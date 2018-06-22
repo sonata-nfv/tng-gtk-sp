@@ -30,24 +30,18 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-FROM ruby:2.4.3-slim-stretch
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev libpq-dev && \
-	  rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /app/lib/local-gems
-WORKDIR /app
-COPY Gemfile /app
-RUN bundle install
-COPY . /app
-EXPOSE 5000
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST son-postgres
-ENV DATABASE_PORT 5432
-#ENV DATABASE_URL=postgresql://tangodefault:tango@son-postgres:5432/gatekeeper
-ENV MQSERVER_URL=amqp://guest:guest@son-broker:5672
-ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
-ENV REPOSITORY_URL=http://tng-rep:4012
-ENV PORT 5000
-CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
+require 'net/http'
+require 'ostruct'
+require 'json'
+require_relative './fetch_service'
 
+class FetchServiceRecordsService < FetchService
+  NO_REPOSITORY_URL_DEFINED_ERROR='The REPOSITORY_URL ENV variable needs to defined and pointing to the Repository where to fetch records'
+  REPOSITORY_URL = ENV.fetch('REPOSITORY_URL', '')
+  if REPOSITORY_URL == ''
+    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_REPOSITORY_URL_DEFINED_ERROR]
+    raise ArgumentError.new(NO_REPOSITORY_URL_DEFINED_ERROR) 
+  end
+  self.site=REPOSITORY_URL+'/nsrs'
+  STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, "self.site=#{self.site}"]
+end
