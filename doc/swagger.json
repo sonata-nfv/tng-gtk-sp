@@ -45,182 +45,40 @@
     },
     "/requests": {
       "post": {
-          "summary": "Creates a request",
-          "consumes": ["application/json"],
-          "produces": ["application/json"],
-          "parameters": [
-            {
-              "in": "body",
-              "name": "request",
-              "description": "The UUID of the entity to which the request is related to (Service or Slice)",
-              "schema": {
-                "$ref": "#/definitions/RequestData" 
-              }
-            }
-          ],
-          "responses": {
-              "201": { "description": "OK"},
-              "400": {"description": "Bad Request"}
-          }
-        }
-    },
-    "/services": {
-      "get": {
-        "tags": ["service management"],
-        "summary": "Query services",
-        "operationId": "serviceQuerying",
-        "consumes": ["*/*"],
+        "tags": ["requests management"],
+        "summary": "Creates a request",
+        "consumes": ["application/json"],
         "produces": ["application/json"],
         "parameters": [
           {
-            "name": "page_size",
-            "in": "query",
-            "description": "The number of records to be included in a page",
-            "required": false,
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          {
-            "name": "page_number",
-            "in": "query",
-            "description": "The number of the page of records to be shown (starting in 0)",
-            "required": false,
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0,
-            "default": 0
+            "in": "body",
+            "name": "uuid",
+            "description": "The UUID of the entity to which the request is related to (Service or Slice)",
+            "schema": {"$ref": "#/definitions/RequestData" }
           }
         ],
         "responses": {
-            "200": { 
-              "description": "OK",
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/ServicesGetMetadataReturn"
-                }
-              },
-            },
-            "400": {"description": "Bad Request"}
+           "201": { "description": "OK"},
+          "400": {"description": "Bad Request"}
         }
       },
-      "options": {
-        "tags": ["service management"],
-        "summary": "Options for services",
-        "operationId": "serviceOptions",
-        "consumes": ["*/*"],
-        "produces": ["application/json"],
-        "parameters": [],
-        "responses": {
-            "200": { "description": "OK"},
-            "400": {"description": "Bad Request"}
-        }
-      }
-    },
-    "/services/{service_uuid}": {
       "get": {
-        "tags": ["service management"],
-        "summary": "Query a specific service meta-data",
-        "parameters": [
-          {
-            "name": "service_uuid",
-            "in": "path",
-            "description": "UUID of the service which meta-data is required",
-            "required": true,
-            "type": "string",
-            "format": "uuid"
-          }
-        ],
-        "consumes": ["*/*"],
-        "produces": ["application/json"],
-        "responses": {
-          "200": { 
-            "description": "OK",
-            "schema":{ "$ref":"#/definitions/ServicesGetMetadataReturn"}
-          },
-          "400": { "description": "Bad request"},
-          "404": { "description": "Not found"}
-        }
-      }
-    },
-    "/functions": {
-      "get": {
-        "tags": ["function management"],
-        "summary": "Query functions",
-        "operationId": "functionQuerying",
-        "consumes": ["*/*"],
+        "tags": ["requests management"],
+        "summary": "Queries requests",
+        "consumes": ["application/json"],
         "produces": ["application/json"],
         "parameters": [
           {
-            "name": "page_size",
-            "in": "query",
-            "description": "The number of records to be included in a page",
-            "required": false,
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-          },
-          {
-            "name": "page_number",
-            "in": "query",
-            "description": "The number of the page of records to be shown (starting in 0)",
-            "required": false,
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0,
-            "default": 0
+            "in": "body",
+            "name": "uuid",
+            "description": "The UUID of the entity to which the request is related to (Service or Slice)",
+            "schema": {"$ref": "#/definitions/RequestResponseData" }
           }
         ],
         "responses": {
-            "200": { 
-              "description": "OK",
-              "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/definitions/FunctionsGetMetadataReturn"
-                }
-              },
-            },
-            "400": {"description": "Bad Request"}
-        }
-      },
-      "options": {
-        "tags": ["function management"],
-        "summary": "Options for functions",
-        "operationId": "functionOptions",
-        "consumes": ["*/*"],
-        "produces": ["application/json"],
-        "parameters": [],
-        "responses": {
-            "200": { "description": "OK"},
-            "400": {"description": "Bad Request"}
-        }
-      }
-    },
-    "/functions/{function_uuid}": {
-      "get": {
-        "tags": ["function management"],
-        "summary": "Query a specific function meta-data",
-        "parameters": [
-          {
-            "name": "functionuuid",
-            "in": "path",
-            "description": "UUID of the function which meta-data is required",
-            "required": true,
-            "type": "string",
-            "format": "uuid"
-          }
-        ],
-        "consumes": ["*/*"],
-        "produces": ["application/json"],
-        "responses": {
-          "200": { 
-            "description": "OK",
-            "schema":{ "$ref":"#/definitions/FunctionsGetMetadataReturn"}
-          },
-          "400": { "description": "Bad request"},
-          "404": { "description": "Not found"}
+          "200": { "description": "OK"},
+          "400": {"description": "Bad Request"},
+          "404": {"description": "Not found"}
         }
       }
     }
@@ -257,36 +115,86 @@
           "items": {
             "type": "string"
           }
+        },
+        "callback": {
+          "type": "string",
+          "description": "The callback to call when the instantiation is ready"
         }
       }
     },
-    "ServicesGetMetadataReturn": {
-      "required": [ "service_uuid", "nsd" ],
+    "RequestResponseData":{
+      "type": "object",
       "properties": {
-        "service_uuid": {
+        "uuid": {
           "type": "string",
-          "description": "UUID of the service."
+          "description": "The UUID of the entity to which the request is related to (Service or Slice) -- mandatory for CREATION"
         },
-        "nsd": {
+        "instance_uuid": {
           "type": "string",
-          "description": "Service descriptor"
-        }
-      },
-      "type": "object"
-    },
-    "FunctionsGetMetadataReturn": {
-      "required": [ "function_uuid", "vnfd" ],
-      "properties": {
-        "function_uuid": {
-          "type": "string",
-          "description": "UUID of the function."
+          "description": "The UUID of the instance of the entity to which the request is related to (Service or Slice) -- mandatory for UPDATE and TERMINATION"
         },
-        "nsd": {
+        "egresses": {
+          "type": "array",
+          "description": "List of egress points to be taken into consideration during the instantiation",
+          "items": {
+            "type": "string"
+          }
+        },
+        "ingresses": {
+          "type": "array",
+          "description": "List of ingress points to be taken into consideration during the instantiation",
+          "items": {
+            "type": "string"
+          }
+        },
+        "blacklist": {
+          "type": "array",
+          "description": "List of sites where not to instantiate",
+          "items": {
+            "type": "string"
+          }
+        },
+        "callback": {
           "type": "string",
-          "description": "Function descriptor"
+          "description": "The callback to call when the instantiation is ready"
+        },
+        "began_at": {
+          "type": "string",
+          "description": "The time at which the instantiation request began"
+        },
+        "created_at": {
+          "type": "string",
+          "description": "The time at which the instantiation request has been created"
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "The time at which the instantiation request has been updated"
+        },
+        "customer_uuid": {
+          "type": "string",
+          "description": "The UUID of the Customer requesting the change to the service"
+        }, 
+        "id": {
+          "type": "string",
+          "description": "The ID of the request"
+        }, 
+        "request_type": {
+          "type": "string",
+          "description": "The type of the request. Defaults to CREATE_SERVICE, but can also be TERMINATE_SERVICE and UPDATE_SERVICE"
+        }, 
+        "sla_id": {
+          "type": "string",
+          "description": "The UUID of the SLA chosen by the customer"
+        }, 
+        "policy_id": {
+          "type": "string",
+          "description": "The UUID of the policy related to the above SLA UUID"
+        },
+        "status": {
+          "type": "string",
+          "description": "The status of the instantiation request: starts NEW, becomes INSTANTIATING while the MANO does the work, and finishes either READY (success) or ERROR (fail)"
         }
-      },
-      "type": "object"
     }
+  }
   }
 }

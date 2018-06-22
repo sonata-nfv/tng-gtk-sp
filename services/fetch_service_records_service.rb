@@ -30,30 +30,18 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-services:
-  - postgresql
-  - rabbitmq
-language: ruby
-rvm:
-  - 2.4.3
-cache: bundler
-addons:
-    postgresql: '9.6'
-env:
-  #  - DB=pgsql
-  global:
-    - DATABASE_URL=postgresql://postgres@localhost:5432/gatekeeper
-    - MQSERVER_URL=amqp://guest:guest@broker:5672
-    - CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
-    - REPOSITORY_URL=http://tng-rep:4012
-#    - RACK_ENV=test 
-before_script:
-#  - cp config/database.yml.travis config/database.yml
-#  - psql -c 'create database gatekeeper;' -U postgres
-  - bundle exec rake db:create
-  - bundle exec rake db:migrate
-script: 
-#  - bundle install
-#  - bundle exec rake db:create
-#  - bundle exec rake db:migrate
-  - bundle exec rspec spec
+require 'net/http'
+require 'ostruct'
+require 'json'
+require_relative './fetch_service'
+
+class FetchServiceRecordsService < FetchService
+  NO_REPOSITORY_URL_DEFINED_ERROR='The REPOSITORY_URL ENV variable needs to defined and pointing to the Repository where to fetch records'
+  REPOSITORY_URL = ENV.fetch('REPOSITORY_URL', '')
+  if REPOSITORY_URL == ''
+    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_REPOSITORY_URL_DEFINED_ERROR]
+    raise ArgumentError.new(NO_REPOSITORY_URL_DEFINED_ERROR) 
+  end
+  self.site=REPOSITORY_URL+'/nsrs'
+  STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, "self.site=#{self.site}"]
+end
