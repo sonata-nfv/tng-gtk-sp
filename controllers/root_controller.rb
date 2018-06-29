@@ -45,6 +45,6 @@ class RootController < ApplicationController
   end
   
   error Sinatra::NotFound do
-    halt 404, {}, {error: 'Route not found'}.to_json
+    halt 404, {}, {error: "Route #{request.url} not found"}.to_json
   end
 end
