@@ -37,7 +37,7 @@ require 'json'
 class RequestsController < ApplicationController
   #register Sinatra::ActiveRecordExtension
   
-  ERROR_REQUEST_CONTENT_TYPE={error: "Just accepting 'application/json' HTTP content type for now."}
+  ERROR_REQUEST_CONTENT_TYPE={error: "Unsupported Media Type, just accepting 'application/json' HTTP content type for now."}
   ERROR_SERVICE_NOT_FOUND="Network Service with UUID '%s' was not found in the Catalogue."
   ERROR_PARSING_NS_DESCRIPTOR="There was an error parsing the NS descriptor with UUID '%s'."
   ERROR_CONNECTING_TO_CATALOGUE={error: "There was an error connecting to the Catalogue."}
@@ -56,7 +56,7 @@ class RequestsController < ApplicationController
   # Accept service instantiation requests
   post '/?' do
     msg='RequestsController.post'
-    halt_with_code_body(400, ERROR_REQUEST_CONTENT_TYPE.to_json) unless request.content_type =~ /^application\/json/
+    halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) unless request.content_type =~ /^application\/json/
 
     body = request.body.read
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
