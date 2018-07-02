@@ -72,7 +72,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: complete_user_data=#{complete_user_data}"
       message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], complete_user_data)
       STDERR.puts "#{msg}: message=#{message}"
-      publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
+      publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:request_id])
     rescue ActiveRecord::StatementInvalid => e
       STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
       return {}
