@@ -48,7 +48,7 @@ RSpec.describe ProcessRequestService do
     let(:service) {{uuid: uuid, nsd: { vendor: 'eu.5gtango', name: 'my_service', version: '0.1', network_functions: network_functions}, username: nil}}
     let(:saved_service_instantiation_request) {
       service_instantiation_request.merge!({
-        request_id: "be9ff802-da73-4927-8433-11649b726d00", created_at: "2018-06-07 16:24:15", updated_at: "2018-06-07 16:24:15", 
+        id: "be9ff802-da73-4927-8433-11649b726d00", created_at: "2018-06-07 16:24:15", updated_at: "2018-06-07 16:24:15", 
         status: "NEW", instance_uuid: nil
       })
     }
@@ -102,7 +102,7 @@ RSpec.describe ProcessRequestService do
       allow(Request).to receive(:create).and_return(saved_service_instantiation_request) # .with(service_instantiation_request)
       allow(FetchUserDataService).to receive(:call).and_return(user_data) #.with(customer_uuid, service[:username], sla_id)
       allow(MessagePublishingService).to receive(:call).
-        with(message, :create_service, saved_service_instantiation_request[:request_id]).
+        with(message, :create_service, saved_service_instantiation_request[:id]).
         and_return(message)
       result = described_class.call({service_uuid: uuid})
       STDERR.puts ">>>>>>>>>>> request = #{result}"
