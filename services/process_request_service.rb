@@ -74,9 +74,11 @@ class ProcessRequestService
       STDERR.puts "#{msg}: message=#{message}"
       publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
     rescue ActiveRecord::StatementInvalid => e
-      raise StandardError.new(e.message)
+      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
+      return {}
     rescue => e
-      raise ArgumentError.new(e.message)
+      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
+      return nil
     end
     instantiation_request
   end
