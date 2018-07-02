@@ -42,8 +42,9 @@ class MessagePublishingService
   MQSERVER_URL = ENV.fetch('MQSERVER_URL', '')
   @@queues = {
     create_service: 'service.instances.create',
-    update_service: 'service.instances.update',
-    terminate_service: 'service.instance.terminate'
+#    update_service: 'service.instances.update',
+#    terminate_service: 'service.instance.terminate',
+    create_vim_computation: 'infrastructure.management.compute.add'
   }
 
   def self.call(message, queue_symbol, correlation_id)
@@ -91,7 +92,10 @@ class MessagePublishingService
         end
         STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
         request['status']=status
-      
+        if request['error']
+          STDERR.puts "#{msg}: error was #{request['error']}"
+          return
+        end
         # if this is a final answer, there'll be an NSR
         service_instance = parsed_payload['nsr']
         if service_instance && service_instance.key?('id')
@@ -102,9 +106,11 @@ class MessagePublishingService
 
         request.save
         STDERR.puts "#{msg}: request saved"
+        return
       rescue Exception => e
-          STDERR.puts "#{msg}: #{e.message}"
-          STDERR.puts "#{msg}: #{e.backtrace.inspect}"
+        STDERR.puts "#{msg}: #{e.message}"
+        STDERR.puts "#{msg}: #{e.backtrace.split('\n\t')}"
+        return
       end
       STDERR.puts "#{msg}: leaving"
     end
