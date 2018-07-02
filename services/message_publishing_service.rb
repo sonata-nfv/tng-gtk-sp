@@ -51,7 +51,7 @@ class MessagePublishingService
     msg=self.name+'#'+__method__.to_s
     STDERR.puts "#{msg}: message=#{message}, queue_symbol=#{queue_symbol}, correlation_id=#{correlation_id}"
     raise ArgumentError.new('No MQServer URL has been defined') if MQSERVER_URL == ''
-    raise ArgumentError.new("Queue must be one of :#{queues.keys.join(', :')}") unless @@queues.keys.include? queue_symbol
+    raise ArgumentError.new("Queue must be one of :#{@@queues.keys.join(', :')}") unless @@queues.keys.include? queue_symbol
     raise ArgumentError.new('No correlation has been given') if correlation_id == ''
 
     channel = Bunny.new(MQSERVER_URL, automatically_recover: false).start.create_channel

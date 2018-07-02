@@ -41,7 +41,7 @@ class ProcessRequestService
 
   def self.call(params)
     msg=self.name+'.'+__method__.to_s
-    request_type = params.key?(:request_type) ? params.delete(:request_type) : 'CREATE_SERVICE'
+    request_type = params.fetch(:request_type, 'CREATE_SERVICE')
     STDERR.puts "#{msg}: params=#{params}"
     
     begin
@@ -57,7 +57,8 @@ class ProcessRequestService
     STDERR.puts "#{msg}: params=#{params}"
     begin
       complete_params = complete_params(params)
-      stored_service = FetchNSDService.call(uuid: params[:uuid])
+      STDERR.puts "#{msg}: completed params=#{complete_params}"
+      stored_service = FetchNSDService.call(uuid: complete_params[:service_uuid])
       STDERR.puts "#{msg}: stored_service=#{stored_service} (#{stored_service.class})"
       return stored_service if (stored_service == {} || stored_service == nil)
       functions_to_fetch = stored_service[:nsd][:network_functions]
@@ -65,13 +66,18 @@ class ProcessRequestService
       stored_functions = fetch_functions(functions_to_fetch)
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
       return stored_functions if stored_functions == nil 
-      params[:began_at] = Time.now.utc
-      instantiation_request = Request.create(params)
-      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request}"
-      complete_user_data = FetchUserDataService.call( params[:customer_uuid], stored_service[:username], params[:sla_id])
+      complete_params[:began_at] = Time.now.utc
+      STDERR.puts "#{msg}: complete_params=#{complete_params}"
+      instantiation_request = Request.create(complete_params)
+      unless instantiation_request
+        STDERR.puts "#{msg}: Failled to create instantiation_request"
+        return nil
+      end
+      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request.inspect}"
+      complete_user_data = FetchUserDataService.call( complete_params[:customer_uuid], stored_service[:username], complete_params[:sla_id])
       STDERR.puts "#{msg}: complete_user_data=#{complete_user_data}"
-      message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], complete_user_data)
-      STDERR.puts "#{msg}: message=#{message}"
+      message = build_message(stored_service, stored_functions, complete_params[:egresses], complete_params[:ingresses], complete_params[:blacklist], complete_user_data)
+      STDERR.puts "#{msg}: instantiation_request[:request_id]=#{instantiation_request[:request_id]}"
       publishing_response = MessagePublishingService.call(message, :create_service, instantiation_request[:request_id])
     rescue ActiveRecord::StatementInvalid => e
       STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
@@ -145,6 +151,7 @@ class ProcessRequestService
     [:egresses, :ingresses, :blacklist].each do |element|
       complement[element] = [] unless params.key?(element)
     end
+    complement[:request_type] = 'CREATE_SERVICE' unless params.key?(:request_type)
     params.merge(complement)
   end
   

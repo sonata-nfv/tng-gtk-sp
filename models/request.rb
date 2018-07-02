@@ -33,5 +33,5 @@
 require 'sinatra/activerecord'
 
 class Request < ActiveRecord::Base
-  validates :uuid, uniqueness: true
+  validates :request_uuid, uniqueness: true
 end
