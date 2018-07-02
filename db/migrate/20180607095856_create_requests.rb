@@ -41,7 +41,7 @@ class CreateRequests < ActiveRecord::Migration[5.2]
       t.uuid :instance_uuid
       t.string :ingresses
       t.string :egresses
-      t.datetime :began_at, null: false
+      #t.datetime :began_at, null: false
       t.string :callback
       t.string :blacklist
       t.uuid :customer_uuid

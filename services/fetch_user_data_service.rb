@@ -40,11 +40,8 @@ class FetchUserDataService
     msg=self.name+'#'+__method__.to_s
     STDERR.puts "#{msg}: customer_uuid=#{customer_uuid}, developer_name=#{developer_name}, sla_id=#{sla_id}"
     {
-      customer: {
-        uuid: customer_uuid, email: 'sonata.admin@email.com', phone: nil, 
-        keys: {public: nil, private: nil}, sla_id: sla_id
-      }, 
-      developer: {username: developer_name, email: nil, phone: nil}
+      customer: { uuid: customer_uuid, email: 'sonata.admin@email.com', phone: nil, keys: {public: nil, private: nil}, sla_id: sla_id}, 
+      developer: { username: developer_name, email: nil, phone: nil}
     }
   end
 end

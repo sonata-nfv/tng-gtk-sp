@@ -26,7 +26,6 @@ ActiveRecord::Schema.define(version: 2018_06_07_095856) do
     t.uuid "instance_uuid"
     t.string "ingresses"
     t.string "egresses"
-    t.datetime "began_at", null: false
     t.string "callback"
     t.string "blacklist"
     t.uuid "customer_uuid"

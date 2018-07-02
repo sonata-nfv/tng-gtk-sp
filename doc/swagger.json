@@ -158,10 +158,6 @@
           "type": "string",
           "description": "The callback to call when the instantiation is ready"
         },
-        "began_at": {
-          "type": "string",
-          "description": "The time at which the instantiation request began"
-        },
         "created_at": {
           "type": "string",
           "description": "The time at which the instantiation request has been created"

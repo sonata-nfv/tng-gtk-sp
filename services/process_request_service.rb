@@ -66,7 +66,7 @@ class ProcessRequestService
       stored_functions = fetch_functions(functions_to_fetch)
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
       return stored_functions if stored_functions == nil 
-      complete_params[:began_at] = Time.now.utc
+      #complete_params[:began_at] = Time.now.utc.to_s
       STDERR.puts "#{msg}: complete_params=#{complete_params}"
       instantiation_request = Request.create(complete_params)
       unless instantiation_request
@@ -152,6 +152,9 @@ class ProcessRequestService
       complement[element] = [] unless params.key?(element)
     end
     complement[:request_type] = 'CREATE_SERVICE' unless params.key?(:request_type)
+    complement[:customer_uuid] = params.fetch(:customer_uuid, '')
+    complement[:sla_id] = params.fetch(:sla_id, '')
+    complement[:callback] = params.fetch(:callback, '')
     params.merge(complement)
   end
   
