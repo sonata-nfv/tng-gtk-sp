@@ -32,22 +32,16 @@
 # encoding: utf-8
 class CreateRequests < ActiveRecord::Migration[5.2]
   def change
-    create_table :products, id: false do |t|
-      t.primary_key :sku
-
-      t.timestamps
-    end
-    
     create_table :requests, id: false  do |t|
       t.timestamps
       t.primary_key :request_uuid
-      t.uuid :uuid, null: false #, default: 'uuid_generate_v4()'
+      t.uuid :service_uuid, null: false #, default: 'uuid_generate_v4()'
       t.string :status, default: 'NEW'
       t.string :request_type, default: 'CREATE_SERVICE'
       t.uuid :instance_uuid
       t.string :ingresses
       t.string :egresses
-      t.datetime :began_at, null: false
+      #t.datetime :began_at, null: false
       t.string :callback
       t.string :blacklist
       t.uuid :customer_uuid

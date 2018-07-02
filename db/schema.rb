@@ -17,20 +17,19 @@ ActiveRecord::Schema.define(version: 2018_06_07_095856) do
   enable_extension "plpgsql"
   enable_extension "uuid-ossp"
 
-  create_table "requests", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
+  create_table "requests", primary_key: "request_uuid", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.uuid "uuid", null: false
+    t.uuid "service_uuid", null: false
     t.string "status", default: "NEW"
     t.string "request_type", default: "CREATE_SERVICE"
     t.uuid "instance_uuid"
     t.string "ingresses"
     t.string "egresses"
-    t.datetime "began_at", null: false
     t.string "callback"
     t.string "blacklist"
     t.uuid "customer_uuid"
-    t.uuid "sla_uuid"
+    t.uuid "sla_id"
   end
 
 end

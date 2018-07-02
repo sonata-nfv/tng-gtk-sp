@@ -61,35 +61,35 @@ class RequestsController < ApplicationController
     body = request.body.read
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
     params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-    halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:uuid)
+    halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:service_uuid)
     
     begin
       saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
-      halt_with_code_body(404, {error: "Service UUID '#{params[:uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
+      halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if saved_request.to_s.empty? 
       halt_with_code_body(201, saved_request.to_json)
     rescue ArgumentError => e
       halt_with_code_body(404, {error: e.message}.to_json)
     rescue JSON::ParserError => e
-      halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:uuid]}.to_json)
+      halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:service_uuid]}.to_json)
     rescue StandardError => e
       halt_with_code_body(500, e.message)
     end
   end
   
   # GETs a request, given an uuid
-  get '/:uuid/?' do
+  get '/:request_uuid/?' do
     msg='RequestsController.get (single)'
-    STDERR.puts "#{msg}: entered with uuid='#{params[:uuid]}'"
+    STDERR.puts "#{msg}: entered with uuid='#{params[:request_uuid]}'"
     captures=params.delete('captures') if params.key? 'captures'
     begin
-      request = Request.find(params[:uuid])
+      request = Request.find(params[:request_uuid])
       STDERR.puts "#{msg}: request='#{request}'"
       halt_with_code_body(200, request.to_json) unless request.to_s.empty?
     rescue Exception => e
       halt_with_code_body(404, {error: e.message}.to_json)
     end
-    halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:uuid]}.to_json)
+    halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json)
   end
 
   # GET many requests

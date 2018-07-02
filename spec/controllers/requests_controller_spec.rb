@@ -43,7 +43,7 @@ RSpec.describe RequestsController, type: :controller do
   describe 'Accepts service intance queries' do
     let(:request_1) {{
       id: requestid_1, created_at:"2018-06-07T16:28:39.571Z",updated_at:"2018-06-07T16:28:39.571Z",
-      uuid:uuid_1,status:"NEW",request_type:"CREATE_SERVICE",instance_uuid: '',ingresses:[],egresses:[],began_at:"2018-06-07T16:28:39.557Z",
+      uuid:uuid_1,status:"NEW",request_type:"CREATE_SERVICE",instance_uuid: '',ingresses:[],egresses:[], #began_at:"2018-06-07T16:28:39.557Z",
       callback:'',blacklist:[],customer_uuid:'',sla_id:'',policy_id:''
     }}
   
@@ -64,7 +64,7 @@ RSpec.describe RequestsController, type: :controller do
       let(:uuid_2) {SecureRandom.uuid}
       let(:request_2) {{
         id: requestid_2, created_at:"2018-06-07T16:28:39.571Z",updated_at:"2018-06-07T16:28:39.571Z",
-        uuid:uuid_2,status:"NEW",request_type:"CREATE_SERVICE",instance_uuid: '',ingresses:[],egresses:[],began_at:"2018-06-07T16:28:39.557Z",
+        uuid:uuid_2,status:"NEW",request_type:"CREATE_SERVICE",instance_uuid: '',ingresses:[],egresses:[], #began_at:"2018-06-07T16:28:39.557Z",
         callback:'',blacklist:[],customer_uuid:'',sla_id:'',policy_id:''
       }}
       let(:requests) {[ request_1, request_2]}
