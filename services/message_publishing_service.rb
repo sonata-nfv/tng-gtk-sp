@@ -54,11 +54,17 @@ class MessagePublishingService
     raise ArgumentError.new("Queue must be one of :#{@@queues.keys.join(', :')}") unless @@queues.keys.include? queue_symbol
     raise ArgumentError.new('No correlation has been given') if correlation_id == ''
 
-    channel = Bunny.new(MQSERVER_URL, automatically_recover: false).start.create_channel
+    begin
+      channel = Bunny.new(MQSERVER_URL, automatically_recover: false).start.create_channel
+    rescue Bunny::TCPConnectionFailed => e
+      STDERR.puts "#{msg}: Connection to #{MQSERVER_URL} failed"
+      return nil
+    end
+    
     topic = channel.topic("son-kernel", auto_delete: false)
     queue = channel.queue(@@queues[queue_symbol], auto_delete: true).bind(topic, routing_key: @@queues[queue_symbol])
     self.send(:"consume_#{queue_symbol.to_s}", queue: queue)
-    published = topic.publish( message, content_type:'text/yaml', routing_key: queue.name, correlation_id: correlation_id, reply_to: queue.name, app_id: 'son-gkeeper')
+    published = topic.publish( message, content_type:'text/yaml', routing_key: queue.name, correlation_id: correlation_id, reply_to: queue.name, app_id: 'tng-gtk-sp')
     STDERR.puts "#{msg}: published=#{published}"
     published
   end  
@@ -74,43 +80,41 @@ class MessagePublishingService
       begin
 
         # We know our own messages, so just skip them
-        return if properties[:app_id] == 'son-gkeeper'
+        unless properties[:app_id] == 'tng-gtk-sp'
+          STDERR.puts "#{msg}: properties[:app_id]: #{properties[:app_id]}"
         
-        # We're interested in app_id == 'son-plugin.slm'
-        parsed_payload = YAML.load(payload)
-        STDERR.puts "#{msg}: parsed_payload: #{parsed_payload}"
-        status = parsed_payload['status']
-        unless status
-          STDERR.puts "#{msg}: status not present"
-          return
-        end
-        STDERR.puts "#{msg}: status: #{status}"
-        request = Request.find_by(id: properties[:correlation_id])
-        unless request
-          STDERR.puts "#{msg}: request #{properties[:correlation_id]} not found"
-          return
-        end
-        STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
-        request['status']=status
-        if request['error']
-          STDERR.puts "#{msg}: error was #{request['error']}"
-          return
-        end
-        # if this is a final answer, there'll be an NSR
-        service_instance = parsed_payload['nsr']
-        if service_instance && service_instance.key?('id')
-          instance_uuid = parsed_payload['nsr']['id']
-          STDERR.puts "#{msg}: request['instance_uuid'] #{request['instance_uuid']} turned into #{instance_uuid}"
-          request['instance_uuid'] = instance_uuid
-        end
+          # We're interested in app_id == 'son-plugin.slm'
+          parsed_payload = YAML.load(payload)
+          STDERR.puts "#{msg}: parsed_payload: #{parsed_payload}"
+          status = parsed_payload['status']
+          if status
+            STDERR.puts "#{msg}: status: #{status}"
+            request = Request.find_by(id: properties[:correlation_id])
+            if request
+              STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
+              request['status']=status
+              if request['error']
+                STDERR.puts "#{msg}: error was #{request['error']}"
+              end
+              # if this is a final answer, there'll be an NSR
+              service_instance = parsed_payload['nsr']
+              if service_instance && service_instance.key?('id')
+                instance_uuid = parsed_payload['nsr']['id']
+                STDERR.puts "#{msg}: request['instance_uuid'] #{request['instance_uuid']} turned into #{instance_uuid}"
+                request['instance_uuid'] = instance_uuid
+              end
 
-        request.save
-        STDERR.puts "#{msg}: request saved"
-        return
+              request.save
+              STDERR.puts "#{msg}: request saved"
+            else
+              STDERR.puts "#{msg}: request #{properties[:correlation_id]} not found"
+            end
+          end
+        end
       rescue Exception => e
-        STDERR.puts "#{msg}: #{e.message}"
+        STDERR.puts "#{msg}: #{e.message} (#{e.class})"
         STDERR.puts "#{msg}: #{e.backtrace.split('\n\t')}"
-        return
+        #return
       end
       STDERR.puts "#{msg}: leaving"
     end
