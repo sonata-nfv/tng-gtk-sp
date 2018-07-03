@@ -92,30 +92,3 @@ class FetchService
   end
 end
 
-=begin
-class A
-  class << self
-    attr_accessor :class_var
-  end
-
-  def set_class_var(value)
-    self.class.class_var = value
-  end
-
-  def get_class_var
-    self.class.class_var
-  end
-end
-
-class B < A; end
-
-A.class_var = 'a'
-B.class_var = 'b'
-puts A.class_var # => a
-puts B.class_var # => b
-
-A.new.set_class_var 'aa'
-B.new.set_class_var 'bb'
-puts A.new.get_class_var # => aa
-puts B.new.get_class_var # => bb
-=end

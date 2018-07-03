@@ -45,13 +45,7 @@ require_relative File.dirname(__FILE__) + '/../controllers/services_controller'
 require_relative File.dirname(__FILE__) + '/../controllers/functions_controller'
 require_relative File.dirname(__FILE__) + '/../controllers/records_controller'
 require_relative File.dirname(__FILE__) + '/../services/message_publishing_service'
-require_relative File.dirname(__FILE__) + '/../services/process_request_service'
-require_relative File.dirname(__FILE__) + '/../services/fetch_service'
-require_relative File.dirname(__FILE__) + '/../services/fetch_nsd_service'
-require_relative File.dirname(__FILE__) + '/../services/fetch_vnfds_service'
-require_relative File.dirname(__FILE__) + '/../services/fetch_user_data_service'
-require_relative File.dirname(__FILE__) + '/../services/fetch_function_records_service'
-require_relative File.dirname(__FILE__) + '/../services/fetch_service_records_service'
+Dir.glob('./services/*.rb').each { |file| require file }
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
