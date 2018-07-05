@@ -20,7 +20,7 @@ ActiveRecord::Schema.define(version: 2018_06_07_095856) do
   create_table "requests", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.uuid "service_uuid", null: false
+    t.uuid "service_uuid"
     t.string "status", default: "NEW"
     t.string "request_type", default: "CREATE_SERVICE"
     t.uuid "instance_uuid"
