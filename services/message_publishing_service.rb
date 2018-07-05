@@ -43,8 +43,8 @@ class MessagePublishingService
   @@queues = {
     create_service: 'service.instances.create',
 #    update_service: 'service.instances.update',
-#    terminate_service: 'service.instance.terminate',
-    create_vim_computation: 'infrastructure.management.compute.add'
+    terminate_service: 'service.instance.terminate' #,
+#    create_vim_computation: 'infrastructure.management.compute.add'
   }
 
   def self.call(message, queue_symbol, correlation_id)
@@ -54,6 +54,11 @@ class MessagePublishingService
     raise ArgumentError.new("Queue must be one of :#{@@queues.keys.join(', :')}") unless @@queues.keys.include? queue_symbol
     raise ArgumentError.new('No correlation has been given') if correlation_id == ''
 
+=begin
+    routing key == topic == service.instances.create
+    you queue name is independent and can have any name and then binded to the exchange "son-kernel" and routing key "service.instances.create"
+    what @tsoenen suggested is that your queue name should have different name than the routing key == topic
+=end
     begin
       channel = Bunny.new(MQSERVER_URL, automatically_recover: false).start.create_channel
     rescue Bunny::TCPConnectionFailed => e
@@ -62,15 +67,73 @@ class MessagePublishingService
     end
     
     topic = channel.topic("son-kernel", auto_delete: false)
-    queue = channel.queue(@@queues[queue_symbol], auto_delete: true).bind(topic, routing_key: @@queues[queue_symbol])
-    self.send(:"consume_#{queue_symbol.to_s}", queue: queue)
+    queue = channel.queue('gk.'+@@queues[queue_symbol], auto_delete: true).bind(topic, routing_key: @@queues[queue_symbol])
+    self.send(:"#{@@queues[queue_symbol].gsub('.','_')}", queue: queue)
     published = topic.publish( message, content_type:'text/yaml', routing_key: queue.name, correlation_id: correlation_id, reply_to: queue.name, app_id: 'tng-gtk-sp')
     STDERR.puts "#{msg}: published=#{published}"
     published
   end  
   
   private
-  def self.consume_create_service(queue:)
+  def self.service_instances_create(queue:)
+    msg=self.name+'#'+__method__.to_s
+    STDERR.puts "#{msg}: entered"
+    queue.subscribe do |delivery_info, properties, payload|
+      STDERR.puts "#{msg}: delivery_info: #{delivery_info}"
+      STDERR.puts "#{msg}: properties: #{properties}"
+      STDERR.puts "#{msg}: payload: #{payload}"
+      begin
+
+        # We know our own messages, so just skip them
+        unless properties[:app_id] == 'tng-gtk-sp'
+          STDERR.puts "#{msg}: properties[:app_id]: #{properties[:app_id]}"
+        
+          # We're interested in app_id == 'son-plugin.slm'
+          parsed_payload = YAML.load(payload)
+          STDERR.puts "#{msg}: parsed_payload: #{parsed_payload}"
+          status = parsed_payload['status']
+          if status
+            STDERR.puts "#{msg}: status: #{status}"
+            request = Request.find_by(id: properties[:correlation_id])
+            if request
+              STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
+              request['status']=status
+              if request['error']
+                STDERR.puts "#{msg}: error was #{request['error']}"
+              end
+              # if this is a final answer, there'll be an NSR
+              service_instance = parsed_payload['nsr']
+              if service_instance && service_instance.key?('id')
+                instance_uuid = parsed_payload['nsr']['id']
+                STDERR.puts "#{msg}: request['instance_uuid'] #{request['instance_uuid']} turned into #{instance_uuid}"
+                request['instance_uuid'] = instance_uuid
+              end
+
+              request.save
+              STDERR.puts "#{msg}: request saved"
+            else
+              STDERR.puts "#{msg}: request #{properties[:correlation_id]} not found"
+            end
+          end
+        end
+      rescue Exception => e
+        STDERR.puts "#{msg}: #{e.message} (#{e.class})"
+        STDERR.puts "#{msg}: #{e.backtrace.split('\n\t')}"
+        #return
+      end
+      STDERR.puts "#{msg}: leaving"
+    end
+  end
+  
+  # Terminate
+  # Request
+  # To terminate a running service, send a message on the service.instance.terminate topic. This message requires the following header fields:
+  #    app_id: to indicate the sender of the message
+  #    correlation_id: a correlation id for the message
+  #    reply_to: the topic on which the sender expects a response, in this case service.instances.create
+  # The payload of the request is a yaml encoded dictionary that should include the following fields:
+  #    instance_id : the service instance id of the service that needs to be terminated
+  def self.service_instance_terminate(queue:)
     msg=self.name+'#'+__method__.to_s
     STDERR.puts "#{msg}: entered"
     queue.subscribe do |delivery_info, properties, payload|

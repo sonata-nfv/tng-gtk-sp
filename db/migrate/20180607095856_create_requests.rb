@@ -36,7 +36,7 @@ class CreateRequests < ActiveRecord::Migration[5.2]
       t.timestamps
       #t.primary_key :request_uuid
       #t.uuid :request_uuid, primary: true, null: false
-      t.uuid :service_uuid, null: false #, default: 'uuid_generate_v4()'
+      t.uuid :service_uuid #, null: false #, default: 'uuid_generate_v4()'
       t.string :status, default: 'NEW'
       t.string :request_type, default: 'CREATE_SERVICE'
       t.uuid :instance_uuid, default: ''
