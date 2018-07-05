@@ -66,10 +66,14 @@ class MessagePublishingService
       return nil
     end
     
-    topic = channel.topic("son-kernel", auto_delete: false)
-    queue = channel.queue(@@queues[queue_symbol], auto_delete: true).bind(topic, routing_key: @@queues[queue_symbol])
+    exchange = channel.topic("son-kernel", auto_delete: false)
+    # So on the third line, the name of your queue should be gk.service.instances.create and the routing key should be service.instances.create. So there you need a change.
+    #queue = channel.queue(@@queues[queue_symbol], auto_delete: true).bind(exchange, routing_key: @@queues[queue_symbol])
+    queue = channel.queue('gk.'+@@queues[queue_symbol], auto_delete: true).bind(exchange, routing_key: @@queues[queue_symbol])
     self.send(:"#{@@queues[queue_symbol].gsub('.','_')}", queue: queue)
-    published = topic.publish( message, content_type:'text/yaml', routing_key: 'gk.'+queue.name, correlation_id: correlation_id, reply_to: queue.name, app_id: 'tng-gtk-sp')
+    # routing_key and reply_to should be the same value as routing_key on the third line
+    # published = exchange.publish( message, content_type:'text/yaml', routing_key: queue.name, correlation_id: correlation_id, reply_to: queue.name, app_id: 'tng-gtk-sp')
+    published = exchange.publish( message, content_type:'text/yaml', routing_key: @@queues[queue_symbol], correlation_id: correlation_id, reply_to: @@queues[queue_symbol], app_id: 'tng-gtk-sp')
     STDERR.puts "#{msg}: published=#{published}"
     published
   end  
