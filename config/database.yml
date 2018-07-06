@@ -54,7 +54,7 @@ pre-int:
 demo:
   <<: *common_settings
 
-integration:
+int:
   <<: *common_settings
   host: <%= ENV['DATABASE_HOST'] || 'son-postgres' %>
   port: <%= ENV['DATABASE_PORT'] || 5432 %>
@@ -62,7 +62,7 @@ integration:
   username: <%= ENV['POSTGRES_USER'] || 'postgres' %>
   password: <%= ENV['POSTGRES_PASSWORD'] || 'sonatatest' %>
 
-qualification:
+qual:
   <<: *common_settings
 
 staging:

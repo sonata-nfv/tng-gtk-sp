@@ -48,7 +48,8 @@ ENV DATABASE_PORT 5432
 ENV MQSERVER_URL=amqp://guest:guest@son-broker:5672
 ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
 ENV REPOSITORY_URL=http://tng-rep:4012
-ENV NUMBER_OF_POOL_CONNECTIONS=10
+ENV NUMBER_OF_POOL_CONNECTIONS=16
 ENV PORT 5000
-CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
+#CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
+CMD ["bundle", "exec", "puma", "-t", "0:5", "-p", "5000", "--host", "0.0.0.0"] 
 
