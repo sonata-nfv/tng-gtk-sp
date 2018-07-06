@@ -30,25 +30,20 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-FROM ruby:2.4.3-slim-stretch
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev libpq-dev && \
-	  rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /app/lib/local-gems
-WORKDIR /app
-COPY Gemfile /app
-RUN bundle install
-COPY . /app
-EXPOSE 5000
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST son-postgres
-ENV DATABASE_PORT 5432
-#ENV DATABASE_URL=postgresql://tangodefault:tango@son-postgres:5432/gatekeeper
-ENV MQSERVER_URL=amqp://guest:guest@son-broker:5672
-ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
-ENV REPOSITORY_URL=http://tng-rep:4012
-ENV PORT 5000
-CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
-# CMD ["bundle", "exec", "puma", "-t", "0:5", "-p", "5000", "--host", "0.0.0.0"] 
-#CMD ["bundle", "exec", "puma", "-C", "config/puma.rb", "-p", "5000", "--host", "0.0.0.0"] 
+environment = ENV['RACK_ENV'] || 'production'
+# Configure "min" to be the minimum number of threads to use to answer
+# requests and "max" the maximum.
+#
+# The default is "0, 16".
+#
+threads 0, 5
+
+# Bind the server to "url". "tcp://", "unix://" and "ssl://" are the only
+# accepted protocols.
+#
+# The default is "tcp://0.0.0.0:9292".
+#
+# bind 'tcp://0.0.0.0:9292'
+# bind 'unix:///var/run/puma.sock'
+# bind 'unix:///var/run/puma.sock?umask=0111'
+# bind 'ssl://127.0.0.1:9292?key=path_to_key&cert=path_to_cert'
