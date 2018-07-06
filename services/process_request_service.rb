@@ -67,7 +67,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
       return stored_functions if stored_functions == nil 
       #complete_params[:began_at] = Time.now.utc.to_s
-      STDERR.puts "#{msg}: complete_params=#{complete_params}"
+      #STDERR.puts "#{msg}: complete_params=#{complete_params}"
       instantiation_request = Request.create(complete_params)
       unless instantiation_request
         STDERR.puts "#{msg}: Failled to create instantiation_request"
@@ -80,13 +80,13 @@ class ProcessRequestService
       STDERR.puts "#{msg}: instantiation_request[:id]=#{instantiation_request[:id]}"
       published_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
       STDERR.puts "#{msg}: published_response=#{published_response}"
-    rescue ActiveRecord::StatementInvalid => e
-      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
-      return {}
-    rescue ActiveRecord::ConnectionTimeoutError => e
-      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
-      return {}
-    rescue => e
+    #rescue ActiveRecord::StatementInvalid => e
+    #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
+    #  return {}
+    #rescue ActiveRecord::ConnectionTimeoutError => e
+    #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
+    #  return {}
+    rescue StandardError => e
       STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
       return nil
     end
