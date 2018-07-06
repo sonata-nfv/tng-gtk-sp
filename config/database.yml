@@ -68,3 +68,6 @@ qual:
 staging:
   <<: *common_settings
 
+production:
+  <<: *common_settings
+
