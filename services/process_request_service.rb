@@ -66,8 +66,6 @@ class ProcessRequestService
       stored_functions = fetch_functions(functions_to_fetch)
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
       return stored_functions if stored_functions == nil 
-      #complete_params[:began_at] = Time.now.utc.to_s
-      #STDERR.puts "#{msg}: complete_params=#{complete_params}"
       instantiation_request = Request.create(complete_params)
       unless instantiation_request
         STDERR.puts "#{msg}: Failled to create instantiation_request"
@@ -87,7 +85,7 @@ class ProcessRequestService
     #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
     #  return {}
     rescue StandardError => e
-      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
+      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.spli('\n\t')}"
       return nil
     end
     instantiation_request
