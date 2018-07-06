@@ -54,7 +54,7 @@ pre-int:
 demo:
   <<: *common_settings
 
-int:
+integration:
   <<: *common_settings
   host: <%= ENV['DATABASE_HOST'] || 'son-postgres' %>
   port: <%= ENV['DATABASE_PORT'] || 5432 %>
