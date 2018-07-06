@@ -83,6 +83,9 @@ class ProcessRequestService
     rescue ActiveRecord::StatementInvalid => e
       STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
       return {}
+    rescue ActiveRecord::ConnectionTimeoutError => e
+      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
+      return {}
     rescue => e
       STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
       return nil

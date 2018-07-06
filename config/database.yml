@@ -36,7 +36,7 @@ common_settings: &common_settings
   host: localhost
   port: 5432
   database: gatekeeper
-  pool: 5
+  pool: <%= ENV['NUMBER_OF_POOL_CONNECTIONS'] || 5 %>
   encoding: unicode
   #url: <%= ENV['DATABASE_URL'] %>
 
