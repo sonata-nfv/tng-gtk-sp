@@ -32,10 +32,11 @@
 # encoding: utf-8
 common_settings: &common_settings
   adapter: postgresql
-  user: postgres
-  host: localhost
-  port: 5432
-  database: gatekeeper
+  host: <%= ENV['DATABASE_HOST'] || 'son-postgres' %>
+  port: <%= ENV['DATABASE_PORT'] || 5432 %>
+  database: <%= ENV['DATABASE_NAME'] || 'gatekeeper' %>
+  username: <%= ENV['POSTGRES_USER'] || 'postgres' %>
+  password: <%= ENV['POSTGRES_PASSWORD'] || 'sonatatest' %>
   pool: 5
   encoding: unicode
   #url: <%= ENV['DATABASE_URL'] %>
@@ -43,6 +44,7 @@ common_settings: &common_settings
 development:
   <<: *common_settings
   #url: postgresql://postgres:sonatatest@localhost:5432/gatekeeper
+  host: localhost
 
 test:
   <<: *common_settings
@@ -51,16 +53,11 @@ test:
 pre-int:
   <<: *common_settings
 
-demo:
-  <<: *common_settings
-
 integration:
   <<: *common_settings
-  host: <%= ENV['DATABASE_HOST'] || 'son-postgres' %>
-  port: <%= ENV['DATABASE_PORT'] || 5432 %>
-  database: <%= ENV['DATABASE_NAME'] || 'gatekeeper' %>
-  username: <%= ENV['POSTGRES_USER'] || 'postgres' %>
-  password: <%= ENV['POSTGRES_PASSWORD'] || 'sonatatest' %>
+
+demo:
+  <<: *common_settings
 
 qualification:
   <<: *common_settings
