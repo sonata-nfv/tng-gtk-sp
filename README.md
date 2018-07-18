@@ -68,7 +68,7 @@ With these commands, you:
 This section covers all the needs a developer has in order to be able to contribute to this project.
 
 ### Built With
-We are using the following libraries (also referenced in the [`Gemfile`](https://github.com/sonata-nfv/tng-gtk-vnv/Gemfile) file) for development:
+We are using the following libraries (also referenced in the [`Gemfile`](https://github.com/sonata-nfv/tng-gtk-sp/Gemfile) file) for development:
 
 * `activerecord` (`5.2`), the *Object-Relational Mapper (ORM)*;
 * `bunny` (`2.8.0`), the adapter to the [RabbitMQ](https://www.rabbitmq.com/) message queue server;
