@@ -23,6 +23,7 @@ $ bundle install # Install dependencies
 $ bundle exec rspec spec # Execute tests
 $ PORT=5000 bundle exec rackup # dev server at http://localhost:5000
 ```
+**Note:** See the [Configuration](#configuration) section below for other environment variables that can be used.
 
 Everything being fine, you'll have a server running on that session, on port `5000`. You can use it by using `curl`, like in:
 
@@ -50,13 +51,18 @@ $ docker run -d -p 5000:5000 --net=tango --name tng-gtk-sp \
   -e DATABASE_PORT=5432 \
   sonatanfv/tng-gtk-sp:dev
 ```
+
+**Note:** user and password are mere indicative, please choose the apropriate ones for your deployment.
+
 With these commands, you:
 
 1. Create a `docker` network named `tango`;
 1. Run the [MongoDB](https://www.mongodb.com/) container within the `tango` network;
+1. Run the [PostgreSQL](https://www.postgresql.org/) container within the `tango` network;
+1. Run the [RabbitMQ](https://www.rabbitmq.com/) container within the `tango` network;
 1. Run the [Catalogue](https://github.com/sonata-nfv/tng-cat) container within the `tango` network;
 1. Run the [Repository](https://github.com/sonata-nfv/tng-rep) container within the `tango` network;
-1. Run the [SP-specific Gatekeeper](https://github.com/sonata-nfv/tng-gtk-sp) container within the `tango` network, with the `CATALOGUE_URL` and `REPOSITORY_URL` environment variables set to the previously created containers.
+1. Run the [SP-specific Gatekeeper](https://github.com/sonata-nfv/tng-gtk-sp) container within the `tango` network, with the needed environment variables set to the previously created containers.
 
 ## Developing
 This section covers all the needs a developer has in order to be able to contribute to this project.
@@ -64,13 +70,17 @@ This section covers all the needs a developer has in order to be able to contrib
 ### Built With
 We are using the following libraries (also referenced in the [`Gemfile`](https://github.com/sonata-nfv/tng-gtk-vnv/Gemfile) file) for development:
 
+* `activerecord` (`5.2`), the *Object-Relational Mapper (ORM)*;
+* `bunny` (`2.8.0`), the adapter to the [RabbitMQ](https://www.rabbitmq.com/) message queue server;
+* `pg` (`0.21.0`), the adapter to the [PostgreSQL](https://www.postgresql.org/) database;
 * `puma` (`3.11.0`), an application server;
 * `rack` (`2.0.4`), a web-server interfacing library, on top of which `sinatra` has been built;
 * `rake`(`12.3.0`), a dependencies management tool for ruby, similar to *make*;
 * `sinatra` (`2.0.2`), a web framework for implementing efficient ruby APIs;
+* `sinatra-activerecord` (`2.0.13`), 
 * `sinatra-contrib` (`2.0.2`), several add-ons to `sinatra`;
 * `sinatra-cross_origin` (`0.4.0`), a *middleware* to `sinatra` that helps in managing the [`Cross Origin Resource Sharing (CORS)`](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS) problem;
-
+* `sinatra-logger` (`0.3.2`), a *logger* *middleware*;
 
 The following *gems* (libraries) are used just for tests:
 * `ci_reporter_rspec` (`1.0.0`), a library for helping in generating continuous integration (CI) test reports;
@@ -92,30 +102,32 @@ We usually use [`rbenv`](https://github.com/rbenv/rbenv) as the ruby version man
 ### Setting up Dev
 Developing this micro-service is easy.
 
-Routes within the micro-service are defined in the [`config.ru`](https://github.com/sonata-nfv/tng-gtk-vnv/blob/master/config.ru) file, in the root directory. It has two sections:
+Routes within the micro-service are defined in the [`config.ru`](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/config.ru) file, in the root directory. It has two sections:
 
 * The `require` section, where all used libraries must be required (**Note:** `controllers` had to be required explicitly, while `services` do not, due to a bug we have found to happened in some of the environments);
 * The `map` section, where this micro-service's routes are mapped to the controller responsible for it.
 
 This new or updated route can then be mapped either into an existing conctroller or imply writing a new controller. This new or updated controller can use either existing or newly written services to fullfil it's role.
 
-For further details on the micro-service's architecture please check the [documentation](https://github.com/sonata-nfv/tng-gtk-vnv/wiki/micro-service-architecture).
+For further details on the micro-service's architecture please check the [documentation](https://github.com/sonata-nfv/tng-gtk-sp/wiki/micro-service-architecture).
 
 ### Submiting changes
-Changes to the repository can be requested using [this repository's issues](https://github.com/sonata-nfv/tng-gtk-vnv/issues) and [pull requests](https://github.com/sonata-nfv/tng-gtk-vnv/pulls) mechanisms.
+Changes to the repository can be requested using [this repository's issues](https://github.com/sonata-nfv/tng-gtk-sp/issues) and [pull requests](https://github.com/sonata-nfv/tng-gtk-sp/pulls) mechanisms.
 
 ## Versioning
 
-The most up-to-date version is v4. For the versions available, see the [link to tags on this repository](https://github.com/sonata-nfv/tng-gtk-vnv/tags).
+The most up-to-date version is v4. For the versions available, see the [link to tags on this repository](https://github.com/sonata-nfv/tng-gtk-sp/releases).
 
 ## Configuration
-The configuration of the micro-service is done through just two environment variables, defined in the [Dockerfile](https://github.com/sonata-nfv/tng-gtk-vnv/blob/master/Dockerfile):
+The configuration of the micro-service is done through the following environment variables, defined in the [Dockerfile](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/Dockerfile):
 
-* `CATALOGUE_URL`, which should define the Catalogue's URL, where test descriptors are fetched from;
-* `REPOSITORY_URL`, which should define the Repository's URL, where test plans and test results are fetched from;
+* `CATALOGUE_URL`, which defines the Catalogue's URL, where test descriptors are fetched from;
+* `REPOSITORY_URL`, which defines the Repository's URL, where test plans and test results are fetched from;
+* `DATABASE_URL`,  which defines the database's URL, in the following format: `postgresql://user:password@host:port/database_name` (**Note:** this is an alternative format to the one described in the [Installing from the Docker container](#installing-from-the-Docker-container) section);
+* `MQSERVER_URL`,  which defines the message queue server's URL, in the following format: `amqp://user:password@host:port`
 
 ## Tests
-Unit tests are defined for both `controllers` and `services`, in the `/spec` folder. Since we use `rspec` as the test library, we configure tests in the [`spec_helper.rb`](https://github.com/sonata-nfv/tng-gtk-vnv/blob/master/spec/spec_helper.rb) file, also in the `/spec` folder.
+Unit tests are defined for both `controllers` and `services`, in the `/spec` folder. Since we use `rspec` as the test library, we configure tests in the [`spec_helper.rb`](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/spec/spec_helper.rb) file, also in the `/spec` folder.
 
 Wider scope (integration and functional) tests involving this micro-service are defined in [`tng-tests`](https://github.com/sonata-nfv/tng-tests).
 
@@ -127,8 +139,8 @@ Our style guide is really simple:
 
 ## Api Reference
 
-We have specified this micro-service's API in a [swagger](https://github.com/sonata-nfv/tng-gtk-vnv/blob/master/doc/swagger.json)-formated file. Please check it there.
+We have specified this micro-service's API in a [swagger](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/doc/swagger.json)-formated file. Please check it there.
 
 ## Licensing
 
-This 5GTANGO component is published under Apache 2.0 license. Please see the [LICENSE](https://github.com/sonata-nfv/tng-gtk-vnv/blob/master/LICENSE) file for more details.
+This 5GTANGO component is published under Apache 2.0 license. Please see the [LICENSE](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/LICENSE) file for more details.
