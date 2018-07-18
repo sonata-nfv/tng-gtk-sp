@@ -20,7 +20,6 @@ To have it up and running from code, please do the following:
 $ git clone https://github.com/sonata-nfv/tng-gtk-sp.git # Clone this repository
 $ cd tng-gtk-sp # Go to the newly created folder
 $ bundle install # Install dependencies
-$ bundle exec rspec spec # Execute tests
 $ PORT=5000 bundle exec rackup # dev server at http://localhost:5000
 ```
 **Note:** See the [Configuration](#configuration) section below for other environment variables that can be used.
@@ -128,6 +127,11 @@ The configuration of the micro-service is done through the following environment
 
 ## Tests
 Unit tests are defined for both `controllers` and `services`, in the `/spec` folder. Since we use `rspec` as the test library, we configure tests in the [`spec_helper.rb`](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/spec/spec_helper.rb) file, also in the `/spec` folder.
+
+These tests are executed by running the following command:
+```shel
+$ bundle exec rspec spec
+```
 
 Wider scope (integration and functional) tests involving this micro-service are defined in [`tng-tests`](https://github.com/sonata-nfv/tng-tests).
 
