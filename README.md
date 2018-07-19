@@ -101,14 +101,14 @@ $ bundle install
 We usually use [`rbenv`](https://github.com/rbenv/rbenv) as the ruby version manager, but others like [`rvm`](https://rvm.io/) may work as well.
 
 ### Setting up Dev
-Developing this micro-service is easy.
+Developing this micro-service is straight-forward with a low amount of necessary steps.
 
 Routes within the micro-service are defined in the [`config.ru`](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/config.ru) file, in the root directory. It has two sections:
 
 * The `require` section, where all used libraries must be required (**Note:** `controllers` had to be required explicitly, while `services` do not, due to a bug we have found to happened in some of the environments);
 * The `map` section, where this micro-service's routes are mapped to the controller responsible for it.
 
-This new or updated route can then be mapped either into an existing conctroller or imply writing a new controller. This new or updated controller can use either existing or newly written services to fullfil it's role.
+This new or updated route can then be mapped either into an existing controller or imply writing a new controller. This new or updated controller can use either existing or newly written services to fullfil it's role.
 
 For further details on the micro-service's architecture please check the [documentation](https://github.com/sonata-nfv/tng-gtk-sp/wiki/micro-service-architecture).
 
