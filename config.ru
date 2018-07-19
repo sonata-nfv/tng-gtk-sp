@@ -38,6 +38,9 @@ require './controllers/root_controller.rb'
 require './controllers/records_controller.rb'
 require './models/request'
 Dir.glob('./services/*.rb').each { |file| require file }
+
+ENV['RACK_ENV'] ||= 'production'
+
 map('/requests') { run RequestsController } 
 #map('/configurations/infra') { run ConfigurationsInfraController } 
 map('/records') { run RecordsController } 

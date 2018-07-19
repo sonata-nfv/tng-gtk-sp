@@ -55,7 +55,7 @@ group :test do
   gem 'webmock', '3.1.1'
   gem 'rspec', '3.7.0'
   gem 'rack-test', '0.8.2'
-  gem 'rspec-its', '1.2.0'
-  gem 'bunny-mock', '1.7.0'
-  gem 'factory_bot', '4.8.2'
+#  gem 'rspec-its', '1.2.0'
+#  gem 'bunny-mock', '1.7.0'
+#  gem 'factory_bot', '4.8.2'
 end

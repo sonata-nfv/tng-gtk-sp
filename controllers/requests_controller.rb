@@ -48,7 +48,7 @@ class RequestsController < ApplicationController
      \tegresses: the list of required egresses (defaults to [])
      \tingresses: the list of required ingresses (defaults to [])
   eos
-  ERROR_SERVICE_UUID_IS_MISSING="Service UUID is a mandatory parameter (absent from the '%s' request)"
+  #ERROR_SERVICE_UUID_IS_MISSING="Service UUID is a mandatory parameter (absent from the '%s' request)"
   ERROR_REQUEST_NOT_FOUND="Request with UUID '%s' was not found"
   
   before { content_type :json}
@@ -61,13 +61,15 @@ class RequestsController < ApplicationController
     body = request.body.read
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
     params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-    halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:service_uuid)
+    #halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:service_uuid)
     
     begin
+      STDERR.puts "#{msg}: before saved_request...'"
       saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
       STDERR.puts "#{msg}: saved_request='#{saved_request}'"
-      halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
+      #halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if saved_request.to_s.empty? 
+      halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
       halt_with_code_body(201, saved_request.to_json)
     rescue ArgumentError => e
       halt_with_code_body(404, {error: e.message}.to_json)
