@@ -54,8 +54,9 @@ class ProcessRequestService
   def self.enrich_one(request)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
-    nsd = FetchNSDService.call(uuid: request['service_uuid'])
-    if (nsd == {} || nsd == nil)
+    service = FetchNSDService.call(uuid: request['service_uuid'])
+    STDERR.puts "#{msg}: service=#{service}"
+    if (service == {} || service == nil)
       STDERR.puts "#{msg}: Network Service Descriptor '#{request['service_uuid']}' wasn't found"
       return recursive_symbolize_keys(request) 
     end
@@ -63,9 +64,9 @@ class ProcessRequestService
     enriched = request
     enriched[:service] = {}
     enriched[:service][:uuid] = service_uuid
-    enriched[:service][:vendor] = nsd[:vendor]
-    enriched[:service][:name] = nsd[:name]
-    enriched[:service][:version] = nsd[:version]
+    enriched[:service][:vendor] = service[:nsd][:vendor]
+    enriched[:service][:name] = service[:nsd][:name]
+    enriched[:service][:version] = service[:nsd][:version]
     recursive_symbolize_keys(enriched)
   end
   
