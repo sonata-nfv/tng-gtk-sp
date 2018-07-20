@@ -86,9 +86,9 @@ class RequestsController < ApplicationController
     STDERR.puts "#{msg}: entered with uuid='#{params[:request_uuid]}'"
     captures=params.delete('captures') if params.key? 'captures'
     begin
-      request = Request.find(params[:request_uuid])
-      STDERR.puts "#{msg}: request='#{request}'"
-      halt_with_code_body(200, request.to_json) unless request.to_s.empty?
+      single_request = Request.find(params[:request_uuid])
+      STDERR.puts "#{msg}: single_request='#{single_request}' (class #{single_request.class})"
+      halt_with_code_body(200, ProcessRequestService.enrich_one(single_request.as_json).to_json) unless single_request.to_s.empty?
     rescue Exception => e
       halt_with_code_body(404, {error: e.message}.to_json)
     end
@@ -108,7 +108,7 @@ class RequestsController < ApplicationController
       requests = Request.where(sanitized_params).limit(page_size).offset(page_number)
       STDERR.puts "#{msg}: requests='#{requests}'"
       headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
-      halt 200, requests.to_json
+      halt 200, ProcessRequestService.enrich(requests.to_a).to_json
     rescue ActiveRecord::RecordNotFound => e
       halt 200, '[]'
     end
