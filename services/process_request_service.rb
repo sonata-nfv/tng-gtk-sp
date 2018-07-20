@@ -50,7 +50,34 @@ class ProcessRequestService
       raise ArgumentError.new("'#{request_type}' is not valid as a request type")
     end
   end
+
+  def self.enrich_one(request)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
+    nsd = FetchNSDService.call(uuid: request['service_uuid'])
+    if (nsd == {} || nsd == nil)
+      STDERR.puts "#{msg}: Network Service Descriptor '#{request['service_uuid']}' wasn't found"
+      return recursive_symbolize_keys(request) 
+    end
+    enriched = {}
+    enriched[:service] = {}
+    enriched[:service][:uuid] = request.delete 'service_uuid'
+    enriched[:service][:vendor] = nsd[:vendor]
+    enriched[:service][:name] = nsd[:name]
+    enriched[:service][:version] = nsd[:version]
+    recursive_symbolize_keys(enriched)
+  end
   
+  def self.enrich(requests)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: requests=#{requests.inspect} (class #{requests.class})"
+    enriched = []
+    requests.each do |request|
+      enriched << enrich_one(request)
+    end
+    enriched
+  end
+    
   private
   def self.create_service(params)
     msg=self.name+'.'+__method__.to_s
@@ -171,7 +198,7 @@ class ProcessRequestService
   end
   
   # https://stackoverflow.com/questions/8379596/how-do-i-convert-a-ruby-hash-so-that-all-of-its-keys-are-symbols
-  def recursive_symbolize_keys(h)
+  def self.recursive_symbolize_keys(h)
     case h
     when Hash
       Hash[
