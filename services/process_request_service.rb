@@ -165,7 +165,8 @@ class ProcessRequestService
     STDERR.puts "#{msg}: found params[:instance_uuid]"
     return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' is not 'READY'"} unless request.status == 'READY'
     record = FetchServiceRecordsService(uuid: params[:instance_uuid])
-    return {error: "Service instance UUID '#{params[:instance_uuid]}' not found"} unless record
+    STDERR.puts "#{msg}: record=#{record.inspect} (class #{record.class})"
+    return {error: "Service instance UUID '#{params[:instance_uuid]}' not found"} if (record == {} || record == nil)
     {}
   end
   
