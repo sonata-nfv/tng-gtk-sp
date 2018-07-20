@@ -184,18 +184,19 @@ class ProcessRequestService
   def self.valid_terminate_service_params?(params)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: params=#{params}"
-    return {error: "Termination of a service instance needs the instance UUID"} if (params[:instance_uuid] && params[:instance_uuid] == '')
+    return {error: "Termination of a service instance needs the instance UUID"} if (params[:instance_uuid] && params[:instance_uuid].empty?)
     STDERR.puts "#{msg}: params[:instance_uuid] is there..."
     return {error: "Instance UUID '#{params[:instance_uuid]}' is not valid"} unless valid_uuid?(params[:instance_uuid])
     STDERR.puts "#{msg}: params[:instance_uuid] has a valid UUID..."
-    request = Request.where('instance_uuid = ?',params[:instance_uuid])
-    STDERR.puts "#{msg}: request=#{request.inspect}"
+    request = Request.where('instance_uuid = ?',params[:instance_uuid]).as_json
+    STDERR.puts "#{msg}: request=#{request}"
     return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' not found"} if request.empty?
     STDERR.puts "#{msg}: found params[:instance_uuid]"
-    return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' is not 'READY'"} unless request.status == 'READY'
+    STDERR.puts "#{msg}: request['status']='#{request['status']}'"
+    return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' is not 'READY'"} unless request['status'] == 'READY'
     record = FetchServiceRecordsService(uuid: params[:instance_uuid])
     STDERR.puts "#{msg}: record=#{record.inspect} (class #{record.class})"
-    return {error: "Service instance UUID '#{params[:instance_uuid]}' not found"} if (record == {} || record == nil)
+    return {error: "Service instance UUID '#{params[:instance_uuid]}' not found"} if (record.empty? || record.nil?)
     {}
   end
   
