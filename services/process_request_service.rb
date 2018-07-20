@@ -73,7 +73,7 @@ class ProcessRequestService
     STDERR.puts "#{msg}: requests=#{requests.inspect} (class #{requests.class})"
     enriched = []
     requests.each do |request|
-      enriched << enrich_one(request)
+      enriched << enrich_one(request.as_json)
     end
     enriched
   end
