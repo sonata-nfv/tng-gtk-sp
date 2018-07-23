@@ -4,11 +4,16 @@
 <p align="center"><img src="https://github.com/sonata-nfv/tng-api-gtw/wiki/images/sonata-5gtango-logo-500px.png" /></p>
 
 # Service Platform-specific Gatekeeper component
-This is the 5GTANGO Gatekeeper Service Platform specific components repository, which closely follows its [V&V Platform counterpart](https://github.com/sonata-nfv/tng-gtk-vnv), complementing the [common component repository](https://github.com/sonata-nfv/tng-gtk-common) .
+This is the 5GTANGO Gatekeeper Service Platform specific components repository, which implement the Gatekeeper features that are specific to the 5GTANGO Ssrvice Platform.
 
-Please see [details on the overall 5GTANGO architecture here](https://5gtango.eu/project-outcomes/deliverables/2-uncategorised/31-d2-2-architecture-design.html) and the following picture.
+For details on the overall 5GTANGO architecture [please check here](https://5gtango.eu/project-outcomes/deliverables/2-uncategorised/31-d2-2-architecture-design.html). The Gatekeeper is the component highlighted in the following picture.
 
 <p align="center"><img src="https://github.com/sonata-nfv/tng-api-gtw/wiki/images/GKs_place_in_5GTANGO_architecture.png" /></p>
+
+You might also be interested in the following related repositories:
+
+* [V&V and Service Platforms common component](https://github.com/sonata-nfv/tng-gtk-common);
+* [V&V Platform specific component](https://github.com/sonata-nfv/tng-gtk-vnv).
 
 ## Installing / Getting started
 
@@ -26,7 +31,7 @@ $ PORT=5000 bundle exec rackup # dev server at http://localhost:5000
 ```
 **Note:** See the [Configuration](#configuration) section below for other environment variables that can be used.
 
-Everything being fine, you'll have a server running on that session, on port `5000`. You can use it by using `curl`, like in:
+Everything being fine, you'll have a server running on that session, on port `5000`. You can aesscc it by using `curl`, like in:
 
 ```shell
 $ curl <host name>:5000/
@@ -68,7 +73,7 @@ With these commands, you:
 ## Developing
 This section covers all the needs a developer has in order to be able to contribute to this project.
 
-### Built With
+### Dependencies
 We are using the following libraries (also referenced in the [`Gemfile`](https://github.com/sonata-nfv/tng-gtk-sp/Gemfile) file) for development:
 
 * `activerecord` (`5.2`), the *Object-Relational Mapper (ORM)*;
@@ -101,7 +106,7 @@ $ bundle install
 We usually use [`rbenv`](https://github.com/rbenv/rbenv) as the ruby version manager, but others like [`rvm`](https://rvm.io/) may work as well.
 
 ### Setting up Dev
-Developing this micro-service is straight-forward with a low amount of necessary steps.
+Developing this micro-service is straightforward with a low amount of necessary steps.
 
 Routes within the micro-service are defined in the [`config.ru`](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/config.ru) file, in the root directory. It has two sections:
 
@@ -143,7 +148,7 @@ Our style guide is really simple:
 1. We try to follow a [Clean Code](https://www.amazon.com/Clean-Code-Handbook-Software-Craftsmanship/dp/0132350882) philosophy in as much as possible, i.e., classes and methods should do one thing only, have the least number of parameters possible, etc.;
 1. we use two spaces for identation.
 
-## Api Reference
+## API Reference
 
 We have specified this micro-service's API in a [swagger](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/doc/swagger.json)-formated file. Please check it there.
 
