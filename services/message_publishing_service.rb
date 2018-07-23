@@ -75,7 +75,7 @@ class MessagePublishingService
     # routing_key and reply_to should be the same value as routing_key on the third line
     # published = exchange.publish( message, content_type:'text/yaml', routing_key: queue.name, correlation_id: correlation_id, reply_to: queue.name, app_id: 'tng-gtk-sp')
     published = exchange.publish( message, content_type:'text/yaml', routing_key: @@queues[queue_symbol], correlation_id: correlation_id, reply_to: @@queues[queue_symbol], app_id: 'tng-gtk-sp')
-    STDERR.puts "#{msg}: published=#{published}"
+    STDERR.puts "#{msg}: published=#{published.inspect}"
     published
   end  
   
