@@ -188,7 +188,7 @@ class ProcessRequestService
     STDERR.puts "#{msg}: params[:instance_uuid] is there..."
     return {error: "Instance UUID '#{params[:instance_uuid]}' is not valid"} unless valid_uuid?(params[:instance_uuid])
     STDERR.puts "#{msg}: params[:instance_uuid] has a valid UUID..."
-    request = Request.where('instance_uuid = ?',params[:instance_uuid]).as_json
+    request = Request.where('instance_uuid = ?',params[:instance_uuid]).as_json.first
     STDERR.puts "#{msg}: request=#{request}"
     return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' not found"} if request.empty?
     STDERR.puts "#{msg}: found params[:instance_uuid]"
