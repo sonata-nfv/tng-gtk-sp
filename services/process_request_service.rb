@@ -142,7 +142,7 @@ class ProcessRequestService
         return {error: "Failled to create termination request for service instance '#{params[:instance_uuid]}'"}
       end
       STDERR.puts "#{msg}: termination_request=#{termination_request.inspect}"
-      published_response = MessagePublishingService.call({service_instance_uuid: params[:instance_uuid]}.to_yaml.to_s, :terminate_service, termination_request[:id])
+      published_response = MessagePublishingService.call({'service_instance_uuid'=> params[:instance_uuid]}.to_yaml.to_s, :terminate_service, termination_request[:id])
       STDERR.puts "#{msg}: published_response=#{published_response}"
     rescue StandardError => e
       STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.spli('\n\t')}"
