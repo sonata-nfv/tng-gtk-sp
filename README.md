@@ -4,7 +4,7 @@
 <p align="center"><img src="https://github.com/sonata-nfv/tng-api-gtw/wiki/images/sonata-5gtango-logo-500px.png" /></p>
 
 # Service Platform-specific Gatekeeper component
-This is the 5GTANGO Gatekeeper Service Platform specific components repository, which implement the Gatekeeper features that are specific to the 5GTANGO Ssrvice Platform.
+This is the 5GTANGO Gatekeeper Service Platform specific components repository, which implement the Gatekeeper features that are specific to the 5GTANGO Service Platform.
 
 For details on the overall 5GTANGO architecture [please check here](https://5gtango.eu/project-outcomes/deliverables/2-uncategorised/31-d2-2-architecture-design.html). The Gatekeeper is the component highlighted in the following picture.
 
