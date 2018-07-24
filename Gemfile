@@ -47,6 +47,7 @@ gem 'sinatra-activerecord', '2.0.13'
 gem 'bunny', '2.8.0'
 
 gem 'puma', '3.11.0'
+gem 'rack-timeout-puma', '0.0.1'
 gem 'ci_reporter_rspec', '1.0.0'
 gem 'rubocop', '0.52.0'
 gem 'rubocop-checkstyle_formatter', '0.4.0', require: false
@@ -55,7 +56,4 @@ group :test do
   gem 'webmock', '3.1.1'
   gem 'rspec', '3.7.0'
   gem 'rack-test', '0.8.2'
-#  gem 'rspec-its', '1.2.0'
-#  gem 'bunny-mock', '1.7.0'
-#  gem 'factory_bot', '4.8.2'
 end

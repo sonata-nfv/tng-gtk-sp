@@ -31,6 +31,7 @@
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
 require 'sinatra/base'
+require 'rack-timeout-puma'
 require './controllers/application_controller.rb'
 require './controllers/requests_controller.rb'
 require './controllers/pings_controller.rb'
@@ -40,6 +41,10 @@ require './models/request'
 Dir.glob('./services/*.rb').each { |file| require file }
 
 ENV['RACK_ENV'] ||= 'production'
+
+# from https://github.com/keyme/rack-timeout-puma
+use Rack::Timeout
+use Rack::Timeout::Puma
 
 map('/requests') { run RequestsController } 
 #map('/configurations/infra') { run ConfigurationsInfraController } 
