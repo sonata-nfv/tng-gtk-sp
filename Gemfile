@@ -47,7 +47,7 @@ gem 'sinatra-activerecord', '2.0.13'
 gem 'bunny', '2.8.0'
 
 gem 'puma', '3.11.0'
-gem 'rack-timeout-puma', '0.5.1'
+gem 'rack-timeout-puma', '0.0.1'
 gem 'ci_reporter_rspec', '1.0.0'
 gem 'rubocop', '0.52.0'
 gem 'rubocop-checkstyle_formatter', '0.4.0', require: false
