@@ -55,9 +55,14 @@ class ProcessRequestService
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
     service_uuid = get_service_uuid(request)
+    if (service_uuid.nil? || service_uuid.empty?)
+      STDERR.puts "#{msg}: Network Service Descriptor '#{service_uuid}' wasn't found"
+      return recursive_symbolize_keys(request) 
+    end
+    STDERR.puts "#{msg}: service_uuid='#{service_uuid}'"
     service = FetchNSDService.call(uuid: service_uuid)
     STDERR.puts "#{msg}: service=#{service}"
-    if (service == {} || service == nil)
+    if (service.nil? || service.empty?)
       STDERR.puts "#{msg}: Network Service Descriptor '#{service_uuid}' wasn't found"
       return recursive_symbolize_keys(request) 
     end
@@ -83,8 +88,11 @@ class ProcessRequestService
     
   private
   def self.get_service_uuid(request)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: request=#{request}"
     return request['service_uuid'] unless (request['service_uuid'].nil? || request['service_uuid'].empty?)
     service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
+    STDERR.puts "#{msg}: service_record=#{service_record}"
     service_record['descriptor_reference']
   end
   
