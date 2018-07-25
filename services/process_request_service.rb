@@ -84,7 +84,7 @@ class ProcessRequestService
   private
   def self.get_service_uuid(request)
     return request['service_uuid'] unless (request['service_uuid'].nil? || request['service_uuid'].empty?)
-    service_record = FetchServiceRecordsService(uuid: request['instance_uuid'])
+    service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
     service_record['descriptor_reference']
   end
   
