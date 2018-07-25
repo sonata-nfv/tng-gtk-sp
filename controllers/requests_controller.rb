@@ -90,7 +90,9 @@ class RequestsController < ApplicationController
       STDERR.puts "#{msg}: single_request='#{single_request}' (class #{single_request.class})"
       halt_with_code_body(200, ProcessRequestService.enrich_one(single_request.as_json).to_json) unless single_request.to_s.empty?
     rescue Exception => e
+			ActiveRecord::Base.clear_active_connections!
       halt_with_code_body(404, {error: e.message}.to_json)
+      raise
     end
     halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json)
   end
