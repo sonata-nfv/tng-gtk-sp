@@ -32,6 +32,7 @@
 # encoding: utf-8
 require 'sinatra/base'
 require 'rack-timeout-puma'
+require 'active_record/rack'
 require './controllers/application_controller.rb'
 require './controllers/requests_controller.rb'
 require './controllers/pings_controller.rb'
@@ -45,6 +46,7 @@ ENV['RACK_ENV'] ||= 'production'
 # from https://github.com/keyme/rack-timeout-puma
 use Rack::Timeout
 use Rack::Timeout::Puma
+use ActiveRecord::Rack::ConnectionManagement
 
 map('/requests') { run RequestsController } 
 #map('/configurations/infra') { run ConfigurationsInfraController } 
