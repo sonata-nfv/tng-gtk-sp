@@ -56,7 +56,7 @@ class FetchService
     begin
       if params.key?(:uuid)
         uuid = params.delete :uuid
-        uri = URI.parse(self.site+'/'+uuid)
+        uri = URI.parse("#{self.site}/#{uuid}")
         # mind that there cany be more params, so we might need to pass params as well
       else
         uri = URI.parse(self.site)

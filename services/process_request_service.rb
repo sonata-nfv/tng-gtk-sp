@@ -54,10 +54,11 @@ class ProcessRequestService
   def self.enrich_one(request)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
-    service = FetchNSDService.call(uuid: request['service_uuid'])
+    service_uuid = get_service_uuid(request)
+    service = FetchNSDService.call(uuid: service_uuid)
     STDERR.puts "#{msg}: service=#{service}"
     if (service == {} || service == nil)
-      STDERR.puts "#{msg}: Network Service Descriptor '#{request['service_uuid']}' wasn't found"
+      STDERR.puts "#{msg}: Network Service Descriptor '#{service_uuid}' wasn't found"
       return recursive_symbolize_keys(request) 
     end
     service_uuid = request.delete 'service_uuid'
@@ -81,6 +82,12 @@ class ProcessRequestService
   end
     
   private
+  def self.get_service_uuid(request)
+    return request['service_uuid'] unless (request['service_uuid'].nil? || request['service_uuid'].empty?)
+    service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
+    service_record['descriptor_reference']
+  end
+  
   def self.create_service(params)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: params=#{params}"
