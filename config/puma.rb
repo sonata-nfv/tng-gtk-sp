@@ -32,10 +32,11 @@
 # encoding: utf-8
 # frozen_string_literal: true
 require 'active_support'
+environment RACK_ENV
 
 # Preload application is better when we run on multiple threads
 preload_app!
-tag '5GTANGO-puma-activerecord'
+tag '5GTANGO Gatekeeper SP component'
 
 # Those 'before_fork' and 'on_worker_boot' hooks are recommended for
 # activerecord when using preload_app
