@@ -55,14 +55,14 @@ class ProcessRequestService
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
     service_uuid = get_service_uuid(request)
-    if (service_uuid.nil? || service_uuid.empty?)
+    if service_uuid.blank?
       STDERR.puts "#{msg}: Network Service Descriptor '#{service_uuid}' wasn't found"
       return recursive_symbolize_keys(request) 
     end
     STDERR.puts "#{msg}: service_uuid='#{service_uuid}'"
     service = FetchNSDService.call(uuid: service_uuid)
     STDERR.puts "#{msg}: service=#{service}"
-    if (service.nil? || service.empty?)
+    if service.blank?
       STDERR.puts "#{msg}: Network Service Descriptor '#{service_uuid}' wasn't found"
       return recursive_symbolize_keys(request) 
     end
@@ -90,7 +90,7 @@ class ProcessRequestService
   def self.get_service_uuid(request)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: request=#{request}"
-    return request['service_uuid'] unless (request['service_uuid'].nil? || request['service_uuid'].empty?)
+    return request['service_uuid'] unless request['service_uuid'].blank?
     service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
     STDERR.puts "#{msg}: service_record=#{service_record}"
     service_record['descriptor_reference']
@@ -109,7 +109,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: completed params=#{complete_params}"
       stored_service = FetchNSDService.call(uuid: complete_params[:service_uuid])
       STDERR.puts "#{msg}: stored_service=#{stored_service} (#{stored_service.class})"
-      return stored_service if (stored_service == {} || stored_service == nil)
+      return stored_service if stored_service.blank?
       functions_to_fetch = stored_service[:nsd][:network_functions]
       STDERR.puts "#{msg}: functions_to_fetch=#{functions_to_fetch}"
       stored_functions = fetch_functions(functions_to_fetch)
@@ -267,7 +267,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: function=#{function}"
       found_function = FetchVNFDsService.call({vendor: function[:vnf_vendor], name: function[:vnf_name], version: function[:vnf_version]})
       STDERR.puts "#{msg}: found_function=#{found_function}"
-      if found_function == [] or found_function == nil
+      if found_function.blank?
         STDERR.puts "#{msg}: Function #{function} not found"
         return nil
       end
