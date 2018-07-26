@@ -34,8 +34,15 @@
 require_relative '../spec_helper'
 
 RSpec.describe ProcessRequestService do
+  let(:uuid) {SecureRandom.uuid}
+  let(:network_function_trio) {{ vnf_name: 'myvnf', vnf_vendor: 'eu.5gtango', vnf_version: '0.1'}}
+  let(:network_functions) {[{ vnf_id: 'my_vnf'}.merge(network_function_trio)]}
+  let(:service) {{
+    uuid: uuid, 
+    nsd: { vendor: 'eu.5gtango', name: 'my_service', version: '0.1', network_functions: network_functions},
+    username: nil
+  }}
   describe '.call' do
-    let(:uuid) {SecureRandom.uuid}
     let(:uuid_2) {SecureRandom.uuid}
     let(:customer_uuid) {SecureRandom.uuid}
     let(:sla_id) {SecureRandom.uuid}
@@ -43,8 +50,6 @@ RSpec.describe ProcessRequestService do
       service_uuid: uuid, egresses:[], ingresses: [], blacklist: [], request_type: "CREATE_SERVICE", customer_uuid: customer_uuid, 
       sla_id: sla_id, callback: ''
     }}
-    let(:network_function_trio) {{ vnf_name: 'myvnf', vnf_vendor: 'eu.5gtango', vnf_version: '0.1'}}
-    let(:network_functions) {[{ vnf_id: 'my_vnf'}.merge(network_function_trio)]}
     let(:service) {{uuid: uuid, nsd: { vendor: 'eu.5gtango', name: 'my_service', version: '0.1', network_functions: network_functions}, username: nil}}
     let(:saved_service_instantiation_request) {
       service_instantiation_request.merge!({
@@ -107,6 +112,38 @@ RSpec.describe ProcessRequestService do
       result = described_class.call({service_uuid: uuid})
       STDERR.puts ">>>>>>>>>>> request = #{result}"
       expect(result).to eq(saved_service_instantiation_request)
+    end
+  end
+  describe '.enrich_one' do
+    let(:instance_uuid) {SecureRandom.uuid}
+    
+    context 'service instantiation request' do
+      let(:instantiation_request) {{service_uuid: uuid, instance_uuid: '', request_type: "CREATE_SERVICE"}}
+      let(:enriched) {{
+        instance_uuid: '',
+        request_type: "CREATE_SERVICE", service: {
+          uuid: service[:uuid], vendor: service[:nsd][:vendor], name: service[:nsd][:name], version: service[:nsd][:version]
+      }}}
+      it 'enriches an existing request with service vendor, name and version' do
+        allow(FetchNSDService).to receive(:call).with({uuid: uuid}).and_return(service)
+        allow(described_class).to receive(:get_service_uuid).with(instantiation_request).and_return(uuid)
+        result = described_class.enrich_one(instantiation_request)
+        expect(result).to eq(enriched)
+      end
+    end
+    context 'service instance termination request' do
+      let(:termination_request) {{instance_uuid: instance_uuid, request_type: "TERMINATE_SERVICE"}}
+      let(:enriched) {{
+        instance_uuid: instance_uuid,
+        request_type: "TERMINATE_SERVICE", service: {
+          uuid: service[:uuid], vendor: service[:nsd][:vendor], name: service[:nsd][:name], version: service[:nsd][:version]
+      }}}
+      it 'enriches an existing request with service vendor, name and version' do
+        allow(FetchNSDService).to receive(:call).with({uuid: uuid}).and_return(service)
+        allow(described_class).to receive(:get_service_uuid).with(termination_request).and_return(uuid)
+        result = described_class.enrich_one(termination_request)
+        expect(result).to eq(enriched)
+      end
     end
   end
 end
