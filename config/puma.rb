@@ -54,3 +54,8 @@ end
 threads 5, 16
 port ENV['PORT'] || 5000
 #bind 'tcp://0.0.0.0:5000'
+#stdout_and_stderr_file_name=::File.join('.', 'log', environment+'.log')
+#stdout_redirect stdout_and_stderr_file_name, stdout_and_stderr_file_name, true
+#stdout_redirect '/u/apps/lolcat/log/stdout', '/u/apps/lolcat/log/stderr'
+#stdout_redirect '/u/apps/lolcat/log/stdout', '/u/apps/lolcat/log/stderr', true
+state_path '/dev/stdout'

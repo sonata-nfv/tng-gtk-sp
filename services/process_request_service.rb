@@ -66,13 +66,14 @@ class ProcessRequestService
       STDERR.puts "#{msg}: Network Service Descriptor '#{service_uuid}' wasn't found"
       return recursive_symbolize_keys(request) 
     end
-    service_uuid = request.delete 'service_uuid'
+    service_uuid = request.delete :service_uuid
     enriched = request
     enriched[:service] = {}
     enriched[:service][:uuid] = service_uuid
     enriched[:service][:vendor] = service[:nsd][:vendor]
     enriched[:service][:name] = service[:nsd][:name]
     enriched[:service][:version] = service[:nsd][:version]
+    STDERR.puts "#{msg}: enriched='#{enriched}'"
     recursive_symbolize_keys(enriched)
   end
   
