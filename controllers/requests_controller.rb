@@ -52,7 +52,8 @@ class RequestsController < ApplicationController
   ERROR_REQUEST_NOT_FOUND="Request with UUID '%s' was not found"
   
   before { content_type :json}
-  after  {ActiveRecord::Base.clear_active_connections!}
+  #after  {ActiveRecord::Base.clear_active_connections!}
+  after  {ActiveRecord::Base.connection.close}
 
   # Accept service instantiation requests
   post '/?' do

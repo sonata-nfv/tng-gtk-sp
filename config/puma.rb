@@ -32,7 +32,7 @@
 # encoding: utf-8
 # frozen_string_literal: true
 require 'active_support'
-environment ENV['RACK_ENV']
+environment ENV['RACK_ENV'] || 'development'
 
 # Preload application is better when we run on multiple threads
 preload_app!
