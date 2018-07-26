@@ -88,11 +88,12 @@ class RequestsController < ApplicationController
     STDERR.puts "#{msg}: entered with uuid='#{params[:request_uuid]}'"
     captures=params.delete('captures') if params.key? 'captures'
     begin
-      STDERR.puts "#{msg}: before Request.find_by: #{ActiveRecord::Base.connection_pool.stat}"
-      single_request = Request.find_by(uuid: params[:request_uuid])
-      STDERR.puts "#{msg}: before Request.find_by: #{ActiveRecord::Base.connection_pool.stat}"
+      STDERR.puts "#{msg}: before Request.find: #{ActiveRecord::Base.connection_pool.stat}"
+      single_request = Request.find(params[:request_uuid])
+      STDERR.puts "#{msg}: after Request.find: #{ActiveRecord::Base.connection_pool.stat}"
       STDERR.puts "#{msg}: single_request='#{single_request}' (class #{single_request.class})"
-      halt_with_code_body(200, ProcessRequestService.enrich_one(single_request.as_json).to_json) unless single_request.to_s.empty?
+      #halt_with_code_body(200, ProcessRequestService.enrich_one(single_request).to_json) unless single_request.blank?
+      halt_with_code_body(200, single_request.to_json) unless single_request.blank?
     rescue Exception => e
 			ActiveRecord::Base.clear_active_connections!
       halt_with_code_body(404, {error: e.message}.to_json)
@@ -114,7 +115,8 @@ class RequestsController < ApplicationController
       requests = Request.where(sanitized_params).limit(page_size).offset(page_number)
       STDERR.puts "#{msg}: requests='#{requests}'"
       headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
-      halt 200, ProcessRequestService.enrich(requests.to_a).to_json
+      #halt 200, ProcessRequestService.enrich(requests.to_a).to_json
+      halt 200, requests.to_json
     rescue ActiveRecord::RecordNotFound => e
       halt 200, '[]'
     end

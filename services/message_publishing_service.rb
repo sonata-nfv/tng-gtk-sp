@@ -99,7 +99,6 @@ class MessagePublishingService
           status = parsed_payload['status']
           if status
             STDERR.puts "#{msg}: status: #{status}"
-            #request = Request.find_by(id: properties[:correlation_id])
             request = Request.find(properties[:correlation_id])
             if request
               STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
@@ -158,7 +157,7 @@ class MessagePublishingService
           status = parsed_payload['status']
           if status
             STDERR.puts "#{msg}: status: #{status}"
-            request = Request.find_by(id: properties[:correlation_id])
+            request = Request.find(properties[:correlation_id])
             if request
               STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
               request['status']=status
