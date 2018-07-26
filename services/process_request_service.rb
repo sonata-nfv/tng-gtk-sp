@@ -56,7 +56,7 @@ class ProcessRequestService
     STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
     service_uuid = get_service_uuid(request)
     if service_uuid.blank?
-      STDERR.puts "#{msg}: Network Service Descriptor '#{service_uuid}' wasn't found"
+      STDERR.puts "#{msg}: service_uuid is blank"
       return recursive_symbolize_keys(request) 
     end
     STDERR.puts "#{msg}: service_uuid='#{service_uuid}'"
@@ -91,6 +91,8 @@ class ProcessRequestService
   def self.get_service_uuid(request)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: request=#{request}"
+    #case request['request_type']
+    #when 'CREATE_SERVICE'
     return request['service_uuid'] unless request['service_uuid'].blank?
     service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
     STDERR.puts "#{msg}: service_record=#{service_record}"
@@ -204,7 +206,9 @@ class ProcessRequestService
     STDERR.puts "#{msg}: params[:instance_uuid] is there..."
     return {error: "Instance UUID '#{params[:instance_uuid]}' is not valid"} unless valid_uuid?(params[:instance_uuid])
     STDERR.puts "#{msg}: params[:instance_uuid] has a valid UUID..."
+    STDERR.puts "#{msg}: before Request.where: #{ActiveRecord::Base.connection_pool.stat}"
     request = Request.where('instance_uuid = ?',params[:instance_uuid]).as_json.first
+    STDERR.puts "#{msg}: after Request.where: #{ActiveRecord::Base.connection_pool.stat}"
     STDERR.puts "#{msg}: request=#{request}"
     return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' not found"} if request.empty?
     STDERR.puts "#{msg}: found params[:instance_uuid]"

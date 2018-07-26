@@ -88,7 +88,9 @@ class RequestsController < ApplicationController
     STDERR.puts "#{msg}: entered with uuid='#{params[:request_uuid]}'"
     captures=params.delete('captures') if params.key? 'captures'
     begin
-      single_request = Request.find(params[:request_uuid])
+      STDERR.puts "#{msg}: before Request.find_by: #{ActiveRecord::Base.connection_pool.stat}"
+      single_request = Request.find_by(uuid: params[:request_uuid])
+      STDERR.puts "#{msg}: before Request.find_by: #{ActiveRecord::Base.connection_pool.stat}"
       STDERR.puts "#{msg}: single_request='#{single_request}' (class #{single_request.class})"
       halt_with_code_body(200, ProcessRequestService.enrich_one(single_request.as_json).to_json) unless single_request.to_s.empty?
     rescue Exception => e
