@@ -52,4 +52,4 @@ on_worker_boot do
 end
 threads 5, 16
 port ENV['PORT'] || 5000
-bind 'tcp://0.0.0.0:5000'
+#bind 'tcp://0.0.0.0:5000'
