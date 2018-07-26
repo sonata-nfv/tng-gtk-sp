@@ -34,6 +34,8 @@
 require 'active_support'
 environment ENV['RACK_ENV'] || 'development'
 
+workers 2
+
 # Preload application is better when we run on multiple threads
 preload_app!
 tag '5GTANGO Gatekeeper SP component'
@@ -54,3 +56,11 @@ end
 threads 5, 16
 port ENV['PORT'] || 5000
 #bind 'tcp://0.0.0.0:5000'
+#stdout_and_stderr_file_name=::File.join('.', 'log', environment+'.log')
+#stdout_redirect stdout_and_stderr_file_name, stdout_and_stderr_file_name, true
+#stdout_redirect '/u/apps/lolcat/log/stdout', '/u/apps/lolcat/log/stderr'
+#stdout_redirect '/u/apps/lolcat/log/stdout', '/u/apps/lolcat/log/stderr', true
+state_path '/app/pids/puma.state'
+#state_path './puma.state'
+#activate_control_app 'unix:///var/run/pumactl.sock', { no_token: true }
+activate_control_app 'tcp://0.0.0.0:9191', { no_token: true }
