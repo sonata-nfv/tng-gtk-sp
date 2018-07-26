@@ -60,7 +60,8 @@ port ENV['PORT'] || 5000
 #stdout_redirect stdout_and_stderr_file_name, stdout_and_stderr_file_name, true
 #stdout_redirect '/u/apps/lolcat/log/stdout', '/u/apps/lolcat/log/stderr'
 #stdout_redirect '/u/apps/lolcat/log/stdout', '/u/apps/lolcat/log/stderr', true
-state_path '/app/pids/puma.state'
+#state_path '/dev/stdout'
+state_path '/app/puma.state'
 #state_path './puma.state'
 #activate_control_app 'unix:///var/run/pumactl.sock', { no_token: true }
 activate_control_app 'tcp://0.0.0.0:9191', { no_token: true }
