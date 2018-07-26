@@ -30,25 +30,26 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-FROM ruby:2.4.3-slim-stretch
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev libpq-dev && \
-	  rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /app/lib/local-gems
-WORKDIR /app
-COPY Gemfile /app
-RUN bundle install
-COPY . /app
-EXPOSE 5000
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST son-postgres
-ENV DATABASE_PORT 5432
-#ENV DATABASE_URL=postgresql://tangodefault:tango@son-postgres:5432/gatekeeper
-ENV MQSERVER_URL=amqp://guest:guest@son-broker:5672
-ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
-ENV REPOSITORY_URL=http://tng-rep:4012
-ENV PORT 5000
-CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
-# CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+# frozen_string_literal: true
+require 'active_support'
 
+# Preload application is better when we run on multiple threads
+preload_app!
+tag '5GTANGO-puma-activerecord'
+
+# Those 'before_fork' and 'on_worker_boot' hooks are recommended for
+# activerecord when using preload_app
+before_fork do
+  ActiveSupport.on_load(:active_record) do
+    ActiveRecord::Base.connection.disconnect!
+  end
+end
+
+on_worker_boot do
+  ActiveSupport.on_load(:active_record) do
+    ActiveRecord::Base.establish_connection
+  end
+end
+threads 5, 16
+port ENV['PORT'] || 5000
+bind 'tcp://0.0.0.0:5000'
