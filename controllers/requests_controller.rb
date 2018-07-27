@@ -51,6 +51,7 @@ class RequestsController < ApplicationController
   #ERROR_SERVICE_UUID_IS_MISSING="Service UUID is a mandatory parameter (absent from the '%s' request)"
   ERROR_REQUEST_NOT_FOUND="Request with UUID '%s' was not found"
   
+  SDTERR.puts "INFO: RequestsController: ActiveRecord pool size=#{ActiveRecord::Base.connection.pool.size}"
   before { content_type :json}
   #after  {ActiveRecord::Base.clear_active_connections!}
   after  {ActiveRecord::Base.connection.close}
@@ -91,7 +92,7 @@ class RequestsController < ApplicationController
       STDERR.puts "#{msg}: before Request.find: #{ActiveRecord::Base.connection_pool.stat}"
       single_request = Request.find(params[:request_uuid])
       STDERR.puts "#{msg}: after Request.find: #{ActiveRecord::Base.connection_pool.stat}"
-      STDERR.puts "#{msg}: single_request='#{single_request}' (class #{single_request.class})"
+      STDERR.puts "#{msg}: single_request='#{single_request.inspect}' (class #{single_request.class})"
       #halt_with_code_body(200, ProcessRequestService.enrich_one(single_request).to_json) unless single_request.blank?
       halt_with_code_body(200, single_request.to_json) unless single_request.blank?
     rescue Exception => e
