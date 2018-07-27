@@ -114,7 +114,7 @@ RSpec.describe RequestsController, type: :controller do
       let(:requests) {[ request_1, request_2]}
       let(:record_2) { {descriptor_reference: uuid_2}}
       it 'adding default parameters for page size and number' do
-        allow(Request).to receive_message_chain(:where, :limit, :offset).and_return(requests)
+        allow(Request).to receive_message_chain(:where, :limit, :offset, :order).and_return(requests)
         allow(FetchServiceRecordsService).to receive(:call).twice.and_return(record_1, record_2)
         get '/'
         expect(last_response).to be_ok
