@@ -48,6 +48,7 @@ gem 'sinatra-activerecord', '2.0.13'
 gem 'bunny', '2.8.0'
 
 gem 'puma', '3.11.0'
+gem 'thin', '1.7.2'
 gem 'rack-timeout-puma', '0.0.1'
 gem 'activerecord-rack', '1.0.0'
 gem 'ci_reporter_rspec', '1.0.0'

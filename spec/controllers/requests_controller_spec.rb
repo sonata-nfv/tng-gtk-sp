@@ -40,20 +40,16 @@ RSpec.describe RequestsController, type: :controller do
   let(:requestid_2) {SecureRandom.uuid}
   let(:instance_uuid_1) {SecureRandom.uuid}
 
-  describe 'Accepts service instantiation requests' 
-  describe 'Accepts service instance queries' do
-    let(:request_1) {{
-      id: requestid_1, created_at:"2018-06-07T16:28:39.571Z",updated_at:"2018-06-07T16:28:39.571Z",
-      service_uuid:uuid_1, status:"NEW",request_type:"CREATE_SERVICE",instance_uuid: instance_uuid_1,ingresses:[],egresses:[], #began_at:"2018-06-07T16:28:39.557Z",
-      callback:'',blacklist:[],customer_uuid:'',sla_id:'',policy_id:''
-    }}
+  describe 'accepts service instantiation requests' 
+  describe 'accepts service instance creation queries' do
+    let(:request_1) {{ id: requestid_1, service_uuid: uuid_1, request_type:"CREATE_SERVICE"}}
     let(:record_1) { {descriptor_reference: uuid_1}}
   
     context 'with UUID given' do
       it 'and returns the existing request' do
-        allow(Request).to receive(:find).with(requestid_1).and_return(request_1)
-        allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
-        get '/'+requestid_1
+        allow(Request).to receive(:find).with(request_1[:id]).and_return(request_1)
+        #allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
+        get '/'+request_1[:id]
         expect(last_response).to be_ok
         expect(last_response.body).to eq(request_1.to_json)
       end
@@ -66,16 +62,52 @@ RSpec.describe RequestsController, type: :controller do
     context 'without UUID given' do
       let(:uuid_2) {SecureRandom.uuid}
       let(:instance_uuid_2) {SecureRandom.uuid}
-      let(:request_2) {{
-        id: requestid_2, created_at:"2018-06-07T16:28:39.571Z",updated_at:"2018-06-07T16:28:39.571Z",
-        service_uuid:uuid_2,status:"NEW",request_type:"CREATE_SERVICE",instance_uuid: instance_uuid_2,ingresses:[],egresses:[], #began_at:"2018-06-07T16:28:39.557Z",
-        callback:'',blacklist:[],customer_uuid:'',sla_id:'',policy_id:''
-      }}
+      let(:request_2) {{id: requestid_2, service_uuid:uuid_2, request_type:"CREATE_SERVICE"}}
       let(:requests) {[ request_1, request_2]}
       let(:record_2) { {descriptor_reference: uuid_2}}
       it 'adding default parameters for page size and number' do
         allow(Request).to receive_message_chain(:where, :limit, :offset).and_return(requests)
         allow(FetchServiceRecordsService).to receive(:call).twice.and_return(record_1, record_2)
+        get '/'
+        expect(last_response).to be_ok
+        expect(last_response.body).to eq(requests.to_json)
+      end
+  
+      it 'returning Ok (200) and an empty array when no service is found' do
+        allow(Request).to receive_message_chain(:where, :limit, :offset).and_raise(ActiveRecord::RecordNotFound)
+        get '/'
+        expect(last_response).to be_ok
+        expect(last_response.body).to eq([].to_json)
+      end
+    end
+  end
+  describe 'accepts service instance termination queries' do
+    let(:request_1) {{ id: requestid_1, instance_uuid: instance_uuid_1, request_type:"TERMINATE_SERVICE"}}
+    let(:record_1) { {descriptor_reference: uuid_1}}
+  
+    context 'with UUID given' do
+      it 'and returns the existing request' do
+        allow(Request).to receive(:find).with(request_1[:id]).and_return(request_1)
+        #allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
+        get '/'+request_1[:id]
+        expect(last_response).to be_ok
+        expect(last_response.body).to eq(request_1.to_json)
+      end
+      it 'and rejects non-existing request' do
+        allow(Request).to receive(:find).with(requestid_2).and_raise(ActiveRecord::RecordNotFound)
+        get '/'+requestid_2
+        expect(last_response).to be_not_found
+      end
+    end
+    context 'without UUID given' do
+      let(:uuid_2) {SecureRandom.uuid}
+      let(:instance_uuid_2) {SecureRandom.uuid}
+      let(:request_2) {{id: requestid_2, instance_uuid: instance_uuid_2, request_type:"TERMINATE_SERVICE"}}
+      let(:requests) {[ request_1, request_2]}
+      let(:record_2) { {descriptor_reference: uuid_2}}
+      it 'adding default parameters for page size and number' do
+        allow(Request).to receive_message_chain(:where, :limit, :offset).and_return(requests)
+        #allow(FetchServiceRecordsService).to receive(:call).twice.and_return(record_1, record_2)
         get '/'
         expect(last_response).to be_ok
         expect(last_response.body).to eq(requests.to_json)

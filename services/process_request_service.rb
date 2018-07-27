@@ -52,6 +52,8 @@ class ProcessRequestService
   end
 
   def self.enrich_one(request)
+    # deactivate this for now
+    return request
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
     service_uuid = get_service_uuid(request)
@@ -78,6 +80,8 @@ class ProcessRequestService
   end
   
   def self.enrich(requests)
+    # deactivate this for now
+    return requests
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: requests=#{requests.inspect} (class #{requests.class})"
     enriched = []
@@ -91,12 +95,17 @@ class ProcessRequestService
   def self.get_service_uuid(request)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: request=#{request}"
-    #case request['request_type']
-    #when 'CREATE_SERVICE'
-    return request['service_uuid'] unless request['service_uuid'].blank?
-    service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
-    STDERR.puts "#{msg}: service_record=#{service_record}"
-    service_record['descriptor_reference']
+    case request['request_type']
+    when 'CREATE_SERVICE'
+      return request['service_uuid']
+    when 'TERMINATE_SERVICE'
+      service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
+      STDERR.puts "#{msg}: service_record=#{service_record}"
+      return service_record['descriptor_reference']
+    else
+      STDERR.puts "#{msg}: '#{request['request_type']}' not valid as a request type"
+      return nil
+    end
   end
   
   def self.create_service(params)
