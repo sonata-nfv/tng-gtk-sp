@@ -17,7 +17,7 @@ You might also be interested in the following related repositories:
 
 ## Installing / Getting started
 
-This component is implemented in [ruby](https://www.ruby-lang.org/en/) (we're using version **2.4.3**). 
+This component is implemented in [ruby](https://www.ruby-lang.org/en/), version **2.4.3**. 
 
 ### Installing from code
 
