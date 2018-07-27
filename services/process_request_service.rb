@@ -52,23 +52,40 @@ class ProcessRequestService
   end
 
   def self.enrich_one(request)
-    # deactivate this for now
-    return request
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
-    service_uuid = get_service_uuid(request)
-    if service_uuid.blank?
-      STDERR.puts "#{msg}: service_uuid is blank"
+    case request['request_type']
+    when 'CREATE_SERVICE'
+      service_uuid = request.delete 'service_uuid'
+      if service_uuid.blank?
+        STDERR.puts "#{msg}: service_uuid is blank"
+        return recursive_symbolize_keys(request) 
+      end
+    when 'TERMINATE_SERVICE'
+      request.delete 'service_uuid' if request.key? 'service_uuid'
+      if request['instance_uuid'].blank?
+        STDERR.puts "#{msg}: Network Service instance UUID is empty"
+        return recursive_symbolize_keys(request) 
+      end
+      service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
+      if service_record.blank?
+        STDERR.puts "#{msg}: Problem fetching service record for instance UUID '#{request['instance_uuid']}"
+        return recursive_symbolize_keys(request) 
+      end
+      if service_record['descriptor_reference'].blank?
+        STDERR.puts "#{msg}: Network Service UUID is empty in service record #{service_record}"
+        return recursive_symbolize_keys(request) 
+      end
+      service_uuid = service_record['descriptor_reference']
+    else
+      STDERR.puts "#{msg}: request type '#{request['request_type']}'"
       return recursive_symbolize_keys(request) 
     end
-    STDERR.puts "#{msg}: service_uuid='#{service_uuid}'"
     service = FetchNSDService.call(uuid: service_uuid)
-    STDERR.puts "#{msg}: service=#{service}"
     if service.blank?
       STDERR.puts "#{msg}: Network Service Descriptor '#{service_uuid}' wasn't found"
       return recursive_symbolize_keys(request) 
     end
-    request.delete :service_uuid
     enriched = request
     enriched[:service] = {}
     enriched[:service][:uuid] = service_uuid
@@ -80,8 +97,6 @@ class ProcessRequestService
   end
   
   def self.enrich(requests)
-    # deactivate this for now
-    return requests
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: requests=#{requests.inspect} (class #{requests.class})"
     enriched = []
@@ -92,21 +107,6 @@ class ProcessRequestService
   end
     
   private
-  def self.get_service_uuid(request)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: request=#{request}"
-    case request['request_type']
-    when 'CREATE_SERVICE'
-      return request['service_uuid']
-    when 'TERMINATE_SERVICE'
-      service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
-      STDERR.puts "#{msg}: service_record=#{service_record}"
-      return service_record['descriptor_reference']
-    else
-      STDERR.puts "#{msg}: '#{request['request_type']}' not valid as a request type"
-      return nil
-    end
-  end
   
   def self.create_service(params)
     msg=self.name+'.'+__method__.to_s
@@ -159,7 +159,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: before validation..."
       valid = valid_terminate_service_params?(params)
       STDERR.puts "#{msg}: valid is #{valid}"
-      unless valid == {}
+      unless valid.blank?
         STDERR.puts "#{msg}: validation failled with error '#{valid[:error]}'"
         return valid
       end
@@ -216,10 +216,14 @@ class ProcessRequestService
     return {error: "Instance UUID '#{params[:instance_uuid]}' is not valid"} unless valid_uuid?(params[:instance_uuid])
     STDERR.puts "#{msg}: params[:instance_uuid] has a valid UUID..."
     STDERR.puts "#{msg}: before Request.where: #{ActiveRecord::Base.connection_pool.stat}"
-    request = Request.where('instance_uuid = ?',params[:instance_uuid]).as_json.first
+    request = Request.where('instance_uuid = ? and request_type = ?', params[:instance_uuid], 'CREATE_SERVICE').as_json
     STDERR.puts "#{msg}: after Request.where: #{ActiveRecord::Base.connection_pool.stat}"
     STDERR.puts "#{msg}: request=#{request}"
-    return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' not found"} if request.empty?
+    if request.is_a?(Array)
+      STDERR.puts "#{msg}: request is an array, chosen #{request[0]}"
+      request = request[0] 
+    end
+    return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' not found"} if request.blank?
     STDERR.puts "#{msg}: found params[:instance_uuid]"
     #STDERR.puts "#{msg}: request['status']='#{request['status']}'"
     #return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' is #{request['status']}' (and not 'READY')"} unless request['status'] == 'READY'

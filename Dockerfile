@@ -40,6 +40,7 @@ COPY Gemfile /app
 RUN bundle install
 COPY . /app
 EXPOSE 5000
+ENV POSTGRES_DB gatekeeper
 ENV POSTGRES_PASSWORD tango
 ENV POSTGRES_USER tangodefault
 ENV DATABASE_HOST son-postgres
@@ -48,6 +49,7 @@ ENV DATABASE_PORT 5432
 ENV MQSERVER_URL=amqp://guest:guest@son-broker:5672
 ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
 ENV REPOSITORY_URL=http://tng-rep:4012
+ENV POLICY_MNGR_URL=http://tng-policy-mngr:8081/api/v1
 ENV PORT 5000
 #CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
 #CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
