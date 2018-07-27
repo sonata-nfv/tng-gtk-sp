@@ -216,7 +216,7 @@ class ProcessRequestService
     return {error: "Instance UUID '#{params[:instance_uuid]}' is not valid"} unless valid_uuid?(params[:instance_uuid])
     STDERR.puts "#{msg}: params[:instance_uuid] has a valid UUID..."
     STDERR.puts "#{msg}: before Request.where: #{ActiveRecord::Base.connection_pool.stat}"
-    request = Request.where('instance_uuid = ? and request_type = ?', params[:instance_uuid], 'CREATE_SERVICE').as_json
+    request = Request.where(instance_uuid: params[:instance_uuid], request_type: 'CREATE_SERVICE').as_json
     STDERR.puts "#{msg}: after Request.where: #{ActiveRecord::Base.connection_pool.stat}"
     STDERR.puts "#{msg}: request=#{request}"
     if request.is_a?(Array)
