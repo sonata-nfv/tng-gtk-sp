@@ -30,28 +30,23 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-require 'sinatra/base'
-require 'rack-timeout-puma'
-require 'active_record/rack'
-require './controllers/application_controller.rb'
-require './controllers/requests_controller.rb'
-require './controllers/policies_controller.rb'
-require './controllers/pings_controller.rb'
-require './controllers/root_controller.rb'
-require './controllers/records_controller.rb'
-require './models/request'
-Dir.glob('./services/*.rb').each { |file| require file }
+require 'net/http'
+require 'ostruct'
+require 'json'
+require_relative './fetch_service'
 
-ENV['RACK_ENV'] ||= 'production'
+class ProcessPlacementPolicyService < FetchService
+  
+  NO_POLICY_MNGR_URL_DEFINED_ERROR='The POLICY_MNGR_URL ENV variable needs to defined and pointing to the Policy Manager where to manage policies'
+  POLICY_MNGR_URL = ENV.fetch('POLICY_MNGR_URL', '')
+  if POLICY_MNGR_URL == ''
+    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'ProcessPlacementPolicyService', NO_POLICY_MNGR_URL_DEFINED_ERROR]
+    raise ArgumentError.new(NO_POLICY_MNGR_URL_DEFINED_ERROR) 
+  end
+  self.site=POLICY_MNGR_URL+'/placement'
+  
+  def self.add(params)
+  end
+end
 
-# from https://github.com/keyme/rack-timeout-puma
-use Rack::Timeout
-use Rack::Timeout::Puma
-use ActiveRecord::Rack::ConnectionManagement
 
-map('/requests') { run RequestsController } 
-#map('/configurations/infra') { run ConfigurationsInfraController } 
-map('/records') { run RecordsController } 
-map('/policies') { run PoliciesController } 
-map('/pings') { run PingsController }
-map('/') { run RootController }
