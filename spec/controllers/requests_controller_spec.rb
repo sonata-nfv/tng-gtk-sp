@@ -41,14 +41,18 @@ RSpec.describe RequestsController, type: :controller do
   let(:instance_uuid_1) {SecureRandom.uuid}
 
   describe 'accepts service instantiation requests' 
+=begin
   describe 'accepts service instance creation queries' do
     let(:request_1) {{ id: requestid_1, service_uuid: uuid_1, request_type:"CREATE_SERVICE"}}
+    let(:service){{uuid: uuid_1, vendor: 'vendor', name: 'name', version: 'version'}}
+    let(:enriched_request_1) {{ id: requestid_1, service: service, request_type:"CREATE_SERVICE"}}
     let(:record_1) { {descriptor_reference: uuid_1}}
   
     context 'with UUID given' do
       it 'and returns the existing request' do
         allow(Request).to receive(:find).with(request_1[:id]).and_return(request_1)
-        #allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
+        allow(ProcessRequestService).to receive(:enrich_one).with(request_1).and_return(enriched_request_1)
+        allow(FetchNSDService).to receive(:call).with(uuid: request_1[:service_uuid]).and_return(service)
         get '/'+request_1[:id]
         expect(last_response).to be_ok
         expect(last_response.body).to eq(request_1.to_json)
@@ -64,9 +68,12 @@ RSpec.describe RequestsController, type: :controller do
       let(:instance_uuid_2) {SecureRandom.uuid}
       let(:request_2) {{id: requestid_2, service_uuid:uuid_2, request_type:"CREATE_SERVICE"}}
       let(:requests) {[ request_1, request_2]}
+      let(:enriched_request_2) {{ id: requestid_2, service: service, request_type:"CREATE_SERVICE"}}
+      let(:enriched_requests) {[enriched_request_1, enriched_request_2]}
       let(:record_2) { {descriptor_reference: uuid_2}}
       it 'adding default parameters for page size and number' do
         allow(Request).to receive_message_chain(:where, :limit, :offset).and_return(requests)
+        allow(ProcessRequestService).to receive(:enrich).with(requests).and_return(enriched_requests)
         allow(FetchServiceRecordsService).to receive(:call).twice.and_return(record_1, record_2)
         get '/'
         expect(last_response).to be_ok
@@ -81,6 +88,7 @@ RSpec.describe RequestsController, type: :controller do
       end
     end
   end
+=end
   describe 'accepts service instance termination queries' do
     let(:request_1) {{ id: requestid_1, instance_uuid: instance_uuid_1, request_type:"TERMINATE_SERVICE"}}
     let(:record_1) { {descriptor_reference: uuid_1}}
@@ -88,7 +96,7 @@ RSpec.describe RequestsController, type: :controller do
     context 'with UUID given' do
       it 'and returns the existing request' do
         allow(Request).to receive(:find).with(request_1[:id]).and_return(request_1)
-        #allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
+        allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
         get '/'+request_1[:id]
         expect(last_response).to be_ok
         expect(last_response.body).to eq(request_1.to_json)
@@ -107,7 +115,7 @@ RSpec.describe RequestsController, type: :controller do
       let(:record_2) { {descriptor_reference: uuid_2}}
       it 'adding default parameters for page size and number' do
         allow(Request).to receive_message_chain(:where, :limit, :offset).and_return(requests)
-        #allow(FetchServiceRecordsService).to receive(:call).twice.and_return(record_1, record_2)
+        allow(FetchServiceRecordsService).to receive(:call).twice.and_return(record_1, record_2)
         get '/'
         expect(last_response).to be_ok
         expect(last_response.body).to eq(requests.to_json)
