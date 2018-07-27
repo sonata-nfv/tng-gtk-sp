@@ -51,8 +51,10 @@ class RequestsController < ApplicationController
   #ERROR_SERVICE_UUID_IS_MISSING="Service UUID is a mandatory parameter (absent from the '%s' request)"
   ERROR_REQUEST_NOT_FOUND="Request with UUID '%s' was not found"
   
-  STDERR.puts "INFO: RequestsController: ActiveRecord pool size=#{ActiveRecord::Base.connection.pool.size}"
-  before { content_type :json}
+  before do 
+    STDERR.puts "INFO: RequestsController: ActiveRecord pool size=#{ActiveRecord::Base.connection.pool.size}"
+    content_type :json
+  end
   #after  {ActiveRecord::Base.clear_active_connections!}
   after  {ActiveRecord::Base.connection.close}
 
