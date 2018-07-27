@@ -71,7 +71,7 @@ class RequestsController < ApplicationController
       saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
       STDERR.puts "#{msg}: saved_request='#{saved_request.inspect}'"
       #halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
-      halt_with_code_body(400, {error: "Error saving request"}.to_json) if saved_request.to_s.empty? 
+      halt_with_code_body(400, {error: "Error saving request"}.to_json) if saved_request.blank? 
       halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
       halt_with_code_body(201, saved_request.to_json)
     rescue ArgumentError => e
