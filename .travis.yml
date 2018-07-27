@@ -46,6 +46,7 @@ env:
     - MQSERVER_URL=amqp://guest:guest@broker:5672
     - CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
     - REPOSITORY_URL=http://tng-rep:4012
+    - POLICY_MNGR_URL=http://tng-policy-mngr:8081/api/v1
 before_script:
 #  - cp config/database.yml.travis config/database.yml
 #  - psql -c 'create database gatekeeper;' -U postgres
