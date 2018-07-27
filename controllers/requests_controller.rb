@@ -117,7 +117,6 @@ class RequestsController < ApplicationController
     begin
       STDERR.puts "#{msg}: before Request.where: #{ActiveRecord::Base.connection_pool.stat}"
       requests = Request.where(sanitized_params).limit(page_size).offset(page_number).order(updated_at: :desc)
-      User.order(email: :desc)
       STDERR.puts "#{msg}: after Request.where: #{ActiveRecord::Base.connection_pool.stat}"
       STDERR.puts "#{msg}: requests='#{requests.inspect}'"
       headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
