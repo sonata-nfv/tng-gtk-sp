@@ -112,8 +112,10 @@ class RequestsController < ApplicationController
     page_number, page_size, sanitized_params = sanitize(params)
     STDERR.puts "#{msg}: page_number, page_size, sanitized_params=#{page_number}, #{page_size}, #{sanitized_params}"
     begin
+      STDERR.puts "#{msg}: before Request.where: #{ActiveRecord::Base.connection_pool.stat}"
       requests = Request.where(sanitized_params).limit(page_size).offset(page_number)
-      STDERR.puts "#{msg}: requests='#{requests}'"
+      STDERR.puts "#{msg}: after Request.where: #{ActiveRecord::Base.connection_pool.stat}"
+      STDERR.puts "#{msg}: requests='#{requests.inspect}'"
       headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
       #halt 200, ProcessRequestService.enrich(requests.to_a).to_json
       halt 200, requests.to_json
