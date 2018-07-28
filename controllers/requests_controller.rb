@@ -56,7 +56,7 @@ class RequestsController < ApplicationController
     content_type :json
   end
   #after  {ActiveRecord::Base.clear_active_connections!}
-  after  {ActiveRecord::Base.connection.close}
+  after  {ActiveRecord::Base.clear_all_connections!}
 
   # Accept service instantiation requests
   post '/?' do
