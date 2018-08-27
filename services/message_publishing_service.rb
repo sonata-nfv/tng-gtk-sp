@@ -102,9 +102,10 @@ class MessagePublishingService
             #request = Request.find_by(id: properties[:correlation_id])
             request = Request.find(properties[:correlation_id])
             if request
-              STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
+              STDERR.puts "#{msg}: status #{request['status']} updated to #{status}"
               request['status']=status
               if request['error']
+                request['error'] = parsed_payload['error']
                 STDERR.puts "#{msg}: error was #{request['error']}"
               end
               # if this is a final answer, there'll be an NSR
