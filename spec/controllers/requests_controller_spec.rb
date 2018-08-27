@@ -121,12 +121,12 @@ RSpec.describe RequestsController, type: :controller do
 #        expect(last_response.body).to eq(requests.to_json)
 #      end
   
-      it 'returning Ok (200) and an empty array when no service is found' do
-        allow(Request).to receive_message_chain(:where, :limit, :offset).and_raise(ActiveRecord::RecordNotFound)
-        get '/'
-        expect(last_response).to be_ok
-        expect(last_response.body).to eq([].to_json)
-      end
+#      it 'returning Ok (200) and an empty array when no service is found' do
+#        allow(Request).to receive_message_chain(:where, :limit, :offset).and_raise(ActiveRecord::RecordNotFound)
+#        get '/'
+#        expect(last_response).to be_ok
+#        expect(last_response.body).to eq([].to_json)
+#      end
     end
   end
 end
