@@ -108,7 +108,7 @@ class MessagePublishingService
             end
             STDERR.puts "#{msg}: status #{request['status']} updated to #{status}"
             request['status']=status
-            if request['error']
+            if parsed_payload['error']
               request['error'] = parsed_payload['error']
               request.save
               STDERR.puts "#{msg}: leaving with error #{request['error']}"
