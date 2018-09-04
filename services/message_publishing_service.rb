@@ -112,24 +112,21 @@ class MessagePublishingService
               request['error'] = parsed_payload['error']
               request.save
               STDERR.puts "#{msg}: leaving with error #{request['error']}"
-              return
+            else
+              unless parsed_payload.key?('nsr')
+                STDERR.puts "#{msg}: leaving with no 'nsr' key in #{parsed_payload}"
+              else
+                # if this is a final answer, there'll be an NSR
+                service_instance = parsed_payload['nsr']
+                if service_instance && service_instance.key?('id')
+                  instance_uuid = parsed_payload['nsr']['id']
+                  STDERR.puts "#{msg}: request['instance_uuid'] #{request['instance_uuid']} turned into #{instance_uuid}"
+                  request['instance_uuid'] = instance_uuid
+                end
+                request.save
+                STDERR.puts "#{msg}: request #{request} saved"
+              end
             end
-          
-            unless parsed_payload.key?('nsr')
-              STDERR.puts "#{msg}: leaving with no 'nsr' key in #{parsed_payload}"
-              return
-            end
-          
-            # if this is a final answer, there'll be an NSR
-            service_instance = parsed_payload['nsr']
-            if service_instance && service_instance.key?('id')
-              instance_uuid = parsed_payload['nsr']['id']
-              STDERR.puts "#{msg}: request['instance_uuid'] #{request['instance_uuid']} turned into #{instance_uuid}"
-              request['instance_uuid'] = instance_uuid
-            end
-
-            request.save
-            STDERR.puts "#{msg}: request saved"
           end
         end
       rescue Exception => e
