@@ -73,12 +73,13 @@ class RequestsController < ApplicationController
       saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
       STDERR.puts "#{msg}: saved_request='#{saved_request.inspect}'"
       #halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
-      halt_with_code_body(400, {error: "Error saving request"}.to_json) if saved_request.blank? 
+      halt_with_code_body(400, {error: "Error saving request"}.to_json) if !saved_request
       halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
       #halt_with_code_body(201, saved_request.to_json)
       halt_with_code_body(201, ProcessRequestService.enrich_one(saved_request).to_json)
 
     rescue ArgumentError => e
+      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
       halt_with_code_body(404, {error: e.message}.to_json)
     rescue JSON::ParserError => e
       halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:service_uuid]}.to_json)
@@ -97,14 +98,13 @@ class RequestsController < ApplicationController
       single_request = Request.find(params[:request_uuid]).as_json
       STDERR.puts "#{msg}: after Request.find: #{ActiveRecord::Base.connection_pool.stat}"
       STDERR.puts "#{msg}: single_request='#{single_request}' (class #{single_request.class})"
-      halt_with_code_body(200, ProcessRequestService.enrich_one(single_request).to_json) unless single_request.blank?
-      #halt_with_code_body(200, single_request.to_json) unless single_request.blank?
+      halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json) if (!single_request || single_request.empty?)
+      halt_with_code_body(200, ProcessRequestService.enrich_one(single_request).to_json)
     rescue Exception => e
 			ActiveRecord::Base.clear_active_connections!
       halt_with_code_body(404, {error: e.message}.to_json)
       raise
     end
-    halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json)
   end
 
   # GET many requests
@@ -159,5 +159,4 @@ class RequestsController < ApplicationController
   def symbolized_hash(hash)
     Hash[hash.map{|(k,v)| [k.to_sym,v]}]
   end
-  
 end

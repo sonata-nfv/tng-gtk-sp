@@ -50,14 +50,14 @@ class PoliciesController < ApplicationController
     halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) unless request.content_type =~ /^application\/json/
 
     body = request.body.read
-    halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.blank?
+    halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if (!body || body.empty?)
     params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
     halt_with_code_body(400, ERROR_POLICY_IS_MISSING % params) unless params.key?(:policy)
     
     begin
       added_policy = ProcessPlacementPolicyService.add(params.deep_symbolize_keys)
       STDERR.puts "#{msg}: added_policy='#{added_policy}'"
-      halt_with_code_body(400, {error: "Placement policy '#{params[:policy]}' not added"}.to_json) if added_policy.blank?
+      halt_with_code_body(400, {error: "Placement policy '#{params[:policy]}' not added"}.to_json) if (!added_policy || added_policy.empty?)
       halt_with_code_body(404, {error: added_policy[:error]}.to_json) if (added_policy.is_a?(Hash) && added_policy.key?(:error))
       halt_with_code_body(200, added_policy.to_json)
     rescue ArgumentError => e
@@ -75,11 +75,11 @@ class PoliciesController < ApplicationController
     captures=params.delete('captures') if params.key? 'captures'
     begin
       single_request = ProcessPlacementPolicyService.call(params[:placement_policy_uuid])
-      halt_with_code_body(200, single_request.to_json) unless single_request.blank?
+      halt_with_code_body(404, {error: ERROR_POLICY_NOT_FOUND % params[:placement_policy_uuid]}.to_json) if (!single_request || single_request.empty?)
+      halt_with_code_body(200, single_request.to_json)
     rescue Exception => e
       halt_with_code_body(404, {error: e.message}.to_json)
     end
-    halt_with_code_body(404, {error: ERROR_POLICY_NOT_FOUND % params[:placement_policy_uuid]}.to_json)
   end
 
   # GET many requests
@@ -121,5 +121,4 @@ class PoliciesController < ApplicationController
   def symbolized_hash(hash)
     Hash[hash.map{|(k,v)| [k.to_sym,v]}]
   end
-  
 end
