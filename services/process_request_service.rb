@@ -57,22 +57,22 @@ class ProcessRequestService
     case request['request_type']
     when 'CREATE_SERVICE'
       service_uuid = request.delete 'service_uuid'
-      if service_uuid.blank?
+      if (!service_uuid || service_uuid.empty?)
         STDERR.puts "#{msg}: service_uuid is blank"
         return recursive_symbolize_keys(request) 
       end
     when 'TERMINATE_SERVICE'
       request.delete 'service_uuid' if request.key? 'service_uuid'
-      if request['instance_uuid'].blank?
+      if (!request['instance_uuid'] || request['instance_uuid'].empty?)
         STDERR.puts "#{msg}: Network Service instance UUID is empty"
         return recursive_symbolize_keys(request) 
       end
       service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
-      if service_record.blank?
+      if (!service_record || service_record.empty?)
         STDERR.puts "#{msg}: Problem fetching service record for instance UUID '#{request['instance_uuid']}"
         return recursive_symbolize_keys(request) 
       end
-      if service_record['descriptor_reference'].blank?
+      if (!service_record['descriptor_reference'] | service_record['descriptor_reference'].empty?)
         STDERR.puts "#{msg}: Network Service UUID is empty in service record #{service_record}"
         return recursive_symbolize_keys(request) 
       end
@@ -82,7 +82,7 @@ class ProcessRequestService
       return recursive_symbolize_keys(request) 
     end
     service = FetchNSDService.call(uuid: service_uuid)
-    if service.blank?
+    if (!service || service.empty?)
       STDERR.puts "#{msg}: Network Service Descriptor '#{service_uuid}' wasn't found"
       return recursive_symbolize_keys(request) 
     end
@@ -112,30 +112,31 @@ class ProcessRequestService
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: params=#{params}"
     begin
-      unless (valid = valid_create_service_params?(params)) == {}
+      valid = valid_create_service_params?(params)
+      if (valid && valid.key?(:error) )
         STDERR.puts "#{msg}: validation failled with error #{valid[:error]}"
         return valid
       end
       
-      complete_params = complete_params(params)
-      STDERR.puts "#{msg}: completed params=#{complete_params}"
-      stored_service = FetchNSDService.call(uuid: complete_params[:service_uuid])
+      completed_params = complete_params(params)
+      STDERR.puts "#{msg}: completed params=#{completed_params}"
+      stored_service = FetchNSDService.call(uuid: completed_params[:service_uuid])
       STDERR.puts "#{msg}: stored_service=#{stored_service} (#{stored_service.class})"
-      return stored_service if stored_service.blank?
+      return stored_service if (!stored_service || stored_service.empty?)
       functions_to_fetch = stored_service[:nsd][:network_functions]
       STDERR.puts "#{msg}: functions_to_fetch=#{functions_to_fetch}"
       stored_functions = fetch_functions(functions_to_fetch)
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
-      return stored_functions if stored_functions == nil 
-      instantiation_request = Request.create(complete_params)
+      return nil if stored_functions == nil 
+      instantiation_request = Request.create(completed_params).as_json
       unless instantiation_request
         STDERR.puts "#{msg}: Failled to create instantiation_request"
         return {error: "Failled to create instantiation request for service '#{params[:service_uuid]}'"}
       end
       STDERR.puts "#{msg}: instantiation_request=#{instantiation_request.inspect}"
-      complete_user_data = FetchUserDataService.call( complete_params[:customer_uuid], stored_service[:username], complete_params[:sla_id])
+      complete_user_data = FetchUserDataService.call( completed_params[:customer_uuid], stored_service[:username], completed_params[:sla_id])
       STDERR.puts "#{msg}: complete_user_data=#{complete_user_data}"
-      message = build_message(stored_service, stored_functions, complete_params[:egresses], complete_params[:ingresses], complete_params[:blacklist], complete_user_data)
+      message = build_message(stored_service, stored_functions, completed_params[:egresses], completed_params[:ingresses], completed_params[:blacklist], complete_user_data)
       STDERR.puts "#{msg}: instantiation_request[:id]=#{instantiation_request[:id]}"
       published_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
       STDERR.puts "#{msg}: published_response=#{published_response}"
@@ -159,7 +160,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: before validation..."
       valid = valid_terminate_service_params?(params)
       STDERR.puts "#{msg}: valid is #{valid}"
-      unless valid.blank?
+      if (valid && valid.key?(:error) )
         STDERR.puts "#{msg}: validation failled with error '#{valid[:error]}'"
         return valid
       end
@@ -204,7 +205,7 @@ class ProcessRequestService
   end
   
   def self.valid_create_service_params?(params)
-    return {error: "Creation of a service needs the service UUID"} if params[:service_uuid] == ''
+    return {error: "Creation of a service needs the service UUID"} if params[:service_uuid].empty?
     {}
   end
   
@@ -223,7 +224,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: request is an array, chosen #{request[0]}"
       request = request[0] 
     end
-    return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' not found"} if request.blank?
+    return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' not found"} if (!request || request.empty?)
     STDERR.puts "#{msg}: found params[:instance_uuid]"
     #STDERR.puts "#{msg}: request['status']='#{request['status']}'"
     #return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' is #{request['status']}' (and not 'READY')"} unless request['status'] == 'READY'
@@ -285,7 +286,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: function=#{function}"
       found_function = FetchVNFDsService.call({vendor: function[:vnf_vendor], name: function[:vnf_name], version: function[:vnf_version]})
       STDERR.puts "#{msg}: found_function=#{found_function}"
-      if found_function.blank?
+      if (!found_function || found_function.empty?)
         STDERR.puts "#{msg}: Function #{function} not found"
         return nil
       end
