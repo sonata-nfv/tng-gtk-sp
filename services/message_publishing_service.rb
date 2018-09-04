@@ -101,7 +101,7 @@ class MessagePublishingService
           status = parsed_payload['status']
           if status
             STDERR.puts "#{msg}: status: #{status}"
-            request = Request.find(properties[:correlation_id])
+            request = Request.find(properties[:correlation_id]).as_json
             unless request
               STDERR.puts "#{msg}: request #{properties[:correlation_id]} not found"
               return
