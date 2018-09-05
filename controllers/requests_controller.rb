@@ -75,8 +75,8 @@ class RequestsController < ApplicationController
       #halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if !saved_request
       halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
-      #halt_with_code_body(201, saved_request.to_json)
-      halt_with_code_body(201, ProcessRequestService.enrich_one(saved_request).to_json)
+      halt_with_code_body(201, saved_request.to_json)
+      #halt_with_code_body(201, ProcessRequestService.enrich_one(saved_request).to_json)
 
     rescue ArgumentError => e
       STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"

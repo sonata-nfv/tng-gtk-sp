@@ -128,7 +128,7 @@ class ProcessRequestService
       stored_functions = fetch_functions(functions_to_fetch)
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
       return nil if stored_functions == nil 
-      instantiation_request = Request.create(completed_params).as_json
+      instantiation_request = Request.create(completed_params) #.as_json
       unless instantiation_request
         STDERR.puts "#{msg}: Failled to create instantiation_request"
         return {error: "Failled to create instantiation request for service '#{params[:service_uuid]}'"}
