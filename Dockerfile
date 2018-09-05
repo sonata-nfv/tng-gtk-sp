@@ -51,7 +51,7 @@ ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
 ENV REPOSITORY_URL=http://tng-rep:4012
 ENV POLICY_MNGR_URL=http://tng-policy-mngr:8081/api/v1
 ENV PORT 5000
-CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
+#CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
 #CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
-#CMD ["bundle", "exec", "thin", "-p", "5000", "-D", "start"]
+CMD ["bundle", "exec", "thin", "-p", "5000", "-D", "start"]
 
