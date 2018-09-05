@@ -72,7 +72,7 @@ class ProcessRequestService
         STDERR.puts "#{msg}: Problem fetching service record for instance UUID '#{request['instance_uuid']}"
         return recursive_symbolize_keys(request) 
       end
-      if (!service_record['descriptor_reference'] | service_record['descriptor_reference'].empty?)
+      if (!service_record['descriptor_reference'] || service_record['descriptor_reference'].empty?)
         STDERR.puts "#{msg}: Network Service UUID is empty in service record #{service_record}"
         return recursive_symbolize_keys(request) 
       end
