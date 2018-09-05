@@ -128,12 +128,12 @@ class ProcessRequestService
       stored_functions = fetch_functions(functions_to_fetch)
       STDERR.puts "#{msg}: stored_functions=#{stored_functions}"
       return nil if stored_functions == nil 
-      instantiation_request = Request.create(completed_params) #.as_json
+      instantiation_request = Request.create(completed_params).as_json
+      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request} (class #{instantiation_request.class})"
       unless instantiation_request
         STDERR.puts "#{msg}: Failled to create instantiation_request"
         return {error: "Failled to create instantiation request for service '#{params[:service_uuid]}'"}
       end
-      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request.inspect}"
       complete_user_data = FetchUserDataService.call( completed_params[:customer_uuid], stored_service[:username], completed_params[:sla_id])
       STDERR.puts "#{msg}: complete_user_data=#{complete_user_data}"
       message = build_message(stored_service, stored_functions, completed_params[:egresses], completed_params[:ingresses], completed_params[:blacklist], complete_user_data)
