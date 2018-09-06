@@ -168,6 +168,7 @@ class ProcessRequestService
         STDERR.puts "#{msg}: validation failled with error '#{valid[:error]}'"
         return valid
       end
+      params[:name] = valid[:name]
       termination_request = Request.create(params).as_json
       STDERR.puts "#{msg}: termination_request=#{termination_request}"
       unless termination_request
@@ -235,7 +236,7 @@ class ProcessRequestService
     #record = FetchServiceRecordsService(uuid: params[:instance_uuid])
     #STDERR.puts "#{msg}: record=#{record.inspect} (class #{record.class})"
     #return {error: "Service instance UUID '#{params[:instance_uuid]}' not found"} if (record.empty? || record.nil?)
-    {}
+    {name: request['name']}
   end
   
   # https://stackoverflow.com/questions/8379596/how-do-i-convert-a-ruby-hash-so-that-all-of-its-keys-are-symbols
