@@ -69,11 +69,12 @@ class FetchServiceRecordsService < FetchService
     case request
     when Hash
       return record if request.empty?
-      record[:instance_name] = request[:name]
+      STDERR.puts "#{msg}: request name = '#{request['name']}'"
+      record[:instance_name] = request['name']
     when Array
       return record if request.empty?
       STDERR.puts "#{msg}: more than one request for the instance uuid '#{record[:uuid]}' were found, only the first was taken"
-      record[:instance_name] = request[0][:name]
+      record[:instance_name] = request[0]['name']
     else
       STDERR.puts "#{msg}: request #{request} wasn't Hash nor Array"
     end
