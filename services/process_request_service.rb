@@ -99,6 +99,10 @@ class ProcessRequestService
   def self.enrich(requests)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: requests=#{requests.inspect} (class #{requests.class})"
+    unless requests.is_a?(Array)
+      STDERR.puts "#{msg}: requests needs to be an array"
+      return requests
+    end
     enriched = []
     requests.each do |request|
       enriched << enrich_one(request.as_json)

@@ -119,11 +119,11 @@ class RequestsController < ApplicationController
     begin
       STDERR.puts "#{msg}: before Request.limit.offset.order: #{ActiveRecord::Base.connection_pool.stat}"
       #       requests = Request.where(sanitized_params).limit(page_size).offset(page_number).order(updated_at: :desc)
-      requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc)
+      requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
       STDERR.puts "#{msg}: after Request.limit.offset.order: #{ActiveRecord::Base.connection_pool.stat}"
       STDERR.puts "#{msg}: requests='#{requests.inspect}'"
       headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
-      halt 200, ProcessRequestService.enrich(requests.to_a).to_json
+      halt 200, ProcessRequestService.enrich(requests).to_json
       #halt 200, requests.to_json
     rescue ActiveRecord::RecordNotFound => e
       halt 200, '[]'
