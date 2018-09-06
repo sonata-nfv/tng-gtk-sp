@@ -165,27 +165,22 @@ class MessagePublishingService
           parsed_payload = YAML.load(payload)
           STDERR.puts "#{msg}: parsed_payload: #{parsed_payload}"
           status = parsed_payload['status']
-          if status
+          unless status
+            STDERR.puts "#{msg}: no status"
+          else
             STDERR.puts "#{msg}: status: #{status}"
             request = Request.find(properties[:correlation_id])
-            if request
-              STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
-              request['status']=status
-              if request['error']
-                STDERR.puts "#{msg}: error was #{request['error']}"
-              end
-              # if this is a final answer, there'll be an NSR
-              service_instance = parsed_payload['nsr']
-              if service_instance && service_instance.key?('id')
-                instance_uuid = parsed_payload['nsr']['id']
-                STDERR.puts "#{msg}: request['instance_uuid'] #{request['instance_uuid']} turned into #{instance_uuid}"
-                request['instance_uuid'] = instance_uuid
-              end
-
-              request.save
-              STDERR.puts "#{msg}: request saved"
+            unless request
+              STDERR.puts "#{msg}: request '#{properties[:correlation_id]}' not found"
             else
-              STDERR.puts "#{msg}: request #{properties[:correlation_id]} not found"
+              STDERR.puts "#{msg}: status '#{request['status']}' updated to '#{status}'"
+              request['status']=status
+              if parsed_payload['error']
+                request['error'] = parsed_payload['error']
+                STDERR.puts "#{msg}: recorded error '#{request['error']}'"
+              end
+              request.save
+              STDERR.puts "#{msg}: request #{request} saved"
             end
           end
         end

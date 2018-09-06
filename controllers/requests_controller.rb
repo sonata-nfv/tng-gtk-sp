@@ -127,6 +127,11 @@ class RequestsController < ApplicationController
       #halt 200, requests.to_json
     rescue ActiveRecord::RecordNotFound => e
       halt 200, '[]'
+    rescue Exception => e
+      STDERR.puts "#{msg}: Exception caught, ActiveRecord::Base.clear_active_connections!"
+      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
+			ActiveRecord::Base.clear_active_connections!
+      raise
     end
   end
   
