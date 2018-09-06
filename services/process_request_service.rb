@@ -164,18 +164,18 @@ class ProcessRequestService
       STDERR.puts "#{msg}: before validation..."
       valid = valid_terminate_service_params?(params)
       STDERR.puts "#{msg}: valid is #{valid}"
-      if (valid && valid.key?(:error) )
+      if (valid && !valid.empty? && valid.key?(:error) )
         STDERR.puts "#{msg}: validation failled with error '#{valid[:error]}'"
         return valid
       end
-      termination_request = Request.create(params)
+      termination_request = Request.create(params).as_json
+      STDERR.puts "#{msg}: termination_request=#{termination_request}"
       unless termination_request
         STDERR.puts "#{msg}: Failled to create termination_request"
         return {error: "Failled to create termination request for service instance '#{params[:instance_uuid]}'"}
       end
-      STDERR.puts "#{msg}: termination_request=#{termination_request.inspect}"
-      published_response = MessagePublishingService.call({'service_instance_uuid'=> params[:instance_uuid]}.to_yaml.to_s, :terminate_service, termination_request[:id])
-      STDERR.puts "#{msg}: published_response=#{published_response}"
+      published_response = MessagePublishingService.call({'service_instance_uuid'=> params[:instance_uuid]}.to_yaml.to_s, :terminate_service, termination_request['id'])
+      STDERR.puts "#{msg}: published_response=#{published_response.inspect}"
     rescue StandardError => e
       STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.spli('\n\t')}"
       return nil
@@ -229,7 +229,7 @@ class ProcessRequestService
       request = request[0] 
     end
     return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' not found"} if (!request || request.empty?)
-    STDERR.puts "#{msg}: found params[:instance_uuid]"
+    STDERR.puts "#{msg}: found creation request for instance uuid '#{params[:instance_uuid]}': #{request}"
     #STDERR.puts "#{msg}: request['status']='#{request['status']}'"
     #return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' is #{request['status']}' (and not 'READY')"} unless request['status'] == 'READY'
     #record = FetchServiceRecordsService(uuid: params[:instance_uuid])
