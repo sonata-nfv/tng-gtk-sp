@@ -44,4 +44,39 @@ class FetchServiceRecordsService < FetchService
   end
   self.site=REPOSITORY_URL+'/nsrs'
   STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, "self.site=#{self.site}"]
+  
+  def self.call(params)
+    msg=self.name+'#'+__method__.to_s
+    service_records = super
+    case service_records
+    when Hash
+      return enrich_one(service_records)
+    when Array
+      enriched = []
+      service_records.each { |record| enriched << enrich_one(record)}
+      return enriched
+    else
+      service_records
+    end
+  end
+  
+  private
+  def self.enrich_one(record)
+    msg=self.name+'#'+__method__.to_s
+    STDERR.puts "#{msg}: record=#{record}"
+    request = Request.where(instance_uuid: record[:uuid]).as_json
+    STDERR.puts "#{msg}: request=#{request}"
+    case request
+    when Hash
+      return record if request.empty?
+      record[:instance_name] = request[:name]
+    when Array
+      return record if request.empty?
+      STDERR.puts "#{msg}: more than one request for the instance uuid '#{record[:uuid]}' were found, only the first was taken"
+      record[:instance_name] = request[0][:name]
+    else
+      STDERR.puts "#{msg}: request #{request} wasn't Hash nor Array"
+    end
+    record
+  end
 end
