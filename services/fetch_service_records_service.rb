@@ -64,7 +64,7 @@ class FetchServiceRecordsService < FetchService
   def self.enrich_one(record)
     msg=self.name+'#'+__method__.to_s
     STDERR.puts "#{msg}: record=#{record}"
-    request = Request.where(instance_uuid: record[:uuid]).as_json
+    request = Request.where("instance_uuid = ? AND request_type = 'CREATE_SERVICE'", record[:uuid]).as_json
     STDERR.puts "#{msg}: request=#{request}"
     case request
     when Hash
