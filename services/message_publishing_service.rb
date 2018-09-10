@@ -90,9 +90,11 @@ class MessagePublishingService
       begin
 
         # We know our own messages, so just skip them
-        unless properties[:app_id] == 'tng-gtk-sp'
+        if properties[:app_id] == 'tng-gtk-sp'
+          STDERR.puts "#{msg}: leaving, we know our own messages, so just skip them..."
+        else
           STDERR.puts "#{msg}: properties[:app_id]: #{properties[:app_id]}"
-        
+      
           # We're interested in app_id == 'son-plugin.slm'
           parsed_payload = YAML.load(payload)
           STDERR.puts "#{msg}: parsed_payload: #{parsed_payload}"
@@ -100,33 +102,38 @@ class MessagePublishingService
           if status
             STDERR.puts "#{msg}: status: #{status}"
             request = Request.find(properties[:correlation_id])
-            if request
-              STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
-              request['status']=status
-              if request['error']
-                STDERR.puts "#{msg}: error was #{request['error']}"
-              end
-              # if this is a final answer, there'll be an NSR
-              service_instance = parsed_payload['nsr']
-              if service_instance && service_instance.key?('id')
-                instance_uuid = parsed_payload['nsr']['id']
-                STDERR.puts "#{msg}: request['instance_uuid'] #{request['instance_uuid']} turned into #{instance_uuid}"
-                request['instance_uuid'] = instance_uuid
-              end
-
-              request.save
-              STDERR.puts "#{msg}: request saved"
-            else
+            unless request
               STDERR.puts "#{msg}: request #{properties[:correlation_id]} not found"
+              return
+            end
+            STDERR.puts "#{msg}: status #{request['status']} updated to #{status}"
+            request['status']=status
+            if parsed_payload['error']
+              request['error'] = parsed_payload['error']
+              request.save
+              STDERR.puts "#{msg}: leaving with error #{request['error']}"
+            else
+              unless parsed_payload.key?('nsr')
+                STDERR.puts "#{msg}: no 'nsr' key in #{parsed_payload}"
+              else
+                # if this is a final answer, there'll be an NSR
+                service_instance = parsed_payload['nsr']
+                if service_instance.key?('id')
+                  STDERR.puts "#{msg}: request['instance_uuid']='#{service_instance['id']}'"
+                  request['instance_uuid'] = service_instance['id']
+                else
+                  STDERR.puts "#{msg}: no service instance uuid"
+                end
+              end
+              request.save
+              STDERR.puts "#{msg}: request #{request} saved"
             end
           end
         end
       rescue Exception => e
         STDERR.puts "#{msg}: #{e.message} (#{e.class})"
         STDERR.puts "#{msg}: #{e.backtrace.split('\n\t')}"
-        #return
       end
-      STDERR.puts "#{msg}: leaving"
     end
   end
   
@@ -148,43 +155,39 @@ class MessagePublishingService
       begin
 
         # We know our own messages, so just skip them
-        unless properties[:app_id] == 'tng-gtk-sp'
+        # We know our own messages, so just skip them
+        if properties[:app_id] == 'tng-gtk-sp'
+          STDERR.puts "#{msg}: leaving, we know our own messages, so just skip them..."
+        else
           STDERR.puts "#{msg}: properties[:app_id]: #{properties[:app_id]}"
-        
+      
           # We're interested in app_id == 'son-plugin.slm'
           parsed_payload = YAML.load(payload)
           STDERR.puts "#{msg}: parsed_payload: #{parsed_payload}"
           status = parsed_payload['status']
-          if status
+          unless status
+            STDERR.puts "#{msg}: no status"
+          else
             STDERR.puts "#{msg}: status: #{status}"
             request = Request.find(properties[:correlation_id])
-            if request
-              STDERR.puts "#{msg}: request['status'] #{request['status']} turned into #{status}"
-              request['status']=status
-              if request['error']
-                STDERR.puts "#{msg}: error was #{request['error']}"
-              end
-              # if this is a final answer, there'll be an NSR
-              service_instance = parsed_payload['nsr']
-              if service_instance && service_instance.key?('id')
-                instance_uuid = parsed_payload['nsr']['id']
-                STDERR.puts "#{msg}: request['instance_uuid'] #{request['instance_uuid']} turned into #{instance_uuid}"
-                request['instance_uuid'] = instance_uuid
-              end
-
-              request.save
-              STDERR.puts "#{msg}: request saved"
+            unless request
+              STDERR.puts "#{msg}: request '#{properties[:correlation_id]}' not found"
             else
-              STDERR.puts "#{msg}: request #{properties[:correlation_id]} not found"
+              STDERR.puts "#{msg}: status '#{request['status']}' updated to '#{status}'"
+              request['status']=status
+              if parsed_payload['error']
+                request['error'] = parsed_payload['error']
+                STDERR.puts "#{msg}: recorded error '#{request['error']}'"
+              end
+              request.save
+              STDERR.puts "#{msg}: request #{request} saved"
             end
           end
         end
       rescue Exception => e
         STDERR.puts "#{msg}: #{e.message} (#{e.class})"
         STDERR.puts "#{msg}: #{e.backtrace.split('\n\t')}"
-        #return
       end
-      STDERR.puts "#{msg}: leaving"
     end
   end
 end
