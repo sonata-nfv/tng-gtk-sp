@@ -33,11 +33,24 @@
 FROM ruby:2.4.3-slim-stretch
 RUN apt-get update && \
     apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev libpq-dev && \
+          apt-get clean && \
+          apt-get autoremove && \
 	  rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /app/lib/local-gems
 WORKDIR /app
 COPY Gemfile /app
 RUN bundle install
+
+
+FROM ruby:2.4.3-slim-stretch
+COPY --from=0 /app/lib/local-gems /app/lib/local-gems
+COPY --from=0 /usr/local/bundle /usr/local/bundle
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends libcurl3 libcurl3-gnutls libcurl4-openssl-dev libpq-dev && \
+          apt-get clean && \
+          apt-get autoremove && \
+	  rm -rf /var/lib/apt/lists/*
+WORKDIR /app
 COPY . /app
 EXPOSE 5000
 ENV POSTGRES_DB gatekeeper
