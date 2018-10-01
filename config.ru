@@ -39,6 +39,7 @@ require './controllers/policies_controller.rb'
 require './controllers/pings_controller.rb'
 require './controllers/root_controller.rb'
 require './controllers/records_controller.rb'
+require './controllers/slice_instances_controller.rb'
 require './models/request'
 Dir.glob('./services/*.rb').each { |file| require file }
 
@@ -49,9 +50,10 @@ use Rack::Timeout
 use Rack::Timeout::Puma
 use ActiveRecord::Rack::ConnectionManagement
 
+map('/pings') { run PingsController }
+map('/policies') { run PoliciesController } 
+map('/records') { run RecordsController } 
 map('/requests') { run RequestsController } 
 #map('/configurations/infra') { run ConfigurationsInfraController } 
-map('/records') { run RecordsController } 
-map('/policies') { run PoliciesController } 
-map('/pings') { run PingsController }
+map('/slice-instances') { run SliceInstancesController } 
 map('/') { run RootController }
