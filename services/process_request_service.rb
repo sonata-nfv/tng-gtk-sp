@@ -45,7 +45,15 @@ class ProcessRequestService
     STDERR.puts "#{msg}: params=#{params}"
     
     begin
-      return send(request_type.downcase.to_sym, params)
+      # ToDo:
+      # This is temporary, the 'else' branch will disappear when we have this tested for the Slice creation only
+      if request_type == 'CREATE_SLICE'
+        klass_name = "Process#{ActiveSupport::Inflector.camelize(request_type.downcase)}Request"
+        klass = ActiveSupport::Inflector.constantize(klass_name)
+        return klass.call(params)
+      else
+        return send(request_type.downcase.to_sym, params)
+      end
     rescue NoMethodError => e
       raise ArgumentError.new("'#{request_type}' is not valid as a request type")
     end
@@ -304,4 +312,5 @@ class ProcessRequestService
     uuid.match /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/
     uuid == $&
   end
+  
 end

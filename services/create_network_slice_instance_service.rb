@@ -30,30 +30,48 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-FROM ruby:2.4.3-slim-stretch
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends build-essential libcurl3 libcurl3-gnutls libcurl4-openssl-dev libpq-dev && \
-	  rm -rf /var/lib/apt/lists/*
-RUN mkdir -p /app/lib/local-gems
-WORKDIR /app
-COPY Gemfile /app
-RUN bundle install
-COPY . /app
-EXPOSE 5000
-ENV POSTGRES_DB gatekeeper
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST son-postgres
-ENV DATABASE_PORT 5432
-#ENV DATABASE_URL=postgresql://tangodefault:tango@son-postgres:5432/gatekeeper
-ENV MQSERVER_URL=amqp://guest:guest@son-broker:5672
-ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
-ENV REPOSITORY_URL=http://tng-rep:4012
-ENV POLICY_MNGR_URL=http://tng-policy-mngr:8081/api/v1
-ENV SLM_URL=http://tng-slice-mngr:5998/api/
-ENV SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change
-ENV PORT 5000
-#CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
-#CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
-CMD ["bundle", "exec", "thin", "-p", "5000", "-D", "start"]
+require 'net/http'
+require 'uri'
+require 'json'
+
+class CreateNetworkSliceInstanceService 
+  NO_SLM_URL_DEFINED_ERROR='The SLM_URL ENV variable needs to be defined and pointing to the Slice Manager component, where to request new Network Slice instances'
+  SLM_URL = ENV.fetch('SLM_URL', '')
+  if SLM_URL == ''
+    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_SLM_URL_DEFINED_ERROR]
+    raise ArgumentError.new(NO_SLM_URL_DEFINED_ERROR) 
+  end
+  # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi, with body {...}
+  @@site=SLM_URL+'/nsilcm/v1/nsi'
+  STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, "@@site=#{@@site}"]
+  
+  def self.call(params)
+    msg=self.name+'#'+__method__.to_s
+    STDERR.puts "#{msg}: params=#{params} site=#{@@site}"
+    uri = URI.parse(@@site)
+
+    # Create the HTTP objects
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
+    request.body = params.to_json
+
+    # Send the request
+    begin
+      response = http.request(request)
+      STDERR.puts "#{msg}: response=#{response}"
+      case response
+      when Net::HTTPSuccess, Net::HTTPCreated
+        body = response.body
+        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      else
+        return {error: "#{response.message}"}
+      end
+    rescue Exception => e
+      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+    end
+    nil
+  end
+end
+
 

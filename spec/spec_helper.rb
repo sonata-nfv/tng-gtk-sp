@@ -38,13 +38,14 @@ ENV['RACK_ENV'] = 'test'
 #$LOAD_PATH << '../models'
 require_relative File.dirname(__FILE__) + '/../models/request'
 require_relative File.dirname(__FILE__) + '/../controllers/application_controller'
+require_relative File.dirname(__FILE__) + '/../controllers/functions_controller'
+require_relative File.dirname(__FILE__) + '/../controllers/pings_controller'
+require_relative File.dirname(__FILE__) + '/../controllers/policies_controller'
+require_relative File.dirname(__FILE__) + '/../controllers/records_controller'
 require_relative File.dirname(__FILE__) + '/../controllers/requests_controller'
 require_relative File.dirname(__FILE__) + '/../controllers/root_controller'
 require_relative File.dirname(__FILE__) + '/../controllers/pings_controller'
 require_relative File.dirname(__FILE__) + '/../controllers/services_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/functions_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/records_controller'
-require_relative File.dirname(__FILE__) + '/../services/message_publishing_service'
 Dir.glob('./services/*.rb').each { |file| require file }
 
 RSpec.configure do |config|

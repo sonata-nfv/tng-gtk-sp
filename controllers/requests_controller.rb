@@ -142,6 +142,29 @@ class RequestsController < ApplicationController
     halt 200
   end
   
+  # Callback for the tng-slice-mngr to notify the result of processing
+  post '/:request_uuid/on-change/?' do
+    msg='RequestsController#post /:request_uuid/on-change'
+    STDERR.puts "#{msg}: entered, request_uuid=#{params[:request_uuid]}, params=#{params}"
+    
+    #halt 400, {}, {error: ERROR_EVENT_CONTENT_TYPE % request.content_type}.to_json unless request.content_type =~ /application\/json/
+    begin
+      body = request.body.read
+      halt_with_code_body(400, "The callback is missing the event data") if body.empty?
+      event_data = JSON.parse(body, quirks_mode: true, symbolize_names: true)
+
+      event_data[:original_event_uuid] = params[:request_uuid]
+      STDERR.puts "#{msg}: event_data=#{event_data}"
+      result = ProcessCreateSliceInstanceRequest.process_callback(event_data)
+      STDERR.puts "#{msg}: result=#{result}"
+      halt 201, {}, result.to_json unless result.empty?
+      halt 404, {}, {error: "Package processing UUID not found in event #{event_data}"}.to_json
+    rescue JSON::ParserError, ActiveRecord::RecordNotFound, ArgumentError  => e
+      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
+      halt 400, {}, {error: e.message}.to_json
+    end
+  end  
+  
   private
   def halt_with_code_body(code, body)
     halt code, {'Content-Type'=>'application/json', 'Content-Length'=>body.length.to_s}, body
