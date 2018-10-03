@@ -47,6 +47,9 @@ env:
     - CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
     - REPOSITORY_URL=http://tng-rep:4012
     - POLICY_MNGR_URL=http://tng-policy-mngr:8081/api/v1
+    - SLM_URL=http://tng-slice-mngr:5998/api/
+#    - SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change
+    - SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-gtk-sp:5000/requests
 before_script:
 #  - cp config/database.yml.travis config/database.yml
 #  - psql -c 'create database gatekeeper;' -U postgres

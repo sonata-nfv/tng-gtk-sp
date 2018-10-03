@@ -64,7 +64,7 @@ ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
 ENV REPOSITORY_URL=http://tng-rep:4012
 ENV POLICY_MNGR_URL=http://tng-policy-mngr:8081/api/v1
 ENV SLM_URL=http://tng-slice-mngr:5998/api/
-ENV SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change
+ENV SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-gtk-sp:5000/requests
 ENV PORT 5000
 #CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
 #CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
