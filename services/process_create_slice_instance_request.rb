@@ -35,11 +35,12 @@ require 'net/http'
 require 'ostruct'
 require 'json'
 require 'yaml'
+require 'process_request_service'
 
 class ProcessCreateSliceInstanceRequest < ProcessRequestService
   
-  SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change')
-  @@user_callbacks = {}
+  #SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change')
+  SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-gtk-sp:5000/requests')
   
   def self.call(params)
     msg=self.name+'.'+__method__.to_s
@@ -63,10 +64,10 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestService
       # pass it to the Slice Manager
       # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
       # the user callback is saved in the request
-      enriched_params[:callback] = SLICE_INSTANCE_CHANGE_CALLBACK_URL
+      enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request[:id]}/on-change"
       request = CreateNetworkSliceInstanceService.call(enriched_params)
     rescue StandardError => e
-      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.spli('\n\t')}"
+      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
       return nil
     end
     instantiation_request

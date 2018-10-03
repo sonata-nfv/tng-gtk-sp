@@ -33,6 +33,7 @@
 # encoding: utf-8
 require_relative '../spec_helper'
 require 'uri'
+require 'fetch_function_records_service'
 
 RSpec.describe FetchFunctionRecordsService do
   describe '.call' do

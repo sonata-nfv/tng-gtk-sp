@@ -32,6 +32,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 require_relative '../spec_helper'
+require 'requests_controller'
 
 RSpec.describe RequestsController, type: :controller do
   def app() described_class end

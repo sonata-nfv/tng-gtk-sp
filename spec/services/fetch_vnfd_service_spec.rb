@@ -33,6 +33,7 @@
 # encoding: utf-8
 require_relative '../spec_helper'
 require 'uri'
+require 'fetch_vnfds_service'
 
 RSpec.describe FetchVNFDsService do
   describe '.call' do

@@ -32,6 +32,8 @@
 # frozen_string_literal: true
 # encoding: utf-8
 require_relative '../spec_helper'
+require 'records_controller'
+require 'fetch_service_records_service'
 
 RSpec.describe RecordsController, type: :controller do
   def app() described_class end

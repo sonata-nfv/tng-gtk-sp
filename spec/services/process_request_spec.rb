@@ -32,6 +32,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 require_relative '../spec_helper'
+require 'process_request_service'
 
 RSpec.describe ProcessRequestService do
   let(:uuid) {SecureRandom.uuid}

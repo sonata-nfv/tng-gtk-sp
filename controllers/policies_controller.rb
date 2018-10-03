@@ -32,6 +32,7 @@
 # encoding: utf-8
 require 'sinatra'
 require 'json'
+require 'application_controller'
 
 class PoliciesController < ApplicationController
   ERROR_REQUEST_CONTENT_TYPE={error: "Unsupported Media Type, just accepting 'application/json' HTTP content type for now."}

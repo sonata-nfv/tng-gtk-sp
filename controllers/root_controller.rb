@@ -33,6 +33,7 @@
 require 'sinatra'
 require 'json'
 require 'logger'
+require 'application_controller'
 
 class RootController < ApplicationController
 

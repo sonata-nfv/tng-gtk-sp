@@ -32,6 +32,9 @@
 # frozen_string_literal: true
 # encoding: utf-8
 require_relative '../spec_helper'
+require 'process_create_slice_instance_request'
+require 'request'
+require 'create_network_slice_instance_service'
 
 RSpec.describe ProcessCreateSliceInstanceRequest do
   let(:uuid_1) {SecureRandom.uuid}

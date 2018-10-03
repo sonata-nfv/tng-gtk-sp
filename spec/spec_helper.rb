@@ -35,18 +35,11 @@ require 'rspec'
 require 'webmock/rspec'
 
 ENV['RACK_ENV'] = 'test'
-#$LOAD_PATH << '../models'
-require_relative File.dirname(__FILE__) + '/../models/request'
-require_relative File.dirname(__FILE__) + '/../controllers/application_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/functions_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/pings_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/policies_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/records_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/requests_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/root_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/pings_controller'
-require_relative File.dirname(__FILE__) + '/../controllers/services_controller'
-Dir.glob('./services/*.rb').each { |file| require file }
+%w{ controllers models services }.each do |dir|
+  path = File.expand_path(File.join(File.dirname(__FILE__), '../', dir))
+  $LOAD_PATH << path
+end
+#STDERR.puts "$LOAD_PATH=#{$LOAD_PATH}"
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods

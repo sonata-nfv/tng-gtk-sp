@@ -33,6 +33,7 @@
 # encoding: utf-8
 require_relative '../spec_helper'
 require 'uri'
+require 'fetch_nsd_service'
 
 RSpec.describe FetchNSDService do
   describe '.call' do
