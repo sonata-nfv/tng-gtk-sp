@@ -90,6 +90,7 @@ class RequestsController < ApplicationController
       STDERR.puts "#{msg}: saved_request='#{saved_request.inspect}'"
       #halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if !saved_request
+      # for the special case of CREATE_SLICE, the returned data structure is not an Hash
       halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
       #halt_with_code_body(201, saved_request.to_json)
       halt_with_code_body(201, result.to_json)
