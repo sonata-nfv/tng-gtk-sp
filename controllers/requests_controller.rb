@@ -81,11 +81,11 @@ class RequestsController < ApplicationController
 
     rescue ArgumentError => e
       STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
-      halt_with_code_body(404, {error: e.message}.to_json)
+      halt_with_code_body(404, {error: "#{e.message}\n#{e.backtrace.join("\n\t")}"}.to_json)
     rescue JSON::ParserError => e
       halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:service_uuid]}.to_json)
     rescue StandardError => e
-      halt_with_code_body(500, e.message)
+      halt_with_code_body(500, "#{e.message}\n#{e.backtrace.join("\n\t")}")
     end
   end
   

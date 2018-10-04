@@ -50,6 +50,7 @@ class ProcessRequestService
       STDERR.puts "#{msg}: request_type=#{request_type}"
       if request_type == 'CREATE_SLICE'
         klass_name = "Process#{ActiveSupport::Inflector.camelize(request_type.downcase)}InstanceRequest" #ProcessCreateSliceInstanceRequest
+        STDERR.puts "#{msg}: looking for class #{klass_name}"
         klass = ActiveSupport::Inflector.constantize(klass_name)
         STDERR.puts "#{msg}: CREATE_SLICE: class #{klass.name}"
         return klass.call(params)
