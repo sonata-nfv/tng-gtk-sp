@@ -35,6 +35,11 @@ require 'ostruct'
 require 'json'
 require 'yaml'
 require 'active_support'
+require_relative './fetch_nsd_service'
+require_relative './fetch_vnfds_service'
+require_relative './fetch_user_data_service'
+require_relative './fetch_service_records_service'
+require_relative './message_publishing_service'
 
 class ProcessRequestService  
   ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
