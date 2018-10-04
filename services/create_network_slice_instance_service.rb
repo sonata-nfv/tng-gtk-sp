@@ -30,35 +30,48 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-require 'rack/test'
-require 'rspec'
-require 'webmock/rspec'
+require 'net/http'
+require 'uri'
+require 'json'
 
-ENV['RACK_ENV'] = 'test'
-%w{ controllers models services }.each do |dir|
-  path = File.expand_path(File.join(File.dirname(__FILE__), '../', dir))
-  $LOAD_PATH << path
-end
-require 'application_controller'
-require 'requests_controller'
-require 'policies_controller'
-require 'pings_controller'
-require 'root_controller'
-require 'records_controller'
-require 'request'
-#Dir.glob('./services/*.rb').each { |file| require file }
-#STDERR.puts "$LOAD_PATH=#{$LOAD_PATH}"
-
-RSpec.configure do |config|
-  config.include Rack::Test::Methods
-  config.mock_with :rspec do |configuration|
-    configuration.syntax = :expect
+class CreateNetworkSliceInstanceService 
+  NO_SLM_URL_DEFINED_ERROR='The SLM_URL ENV variable needs to be defined and pointing to the Slice Manager component, where to request new Network Slice instances'
+  SLM_URL = ENV.fetch('SLM_URL', '')
+  if SLM_URL == ''
+    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_SLM_URL_DEFINED_ERROR]
+    raise ArgumentError.new(NO_SLM_URL_DEFINED_ERROR) 
   end
-  config.order = 'random'
-  #config.color_enabled = true
-  config.tty = true
-  config.formatter = :documentation
-  config.profile_examples = 3
+  # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi, with body {...}
+  @@site=SLM_URL+'/nsilcm/v1/nsi'
+  STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, "@@site=#{@@site}"]
+  
+  def self.call(params)
+    msg=self.name+'#'+__method__.to_s
+    STDERR.puts "#{msg}: params=#{params} site=#{@@site}"
+    uri = URI.parse(@@site)
+
+    # Create the HTTP objects
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
+    request.body = params.to_json
+
+    # Send the request
+    begin
+      response = http.request(request)
+      STDERR.puts "#{msg}: response=#{response}"
+      case response
+      when Net::HTTPSuccess, Net::HTTPCreated
+        body = response.body
+        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      else
+        return {error: "#{response.code} (#{response.message}): #{params}"}
+      end
+    rescue Exception => e
+      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+    end
+    nil
+  end
 end
 
-WebMock.disable_net_connect!() #allow_localhost: true)
+

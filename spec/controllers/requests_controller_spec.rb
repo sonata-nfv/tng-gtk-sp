@@ -32,6 +32,7 @@
 # frozen_string_literal: true
 # encoding: utf-8
 require_relative '../spec_helper'
+require 'requests_controller'
 
 RSpec.describe RequestsController, type: :controller do
   def app() described_class end
@@ -98,12 +99,14 @@ RSpec.describe RequestsController, type: :controller do
         allow(Request).to receive(:find).with(request_1[:id]).and_return(request_1)
         allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
         get '/'+request_1[:id]
+        STDERR.puts "last_response=#{last_response.inspect}"
         expect(last_response).to be_ok
         expect(last_response.body).to eq(request_1.to_json)
       end
       it 'and rejects non-existing request' do
         allow(Request).to receive(:find).with(requestid_2).and_raise(ActiveRecord::RecordNotFound)
         get '/'+requestid_2
+        STDERR.puts "last_response=#{last_response.inspect}"
         expect(last_response).to be_not_found
       end
     end
@@ -127,6 +130,50 @@ RSpec.describe RequestsController, type: :controller do
 #        expect(last_response).to be_ok
 #        expect(last_response.body).to eq([].to_json)
 #      end
+    end
+  end
+  
+  describe 'slice instantaition callback' do
+    context 'with valid event data' do
+      let(:valid_event_data) {{
+        original_event_uuid: uuid_1,
+        event: 'slice_changed',
+        correlation_id: uuid_1
+      }}
+      let(:valid_result) {{
+         id: uuid_1, #"06a0fdeb-a5b4-4f4e-a8db-def87abdc3fb",
+         created_at: "2018-07-04 15:24:08 UTC",
+         updated_at: "2018-07-06 14:01:07 UTC",
+         service_uuid: "534c3ade-1681-4edc-92d1-cfe260827f29",
+         status: "READY",
+         request_type: "CREATE_SLICE",
+         instance_uuid: nil,
+         ingresses: [],
+         egresses: [],
+         callback: "",
+         blacklist: [],
+         customer_uuid: nil,
+         sla_id: nil,
+         name: nil,
+         error: nil
+      }}
+      it 'processes data and returns 200 (OK)' do
+        allow(ProcessCreateSliceInstanceRequest).to receive(:process_callback).with(valid_event_data).and_return(valid_result)
+        post '/'+uuid_1+'/on-change', valid_event_data.to_json, {"Content-Type"=>"application/json"}
+        expect(last_response).to be_created
+        #expect(last_response.body).to eq(valid_result_with_location.to_json)
+      end
+    end
+  
+    context 'with invalid event data' do
+      let(:invalid_event_data) {{ original_event_uuid: uuid_1}}
+      let(:valid_result) {{error: 'error'}}
+      it 'fails with error' do
+        allow(ProcessCreateSliceInstanceRequest).to receive(:process_callback).with(invalid_event_data).and_return({})
+        post '/'+uuid_1+'/on-change', invalid_event_data.to_json, {"Content-Type"=>"application/json"}
+        expect(last_response).not_to be_ok
+        expect(last_response.body).to match(/error/)
+      end
     end
   end
 end

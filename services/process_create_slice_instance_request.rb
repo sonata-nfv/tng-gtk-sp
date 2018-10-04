@@ -1,0 +1,149 @@
+## Copyright (c) 2015 SONATA-NFV, 2017 5GTANGO [, ANY ADDITIONAL AFFILIATION]
+## ALL RIGHTS RESERVED.
+##
+## Licensed under the Apache License, Version 2.0 (the "License");
+## you may not use this file except in compliance with the License.
+## You may obtain a copy of the License at
+##
+##     http://www.apache.org/licenses/LICENSE-2.0
+##
+## Unless required by applicable law or agreed to in writing, software
+## distributed under the License is distributed on an "AS IS" BASIS,
+## WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+## See the License for the specific language governing permissions and
+## limitations under the License.
+##
+## Neither the name of the SONATA-NFV, 5GTANGO [, ANY ADDITIONAL AFFILIATION]
+## nor the names of its contributors may be used to endorse or promote
+## products derived from this software without specific prior written
+## permission.
+##
+## This work has been performed in the framework of the SONATA project,
+## funded by the European Commission under Grant number 671517 through
+## the Horizon 2020 and 5G-PPP programmes. The authors would like to
+## acknowledge the contributions of their colleagues of the SONATA
+## partner consortium (www.sonata-nfv.eu).
+##
+## This work has been performed in the framework of the 5GTANGO project,
+## funded by the European Commission under Grant number 761493 through
+## the Horizon 2020 and 5G-PPP programmes. The authors would like to
+## acknowledge the contributions of their colleagues of the 5GTANGO
+## partner consortium (www.5gtango.eu).
+# encoding: utf-8
+require 'securerandom'
+require 'net/http'
+require 'ostruct'
+require 'json'
+require 'yaml'
+require_relative './create_network_slice_instance_service'
+
+class ProcessCreateSliceInstanceRequest #< ProcessRequestService
+  
+  #SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change')
+  SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-gtk-sp:5000/requests')
+  
+  def self.call(params)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: params=#{params}"
+    begin
+      valid = valid_request?(params)
+      if (valid && valid.is_a?(Hash) && valid.key?(:error) )
+        STDERR.puts "#{msg}: validation failled with error #{valid[:error]}"
+        return valid
+      end
+      
+      enriched_params = enrich_params(params)
+      STDERR.puts "#{msg}: enriched_params params=#{enriched_params}"
+      
+      instantiation_request = Request.create(enriched_params).as_json
+      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request} (class #{instantiation_request.class})"
+      unless instantiation_request
+        STDERR.puts "#{msg}: Failled to create instantiation_request"
+        return {error: "Failled to create instantiation request for slice template '#{params[:nstId]}'"}
+      end
+      # pass it to the Slice Manager
+      # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
+      # the user callback is saved in the request
+      enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request[:id]}/on-change"
+      request = CreateNetworkSliceInstanceService.call(enriched_params)
+    rescue StandardError => e
+      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
+      return nil
+    end
+    instantiation_request
+  end
+  
+  # "/api/nsilcm/v1/nsi/on-change"
+  # @app.route(API_ROOT+API_NSILCM+API_VERSION+API_NSI+'/update_NSIservinstance', methods=['POST'])
+  # GET http://tng-slice-mngr:5998/api/nst/v1/descriptors
+  def self.process_callback(event)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: event=#{event}"
+    result, user_callback = save_result(event)
+    notify_user(result, user_callback) unless user_callback.to_s.empty?
+    STDERR.puts "#{msg}: result=#{result}"
+    result
+  end
+  
+  private  
+  def self.save_result(event)
+    msg=self.name+'.'+__method__.to_s
+    original_request = Request.find(event[:original_event_uuid]) #.as_json
+    STDERR.puts "#{msg}: original request = #{original_request.inspect}"
+    body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
+    original_request['status'] = body[:status]
+    original_request.save
+    [original_request.as_json, body[:callback]]
+  end
+  
+  def self.notify_user(result, user_callback)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: entered, result=#{result}, user_callback=#{user_callback}"
+    
+    uri = URI.parse(user_callback)
+
+    # Create the HTTP objects
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
+    request.body = result.to_json
+
+    # Send the request
+    begin
+      response = http.request(request)
+      STDERR.puts "#{msg}: response=#{response}"
+      case response
+      when Net::HTTPSuccess, Net::HTTPCreated
+        body = response.body
+        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      else
+        return {error: "#{response.message}"}
+      end
+    rescue Exception => e
+      STDERR.puts "%s - %s: %s", [Time.now.utc.to_s, msg, "Failled to post to user's callback #{user_callback} with message #{e.message}"]
+    end
+    nil
+  end
+
+  def self.valid_request?(params)
+    msg=self.name+'.'+__method__.to_s
+    # { "request_type":"CREATE_SLICE", "nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc", "slice_instance_ready_callback":"http://..."}
+    # if params include a Network Slice Template UUID
+    # template existense is tested within the SLM
+    # GET http://tng-slice-mngr:5998/api/nst/v1/descriptors
+
+    true
+    # else {error: ''}
+  end
+  
+  def self.enrich_params(params)
+    msg=self.name+'.'+__method__.to_s
+    params
+  end
+  
+  def self.valid_uuid?(uuid)
+    uuid.match /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/
+    uuid == $&
+  end
+  
+end

@@ -32,7 +32,9 @@
 # encoding: utf-8
 require 'sinatra'
 require 'json'
-#require 'logger'
+require_relative './application_controller'
+require_relative '../services/process_request_service'
+require_relative '../services/process_create_slice_instance_request'
 
 class RequestsController < ApplicationController
   #register Sinatra::ActiveRecordExtension
@@ -66,25 +68,39 @@ class RequestsController < ApplicationController
     body = request.body.read
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
     params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-    #halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:service_uuid)
+    STDERR.puts "#{msg}: params=#{params}"
     
     begin
-      STDERR.puts "#{msg}: before saved_request...'"
-      saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
+      request_type = params.fetch(:request_type, 'CREATE_SERVICE')
+    
+      # ToDo:
+      # This is temporary, the 'else' branch will disappear when we have this tested for the Slice creation only
+      STDERR.puts "#{msg}: request_type=#{request_type}"
+      if request_type == 'CREATE_SLICE'
+        klass_name = "Process#{camelize(request_type.downcase)}InstanceRequest"
+        STDERR.puts "#{msg}: looking for class #{klass_name}"
+        klass = constantize(klass_name)
+        STDERR.puts "#{msg}: CREATE_SLICE: class #{klass.name}"
+        result = saved_request = klass.call(params.deep_symbolize_keys)
+      else
+        saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
+        result = ProcessRequestService.enrich_one(saved_request)
+      end
+    
       STDERR.puts "#{msg}: saved_request='#{saved_request.inspect}'"
       #halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if !saved_request
       halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
       #halt_with_code_body(201, saved_request.to_json)
-      halt_with_code_body(201, ProcessRequestService.enrich_one(saved_request).to_json)
+      halt_with_code_body(201, result.to_json)
 
     rescue ArgumentError => e
       STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
-      halt_with_code_body(404, {error: e.message}.to_json)
+      halt_with_code_body(404, {error: "#{e.message}\n#{e.backtrace.join("\n\t")}"}.to_json)
     rescue JSON::ParserError => e
       halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:service_uuid]}.to_json)
     rescue StandardError => e
-      halt_with_code_body(500, e.message)
+      halt_with_code_body(500, "#{e.message}\n#{e.backtrace.join("\n\t")}")
     end
   end
   
@@ -142,6 +158,29 @@ class RequestsController < ApplicationController
     halt 200
   end
   
+  # Callback for the tng-slice-mngr to notify the result of processing
+  post '/:request_uuid/on-change/?' do
+    msg='RequestsController#post /:request_uuid/on-change'
+    STDERR.puts "#{msg}: entered, request_uuid=#{params[:request_uuid]}, params=#{params}"
+    
+    #halt 400, {}, {error: ERROR_EVENT_CONTENT_TYPE % request.content_type}.to_json unless request.content_type =~ /application\/json/
+    begin
+      body = request.body.read
+      halt_with_code_body(400, "The callback is missing the event data") if body.empty?
+      event_data = JSON.parse(body, quirks_mode: true, symbolize_names: true)
+
+      event_data[:original_event_uuid] = params[:request_uuid]
+      STDERR.puts "#{msg}: event_data=#{event_data}"
+      result = ProcessCreateSliceInstanceRequest.process_callback(event_data)
+      STDERR.puts "#{msg}: result=#{result}"
+      halt 201, {}, result.to_json unless result.empty?
+      halt 404, {}, {error: "Package processing UUID not found in event #{event_data}"}.to_json
+    rescue JSON::ParserError, ActiveRecord::RecordNotFound, ArgumentError  => e
+      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
+      halt 400, {}, {error: e.message}.to_json
+    end
+  end  
+  
   private
   def halt_with_code_body(code, body)
     halt code, {'Content-Type'=>'application/json', 'Content-Length'=>body.length.to_s}, body
@@ -164,4 +203,40 @@ class RequestsController < ApplicationController
   def symbolized_hash(hash)
     Hash[hash.map{|(k,v)| [k.to_sym,v]}]
   end
+  
+  def constantize(camel_cased_word)
+    names = camel_cased_word.split("::".freeze)
+
+    # Trigger a built-in NameError exception including the ill-formed constant in the message.
+    Object.const_get(camel_cased_word) if names.empty?
+
+    # Remove the first blank element in case of '::ClassName' notation.
+    names.shift if names.size > 1 && names.first.empty?
+
+    names.inject(Object) do |constant, name|
+      if constant == Object
+        constant.const_get(name)
+      else
+        candidate = constant.const_get(name)
+        next candidate if constant.const_defined?(name, false)
+        next candidate unless Object.const_defined?(name)
+
+        # Go down the ancestors to check if it is owned directly. The check
+        # stops when we reach Object or the end of ancestors tree.
+        constant = constant.ancestors.inject(constant) do |const, ancestor|
+          break const    if ancestor == Object
+          break ancestor if ancestor.const_defined?(name, false)
+          const
+        end
+
+        # owner is in Object, so raise
+        constant.const_get(name, false)
+      end
+    end
+  end
+  
+  def camelize(str)
+    str.split('_').map(&:capitalize).join
+  end
+  
 end

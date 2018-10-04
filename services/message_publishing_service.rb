@@ -110,8 +110,6 @@ class MessagePublishingService
             request['status']=status
             if parsed_payload['error']
               request['error'] = parsed_payload['error']
-              request.save
-              STDERR.puts "#{msg}: leaving with error #{request['error']}"
             else
               unless parsed_payload.key?('nsr')
                 STDERR.puts "#{msg}: no 'nsr' key in #{parsed_payload}"
@@ -125,9 +123,10 @@ class MessagePublishingService
                   STDERR.puts "#{msg}: no service instance uuid"
                 end
               end
-              request.save
-              STDERR.puts "#{msg}: request #{request} saved"
             end
+            request.save
+            STDERR.puts "#{msg}: leaving with request #{request}"
+            notify_user(request.as_json) unless request['callback'].empty?
           end
         end
       rescue Exception => e
@@ -181,6 +180,7 @@ class MessagePublishingService
               end
               request.save
               STDERR.puts "#{msg}: request #{request} saved"
+              notify_user(request.as_json) unless request['callback'].empty?
             end
           end
         end
@@ -189,6 +189,34 @@ class MessagePublishingService
         STDERR.puts "#{msg}: #{e.backtrace.split('\n\t')}"
       end
     end
+  end
+  
+  private
+  def self.notify_user(params)
+    msg=self.name+'#'+__method__.to_s
+    uri = URI.parse(params['callback'])
+
+    # Create the HTTP objects
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
+    request.body = params.to_json
+
+    # Send the request
+    begin
+      response = http.request(request)
+      STDERR.puts "#{msg}: response=#{response}"
+      case response
+      when Net::HTTPSuccess, Net::HTTPCreated
+        body = response.body
+        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      else
+        return {error: "#{response.message}"}
+      end
+    rescue Exception => e
+      STDERR.puts "%s - %s: %s", [Time.now.utc.to_s, msg, "Failled to post to user's callback #{user_callback} with message #{e.message}"]
+    end
+    nil
   end
 end
 

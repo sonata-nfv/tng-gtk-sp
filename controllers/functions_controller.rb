@@ -31,6 +31,7 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'securerandom'
+require 'application_controller'
 
 class FunctionsController < ApplicationController
 
