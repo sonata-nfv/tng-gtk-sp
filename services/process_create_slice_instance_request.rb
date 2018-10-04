@@ -55,8 +55,8 @@ class ProcessCreateSliceInstanceRequest #< ProcessRequestService
       enriched_params = enrich_params(params)
       STDERR.puts "#{msg}: enriched_params params=#{enriched_params}"
       
-      instantiation_request = Request.create(enriched_params).as_json
-      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request}"
+      instantiation_request = Request.create(enriched_params)
+      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request.inspect}"
       unless instantiation_request
         STDERR.puts "#{msg}: Failled to create instantiation_request"
         return {error: "Failled to create instantiation request for slice template '#{params[:nstId]}'"}
