@@ -39,6 +39,15 @@ ENV['RACK_ENV'] = 'test'
   path = File.expand_path(File.join(File.dirname(__FILE__), '../', dir))
   $LOAD_PATH << path
 end
+require 'application_controller'
+require 'requests_controller'
+require 'policies_controller'
+require 'pings_controller'
+require 'root_controller'
+require 'records_controller'
+require 'slice_instances_controller'
+require 'request'
+Dir.glob('./services/*.rb').each { |file| require file }
 #STDERR.puts "$LOAD_PATH=#{$LOAD_PATH}"
 
 RSpec.configure do |config|
