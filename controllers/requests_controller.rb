@@ -33,7 +33,7 @@
 require 'sinatra'
 require 'json'
 #require 'logger'
-require 'application_controller'
+require_relative './application_controller'
 
 class RequestsController < ApplicationController
   #register Sinatra::ActiveRecordExtension

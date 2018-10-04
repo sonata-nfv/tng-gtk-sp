@@ -34,8 +34,12 @@
 require 'rspec/core/rake_task'
 require 'ci/reporter/rake/rspec'
 require 'sinatra/activerecord/rake'
-require './controllers/application_controller'
-require './controllers/requests_controller'
+%w{ controllers models services }.each do |dir|
+  path = File.expand_path(File.join(File.dirname(__FILE__), '../', dir))
+  $LOAD_PATH << path
+end
+require_relative './controllers/application_controller'
+require_relative './controllers/requests_controller'
 task default: ['ci:all']
 
 desc 'Run Unit Tests'

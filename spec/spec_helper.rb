@@ -45,7 +45,6 @@ require 'policies_controller'
 require 'pings_controller'
 require 'root_controller'
 require 'records_controller'
-require 'slice_instances_controller'
 require 'request'
 Dir.glob('./services/*.rb').each { |file| require file }
 #STDERR.puts "$LOAD_PATH=#{$LOAD_PATH}"
