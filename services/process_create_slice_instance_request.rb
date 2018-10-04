@@ -66,6 +66,11 @@ class ProcessCreateSliceInstanceRequest #< ProcessRequestService
       # the user callback is saved in the request
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"
       request = CreateNetworkSliceInstanceService.call(enriched_params)
+      if (request && request.key?(:error)
+        instantiation_request['status'] = 'ERROR'
+        instantiation_request['error'] = request[:error]
+        instantiation_request.save
+      end
     rescue StandardError => e
       STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
       return nil
