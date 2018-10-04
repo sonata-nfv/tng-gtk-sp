@@ -47,7 +47,7 @@ class ProcessRequestService
     begin
       # ToDo:
       # This is temporary, the 'else' branch will disappear when we have this tested for the Slice creation only
-      STDERR.puts "#{msg}: request_type=#{params[:request_type]}"
+      STDERR.puts "#{msg}: request_type=#{request_type}"
       if request_type == 'CREATE_SLICE'
         klass_name = "Process#{ActiveSupport::Inflector.camelize(request_type.downcase)}Request"
         klass = ActiveSupport::Inflector.constantize(klass_name)
@@ -57,7 +57,7 @@ class ProcessRequestService
         return send(request_type.downcase.to_sym, params)
       end
     rescue NoMethodError => e
-      raise ArgumentError.new("'#{request_type}' is not valid as a request type")
+      raise ArgumentError.new("'#{request_type}' is not valid as a request type\n#{e.message}\n#{e.backtrace.join("\n\t")}")
     end
   end
 
