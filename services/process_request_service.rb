@@ -35,6 +35,11 @@ require 'ostruct'
 require 'json'
 require 'yaml'
 require 'active_support'
+require_relative './fetch_nsd_service'
+require_relative './fetch_vnfds_service'
+require_relative './fetch_user_data_service'
+require_relative './fetch_service_records_service'
+require_relative './message_publishing_service'
 
 class ProcessRequestService  
   ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
@@ -157,13 +162,13 @@ class ProcessRequestService
       published_response = MessagePublishingService.call(message, :create_service, instantiation_request['id'])
       STDERR.puts "#{msg}: published_response=#{published_response}"
     #rescue ActiveRecord::StatementInvalid => e
-    #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
+    #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.split('\n\t')}"
     #  return {}
     #rescue ActiveRecord::ConnectionTimeoutError => e
-    #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
+    #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.split('\n\t')}"
     #  return {}
     rescue StandardError => e
-      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.spli('\n\t')}"
+      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
       return nil
     end
     instantiation_request
@@ -190,7 +195,7 @@ class ProcessRequestService
       published_response = MessagePublishingService.call({'service_instance_uuid'=> params[:instance_uuid]}.to_yaml.to_s, :terminate_service, termination_request['id'])
       STDERR.puts "#{msg}: published_response=#{published_response.inspect}"
     rescue StandardError => e
-      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.spli('\n\t')}"
+      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
       return nil
     end
     termination_request
