@@ -32,8 +32,9 @@
 # encoding: utf-8
 require 'sinatra'
 require 'json'
-#require 'logger'
 require_relative './application_controller'
+require_relative '../services/process_request_service'
+require_relative '../services/process_create_slice_instance_request'
 
 class RequestsController < ApplicationController
   #register Sinatra::ActiveRecordExtension
@@ -71,7 +72,22 @@ class RequestsController < ApplicationController
     
     begin
       STDERR.puts "#{msg}: before saved_request...'"
-      saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
+      request_type = params.fetch(:request_type, 'CREATE_SERVICE')
+      STDERR.puts "#{msg}: params=#{params}"
+    
+      # ToDo:
+      # This is temporary, the 'else' branch will disappear when we have this tested for the Slice creation only
+      STDERR.puts "#{msg}: request_type=#{request_type}"
+      if request_type == 'CREATE_SLICE'
+        klass_name = "Process#{ActiveSupport::Inflector.camelize(request_type.downcase)}InstanceRequest" #ProcessCreateSliceInstanceRequest
+        STDERR.puts "#{msg}: looking for class #{klass_name}"
+        klass = ActiveSupport::Inflector.constantize(klass_name)
+        STDERR.puts "#{msg}: CREATE_SLICE: class #{klass.name}"
+        saved_request = klass.call(params.deep_symbolize_keys)
+      else
+        saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
+      end
+    
       STDERR.puts "#{msg}: saved_request='#{saved_request.inspect}'"
       #halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if !saved_request

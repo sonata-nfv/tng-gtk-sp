@@ -35,9 +35,9 @@ require 'net/http'
 require 'ostruct'
 require 'json'
 require 'yaml'
-require 'process_request_service'
+require_relative './create_network_slice_instance_service'
 
-class ProcessCreateSliceInstanceRequest < ProcessRequestService
+class ProcessCreateSliceInstanceRequest #< ProcessRequestService
   
   #SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change')
   SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-gtk-sp:5000/requests')
