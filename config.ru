@@ -34,17 +34,15 @@ require 'sinatra/base'
 require 'rack-timeout-puma'
 require 'active_record/rack'
 %w{ controllers models services }.each do |dir|
-  path = File.expand_path(File.join(File.dirname(__FILE__), '../', dir))
-  $LOAD_PATH << path
+  path = File.expand_path(File.join(File.dirname(__FILE__), dir))
+  $LOAD_PATH.unshift(path)
 end
-
 require 'application_controller'
 require 'requests_controller'
 require 'policies_controller'
 require 'pings_controller'
 require 'root_controller'
 require 'records_controller'
-require 'slice_instances_controller'
 require 'request'
 Dir.glob('./services/*.rb').each { |file| require file }
 
@@ -60,5 +58,4 @@ map('/policies') { run PoliciesController }
 map('/records') { run RecordsController } 
 map('/requests') { run RequestsController } 
 #map('/configurations/infra') { run ConfigurationsInfraController } 
-map('/slice-instances') { run SliceInstancesController } 
 map('/') { run RootController }

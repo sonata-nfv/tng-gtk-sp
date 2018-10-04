@@ -49,7 +49,7 @@ class ProcessRequestService
       # This is temporary, the 'else' branch will disappear when we have this tested for the Slice creation only
       STDERR.puts "#{msg}: request_type=#{request_type}"
       if request_type == 'CREATE_SLICE'
-        klass_name = "Process#{ActiveSupport::Inflector.camelize(request_type.downcase)}Request"
+        klass_name = "Process#{ActiveSupport::Inflector.camelize(request_type.downcase)}InstanceRequest" #ProcessCreateSliceInstanceRequest
         klass = ActiveSupport::Inflector.constantize(klass_name)
         STDERR.puts "#{msg}: CREATE_SLICE: class #{klass.name}"
         return klass.call(params)
