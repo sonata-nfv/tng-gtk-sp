@@ -65,7 +65,7 @@ class CreateNetworkSliceInstanceService
         STDERR.puts "#{msg}: #{response.code} body=#{body}"
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
       else
-        return {error: "#{response.message}"}
+        return {error: "#{response.code} (#{response.message}): #{params}"}
       end
     rescue Exception => e
       STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]

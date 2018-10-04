@@ -68,24 +68,23 @@ class RequestsController < ApplicationController
     body = request.body.read
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
     params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-    #halt_with_code_body(400, ERROR_SERVICE_UUID_IS_MISSING % params) unless params.key?(:service_uuid)
+    STDERR.puts "#{msg}: params=#{params}"
     
     begin
-      STDERR.puts "#{msg}: before saved_request...'"
       request_type = params.fetch(:request_type, 'CREATE_SERVICE')
-      STDERR.puts "#{msg}: params=#{params}"
     
       # ToDo:
       # This is temporary, the 'else' branch will disappear when we have this tested for the Slice creation only
       STDERR.puts "#{msg}: request_type=#{request_type}"
       if request_type == 'CREATE_SLICE'
-        klass_name = "Process#{ActiveSupport::Inflector.camelize(request_type.downcase)}InstanceRequest" #ProcessCreateSliceInstanceRequest
+        klass_name = "Process#{camelize(request_type.downcase)}InstanceRequest"
         STDERR.puts "#{msg}: looking for class #{klass_name}"
-        klass = ActiveSupport::Inflector.constantize(klass_name)
+        klass = constantize(klass_name)
         STDERR.puts "#{msg}: CREATE_SLICE: class #{klass.name}"
-        saved_request = klass.call(params.deep_symbolize_keys)
+        result = saved_request = klass.call(params.deep_symbolize_keys)
       else
         saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
+        result = ProcessRequestService.enrich_one(saved_request)
       end
     
       STDERR.puts "#{msg}: saved_request='#{saved_request.inspect}'"
@@ -93,7 +92,7 @@ class RequestsController < ApplicationController
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if !saved_request
       halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
       #halt_with_code_body(201, saved_request.to_json)
-      halt_with_code_body(201, ProcessRequestService.enrich_one(saved_request).to_json)
+      halt_with_code_body(201, result.to_json)
 
     rescue ArgumentError => e
       STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
@@ -204,4 +203,40 @@ class RequestsController < ApplicationController
   def symbolized_hash(hash)
     Hash[hash.map{|(k,v)| [k.to_sym,v]}]
   end
+  
+  def constantize(camel_cased_word)
+    names = camel_cased_word.split("::".freeze)
+
+    # Trigger a built-in NameError exception including the ill-formed constant in the message.
+    Object.const_get(camel_cased_word) if names.empty?
+
+    # Remove the first blank element in case of '::ClassName' notation.
+    names.shift if names.size > 1 && names.first.empty?
+
+    names.inject(Object) do |constant, name|
+      if constant == Object
+        constant.const_get(name)
+      else
+        candidate = constant.const_get(name)
+        next candidate if constant.const_defined?(name, false)
+        next candidate unless Object.const_defined?(name)
+
+        # Go down the ancestors to check if it is owned directly. The check
+        # stops when we reach Object or the end of ancestors tree.
+        constant = constant.ancestors.inject(constant) do |const, ancestor|
+          break const    if ancestor == Object
+          break ancestor if ancestor.const_defined?(name, false)
+          const
+        end
+
+        # owner is in Object, so raise
+        constant.const_get(name, false)
+      end
+    end
+  end
+  
+  def camelize(str)
+    str.split('_').map(&:capitalize).join
+  end
+  
 end
