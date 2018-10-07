@@ -40,6 +40,7 @@ require_relative './fetch_vnfds_service'
 require_relative './fetch_user_data_service'
 require_relative './fetch_service_records_service'
 require_relative './message_publishing_service'
+require_relative '../models/request'
 
 class ProcessRequestService  
   ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'

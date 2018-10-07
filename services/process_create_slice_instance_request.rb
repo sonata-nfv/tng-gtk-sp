@@ -32,9 +32,11 @@
 # encoding: utf-8
 require 'securerandom'
 require 'net/http'
+require 'uri'
 require 'ostruct'
 require 'json'
 require 'yaml'
+require_relative '../models/request'
 
 class ProcessCreateSliceInstanceRequest
   
@@ -148,6 +150,7 @@ class ProcessCreateSliceInstanceRequest
   
   def self.enrich_params(params)
     msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: params=#{params}"
     params
   end
   
@@ -158,9 +161,10 @@ class ProcessCreateSliceInstanceRequest
   
   def self.create_slice(params)
     msg=self.name+'.'+__method__.to_s
-    # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi, with body {...}  
-    STDERR.puts "#{msg}: params=#{params} site=#{SLM_URL+'/nsilcm/v1/nsi'}"
-    uri = URI.parse(SLM_URL+'/nsilcm/v1/nsi')
+    # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi, with body {...}
+    site = SLM_URL+'/nsilcm/v1/nsi'
+    STDERR.puts "#{msg}: params=#{params} site=#{site}"
+    uri = URI.parse(site)
 
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
