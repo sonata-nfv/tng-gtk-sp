@@ -41,8 +41,9 @@ require_relative './fetch_user_data_service'
 require_relative './fetch_service_records_service'
 require_relative './message_publishing_service'
 require_relative '../models/request'
+require_relative './process_request_base'
 
-class ProcessRequestService  
+class ProcessRequestService < ProcessRequestBase
   ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
   ERROR_VNF_CATALOGUE_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
 
@@ -127,7 +128,7 @@ class ProcessRequestService
     end
     enriched
   end
-    
+
   private
   
   def self.create_service(params)
@@ -235,7 +236,7 @@ class ProcessRequestService
   def self.valid_terminate_service_params?(params)
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: params=#{params}"
-    return {error: "Termination of a service instance needs the instance UUID"} if (params[:instance_uuid] && params[:instance_uuid].empty?)
+    return {error: "Termination of a service instance needs the instance UUID"} unless (params.key?(:instance_uuid) && !params[:instance_uuid].empty?)
     STDERR.puts "#{msg}: params[:instance_uuid] is there..."
     return {error: "Instance UUID '#{params[:instance_uuid]}' is not valid"} unless valid_uuid?(params[:instance_uuid])
     STDERR.puts "#{msg}: params[:instance_uuid] has a valid UUID..."
@@ -317,10 +318,4 @@ class ProcessRequestService
     end
     list
   end
-  
-  def self.valid_uuid?(uuid)
-    uuid.match /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/
-    uuid == $&
-  end
-  
 end

@@ -96,7 +96,7 @@ RSpec.describe RequestsController, type: :controller do
   
     context 'with UUID given' do
       it 'and returns the existing request' do
-        allow(Request).to receive(:find).with(request_1[:id]).and_return(request_1)
+        allow(ProcessRequestBase).to receive(:find).with(request_1[:id]).and_return(request_1)
         allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
         get '/'+request_1[:id]
         STDERR.puts "last_response=#{last_response.inspect}"
@@ -104,7 +104,7 @@ RSpec.describe RequestsController, type: :controller do
         expect(last_response.body).to eq(request_1.to_json)
       end
       it 'and rejects non-existing request' do
-        allow(Request).to receive(:find).with(requestid_2).and_raise(ActiveRecord::RecordNotFound)
+        allow(ProcessRequestBase).to receive(:find).with(requestid_2).and_raise(ActiveRecord::RecordNotFound)
         get '/'+requestid_2
         STDERR.puts "last_response=#{last_response.inspect}"
         expect(last_response).to be_not_found
@@ -177,15 +177,54 @@ RSpec.describe RequestsController, type: :controller do
     end
   end
   
-  describe 'processes slice instantiation request' do
+  describe 'processes instantiation request' do
     let(:slice_instantiation) {{
       request_type: 'CREATE_SLICE',
       service_uuid: uuid_1
     }}
+    let(:slicer_response) {{
+      created_at: "2018-07-16T14:03:02.204+00:00", updated_at: "2018-07-16T14:03:02.204+00:00",
+      description: "NSI_descriptor",
+      flavorId: "",
+      instantiateTime: "2018-07-16T14:01:31.447547",
+      name: "NSI_16072019_1600",
+      netServInstance_Uuid: [
+        {
+          servId: "4c7d854f-a0a1-451a-b31d-8447b4fd4fbc",
+          servInstanceId: "e1547f09-e954-4299-bd62-138045566872",
+          servName: "ns-squid-haproxy",
+          workingStatus: "READY"
+        }
+      ],
+      nsiState: "INSTANTIATED",
+      nstId: "26c540a8-1e70-4242-beef-5e77dfa05a41",
+      nstName: "Example_NST",
+      nstVersion: "1.0",
+      sapInfo: "",
+      scaleTime: "",
+      terminateTime: "",
+      updateTime: "",
+      uuid: "a75d1555-cc2c-4b96-864f-fa1ffe5c909a",
+      vendor: "eu.5gTango"
+    }}
+    let(:service_instantiation) {{
+      service_uuid: uuid_1
+    }}
     before { header 'Content-Type', 'application/json'}
-    it 'calling the right class to handle the request' do
+    it 'calling the ProcessCreateSliceInstanceRequest class to handle the slice creation request' do
       saved_request = double('Request')
       allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return(saved_request)
+      allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(slice_instantiation).and_return(slicer_response)
+      post '/', slice_instantiation.to_json
+      stub_request(:post, "http://example.com/nsilcm/v1/nsi").
+        with(body: "{\"request_type\":\"CREATE_SLICE\",\"service_uuid\":\"de627e9d-7f04-4e6a-9c44-63c37a2f2e0f\",\"callback\":\"http://tng-gtk-sp:5000/requests/c13e3197-5afb-4d4f-a04a-2e8d25094786/on-change\"}",
+             headers: {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'text/json', 'Host'=>'example.com', 'User-Agent'=>'Ruby'}).
+        to_return(status: 200, body: "", headers: {})
+      expect(last_response).to be_created
+    end
+    it 'calling the ProcessRequestService class to handle the service creation request' do
+      saved_request = double('Request')
+      allow(ProcessRequestService).to receive(:call).with(service_instantiation).and_return(saved_request)
       post '/', slice_instantiation.to_json
       expect(last_response).to be_created
     end
@@ -205,6 +244,7 @@ RSpec.describe RequestsController, type: :controller do
         saved_request = double('Request')
         allow(ProcessRequestService).to receive(:call).with(wrong_request_type).and_raise(ArgumentError)
         post '/', wrong_request_type.to_json
+        STDERR.puts "last_response=#{last_response.inspect}"
         expect(last_response).to be_not_found
       end
       it 'when saving returns an error' do

@@ -36,9 +36,10 @@ require 'uri'
 require 'ostruct'
 require 'json'
 require 'yaml'
+require_relative './process_request_base'
 require_relative '../models/request'
 
-class ProcessCreateSliceInstanceRequest
+class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   
   NO_SLM_URL_DEFINED_ERROR='The SLM_URL ENV variable needs to be defined and pointing to the Slice Manager component, where to request new Network Slice instances'
   SLM_URL = ENV.fetch('SLM_URL', '')
@@ -97,6 +98,26 @@ class ProcessCreateSliceInstanceRequest
     result
   end
   
+  def self.enrich_one(request)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
+    request
+  end
+  
+  def self.enrich(requests)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: requests=#{requests.inspect} (class #{requests.class})"
+    unless requests.is_a?(Array)
+      STDERR.puts "#{msg}: requests needs to be an array"
+      return requests
+    end
+    enriched = []
+    requests.each do |request|
+      enriched << enrich_one(request.as_json)
+    end
+    enriched
+  end  
+  
   private  
   def self.save_result(event)
     msg=self.name+'.'+__method__.to_s
@@ -152,11 +173,6 @@ class ProcessCreateSliceInstanceRequest
     msg=self.name+'.'+__method__.to_s
     STDERR.puts "#{msg}: params=#{params}"
     params
-  end
-  
-  def self.valid_uuid?(uuid)
-    uuid.match /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/
-    uuid == $&
   end
   
   def self.create_slice(params)

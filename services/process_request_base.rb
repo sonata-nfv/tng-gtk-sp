@@ -29,32 +29,28 @@
 ## the Horizon 2020 and 5G-PPP programmes. The authors would like to
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
-# frozen_string_literal: true
 # encoding: utf-8
-require 'rspec/core/rake_task'
-require 'ci/reporter/rake/rspec'
-require 'sinatra/activerecord/rake'
-%w{ controllers models services }.each do |dir|
-  path = File.expand_path(File.join(File.dirname(__FILE__), '../', dir))
-  $LOAD_PATH << path
-end
-require_relative './controllers/application_controller'
-require_relative './controllers/requests_controller'
+require 'net/http'
+require 'ostruct'
+require 'json'
+require 'yaml'
+require_relative '../models/request'
 
-task default: ['ci:all']
-
-desc 'Run Unit Tests'
-RSpec::Core::RakeTask.new :specs do |task|
-  task.pattern = Dir['spec/**/*_spec.rb']
-end
-
-# use like in
-#   rake ci:all
-desc 'Runs all test tasks'
-task 'ci:all' => ['ci:setup:rspec', 'specs']
-
-namespace :db do
-  task :load_config do
-    require './controllers/requests_controller'
+class ProcessRequestBase  
+  
+  def self.search(page_number, page_size)
+    Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
   end
+  
+  def self.find(uuid)
+    Request.find(uuid).as_json
+  end
+  
+  private
+  
+  def self.valid_uuid?(uuid)
+    uuid.match /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/
+    uuid == $&
+  end
+  
 end

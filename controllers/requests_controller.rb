@@ -33,6 +33,7 @@
 require 'sinatra'
 require 'json'
 require_relative './application_controller'
+require_relative '../services/process_request_base'
 require_relative '../services/process_request_service'
 require_relative '../services/process_create_slice_instance_request'
 
@@ -53,8 +54,15 @@ class RequestsController < ApplicationController
   #ERROR_SERVICE_UUID_IS_MISSING="Service UUID is a mandatory parameter (absent from the '%s' request)"
   ERROR_REQUEST_NOT_FOUND="Request with UUID '%s' was not found"
   
+  # From http://gavinmiller.io/2016/the-safesty-way-to-constantize/
+  STRATEGIES = {
+    'CREATE_SERVICE': ProcessRequestService,
+    'TERMINATE_SERVICE': ProcessRequestService,
+    'CREATE_SLICE': ProcessCreateSliceInstanceRequest
+  }
+
   before do 
-    STDERR.puts "INFO: RequestsController: ActiveRecord pool size=#{ActiveRecord::Base.connection.pool.size}"
+    # STDERR.puts "INFO: RequestsController: ActiveRecord pool size=#{ActiveRecord::Base.connection.pool.size}"
     content_type :json
   end
   #after  {ActiveRecord::Base.clear_active_connections!}
@@ -62,7 +70,7 @@ class RequestsController < ApplicationController
 
   # Accept service instantiation requests
   post '/?' do
-    msg='RequestsController.post'
+    msg='RequestsController#post'
     halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) unless request.content_type =~ /^application\/json/
 
     body = request.body.read
@@ -71,32 +79,25 @@ class RequestsController < ApplicationController
     begin
       json_body = JSON.parse(body, quirks_mode: true, symbolize_names: true)
       STDERR.puts "#{msg}: json_body=#{json_body}"
-      request_type = json_body.fetch(:request_type, 'CREATE_SERVICE')
+      STDERR.puts "#{msg}: RequestsController::STRATEGIES=#{RequestsController::STRATEGIES}"
     
-      # ToDo:
-      # This is temporary, the 'else' branch will disappear when we have this tested for the Slice creation only
-      STDERR.puts "#{msg}: request_type=#{request_type}"
-      if request_type == 'CREATE_SLICE'
-        klass_name = "Process#{camelize(request_type.downcase)}InstanceRequest"
-        STDERR.puts "#{msg}: looking for class #{klass_name}"
-        klass = constantize(klass_name)
-        STDERR.puts "#{msg}: CREATE_SLICE: class #{klass.name}"
-        result = saved_request = klass.call(json_body.deep_symbolize_keys)
-      else
-        saved_request = ProcessRequestService.call(json_body.deep_symbolize_keys) #, request.env['5gtango.user.data'])
-        result = ProcessRequestService.enrich_one(saved_request)
-      end
+      #chosen_strategy_class = choose_strategy(json_body)
+      #STDERR.puts "#{msg}: going to call #{STRATEGIES[json_body[:request_type]]}.call with #{json_body.deep_symbolize_keys}"
+      saved_request = strategy(json_body[:request_type]).call(json_body.deep_symbolize_keys)
     
       STDERR.puts "#{msg}: saved_request='#{saved_request.inspect}'"
-      #halt_with_code_body(404, {error: "Service UUID '#{params[:service_uuid]}' not found"}.to_json) if (saved_request == {} || saved_request == nil)
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if !saved_request
       # for the special case of CREATE_SLICE, the returned data structure is not an Hash
       halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
+      result = strategy(json_body[:request_type]).enrich_one(saved_request)
+      STDERR.puts "#{msg}: result=#{result}"
       halt_with_code_body(201, result.to_json)
-
+    rescue KeyError => e
+      STDERR.puts "#{msg}: #{e.message} for #{params}\n#{e.backtrace.join("\n\t")}"
+      halt_with_code_body(404, {error: "Missing code to treat the '#{json_body[:request_type]}' request type"}.to_json)
     rescue ArgumentError => e
-      STDERR.puts "#{msg}: #{e.message} for #{json_body}\n#{e.backtrace.join("\n\t")}"
-      halt_with_code_body(404, {error: "#{e.message} for #{json_body}"}.to_json)
+      STDERR.puts "#{msg}: #{e.message} for #{params}\n#{e.backtrace.join("\n\t")}"
+      halt_with_code_body(404, {error: "#{e.message} for #{params}"}.to_json)
     rescue JSON::ParserError => e
       halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:service_uuid]}.to_json)
     rescue StandardError => e
@@ -106,16 +107,15 @@ class RequestsController < ApplicationController
   
   # GETs a request, given an uuid
   get '/:request_uuid/?' do
-    msg='RequestsController.get (single)'
+    msg='RequestsController#get (single)'
     STDERR.puts "#{msg}: entered with uuid='#{params[:request_uuid]}'"
     captures=params.delete('captures') if params.key? 'captures'
     begin
-      STDERR.puts "#{msg}: before Request.find: #{ActiveRecord::Base.connection_pool.stat}"
-      single_request = Request.find(params[:request_uuid]).as_json
-      STDERR.puts "#{msg}: after Request.find: #{ActiveRecord::Base.connection_pool.stat}"
+      #single_request = Request.find(params[:request_uuid]).as_json
+      single_request = ProcessRequestBase.find(params[:request_uuid])
       STDERR.puts "#{msg}: single_request='#{single_request}' (class #{single_request.class})"
       halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json) if (!single_request || single_request.empty?)
-      halt_with_code_body(200, ProcessRequestService.enrich_one(single_request).to_json)
+      halt_with_code_body(200, strategy(params[:request_type]).enrich_one(single_request).to_json)
     rescue Exception => e
 			ActiveRecord::Base.clear_active_connections!
       halt_with_code_body(404, {error: e.message}.to_json)
@@ -125,7 +125,7 @@ class RequestsController < ApplicationController
 
   # GET many requests
   get '/?' do
-    msg='RequestsController.get (many)'
+    msg='RequestsController#get (many)'
     captures=params.delete('captures') if params.key? 'captures'
     STDERR.puts "#{msg}: entered with params='#{params}'"
     
@@ -133,13 +133,11 @@ class RequestsController < ApplicationController
     page_number, page_size, sanitized_params = sanitize(params)
     STDERR.puts "#{msg}: page_number, page_size, sanitized_params=#{page_number}, #{page_size}, #{sanitized_params}"
     begin
-      STDERR.puts "#{msg}: before Request.limit.offset.order: #{ActiveRecord::Base.connection_pool.stat}"
       #       requests = Request.where(sanitized_params).limit(page_size).offset(page_number).order(updated_at: :desc)
-      requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
-      STDERR.puts "#{msg}: after Request.limit.offset.order: #{ActiveRecord::Base.connection_pool.stat}"
+      requests = ProcessRequestBase.search( page_number, page_size)
       STDERR.puts "#{msg}: requests='#{requests.inspect}'"
       headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
-      halt 200, ProcessRequestService.enrich(requests).to_json
+      halt 200, strategy(params[:request_type]).enrich(requests).to_json
       #halt 200, requests.to_json
     rescue ActiveRecord::RecordNotFound => e
       halt 200, '[]'
@@ -175,13 +173,17 @@ class RequestsController < ApplicationController
       STDERR.puts "#{msg}: result=#{result}"
       halt 201, {}, result.to_json unless result.empty?
       halt 404, {}, {error: "Package processing UUID not found in event #{event_data}"}.to_json
-    rescue JSON::ParserError, ActiveRecord::RecordNotFound, ArgumentError  => e
-      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
+    rescue JSON::ParserError, ActiveRecord::RecordNotFound, ArgumentError, NameError => e
+      STDERR.puts "#{msg}: #{e.message} #{params}\n#{e.backtrace.join("\n\t")}"
       halt 400, {}, {error: e.message}.to_json
     end
   end  
   
   private
+  def strategy(req_type)
+    RequestsController::STRATEGIES.fetch(req_type.to_sym)
+  end
+  
   def halt_with_code_body(code, body)
     halt code, {'Content-Type'=>'application/json', 'Content-Length'=>body.length.to_s}, body
   end
@@ -203,40 +205,4 @@ class RequestsController < ApplicationController
   def symbolized_hash(hash)
     Hash[hash.map{|(k,v)| [k.to_sym,v]}]
   end
-  
-  def constantize(camel_cased_word)
-    names = camel_cased_word.split("::".freeze)
-
-    # Trigger a built-in NameError exception including the ill-formed constant in the message.
-    Object.const_get(camel_cased_word) if names.empty?
-
-    # Remove the first blank element in case of '::ClassName' notation.
-    names.shift if names.size > 1 && names.first.empty?
-
-    names.inject(Object) do |constant, name|
-      if constant == Object
-        constant.const_get(name)
-      else
-        candidate = constant.const_get(name)
-        next candidate if constant.const_defined?(name, false)
-        next candidate unless Object.const_defined?(name)
-
-        # Go down the ancestors to check if it is owned directly. The check
-        # stops when we reach Object or the end of ancestors tree.
-        constant = constant.ancestors.inject(constant) do |const, ancestor|
-          break const    if ancestor == Object
-          break ancestor if ancestor.const_defined?(name, false)
-          const
-        end
-
-        # owner is in Object, so raise
-        constant.const_get(name, false)
-      end
-    end
-  end
-  
-  def camelize(str)
-    str.split('_').map(&:capitalize).join
-  end
-  
 end
