@@ -133,7 +133,7 @@ RSpec.describe RequestsController, type: :controller do
     end
   end
   
-  describe 'slice instantaition callback' do
+  describe 'processes slice instantiation callback' do
     context 'with valid event data' do
       let(:valid_event_data) {{
         original_event_uuid: uuid_1,
@@ -157,7 +157,7 @@ RSpec.describe RequestsController, type: :controller do
          name: nil,
          error: nil
       }}
-      it 'processes data and returns 200 (OK)' do
+      it 'returning 200 (OK)' do
         allow(ProcessCreateSliceInstanceRequest).to receive(:process_callback).with(valid_event_data).and_return(valid_result)
         post '/'+uuid_1+'/on-change', valid_event_data.to_json, {"Content-Type"=>"application/json"}
         expect(last_response).to be_created
@@ -168,12 +168,71 @@ RSpec.describe RequestsController, type: :controller do
     context 'with invalid event data' do
       let(:invalid_event_data) {{ original_event_uuid: uuid_1}}
       let(:valid_result) {{error: 'error'}}
-      it 'fails with error' do
+      it 'returning error' do
         allow(ProcessCreateSliceInstanceRequest).to receive(:process_callback).with(invalid_event_data).and_return({})
         post '/'+uuid_1+'/on-change', invalid_event_data.to_json, {"Content-Type"=>"application/json"}
         expect(last_response).not_to be_ok
         expect(last_response.body).to match(/error/)
       end
+    end
+  end
+  
+  describe 'processes slice instantiation request' do
+    let(:slice_instantiation) {{
+      request_type: 'CREATE_SLICE',
+      service_uuid: uuid_1
+    }}
+    before { header 'Content-Type', 'application/json'}
+    it 'calling the right class to handle the request' do
+      saved_request = double('Request')
+      allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return(saved_request)
+      post '/', slice_instantiation.to_json
+      expect(last_response).to be_created
+    end
+  end
+  describe 'raises an error' do
+    let(:slice_instantiation) {{
+      request_type: 'CREATE_SLICE',
+      service_uuid: uuid_1
+    }}
+    let(:wrong_request_type) {{
+      request_type: 'WHATEVER_THIS_IS',
+      service_uuid: uuid_1
+    }}
+    before { header 'Content-Type', 'application/json'}
+    context '404 (not found)' do
+      it 'when it is an unknown request type' do
+        saved_request = double('Request')
+        allow(ProcessRequestService).to receive(:call).with(wrong_request_type).and_raise(ArgumentError)
+        post '/', wrong_request_type.to_json
+        expect(last_response).to be_not_found
+      end
+      it 'when saving returns an error' do
+        saved_request = double('Request')
+        allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return({error: 'any error'})
+        post '/', slice_instantiation.to_json
+        expect(last_response).to be_not_found
+      end
+    end
+    context '400 (bad request)' do
+      it 'when JSON params are wrong' do
+        post '/', 'this is not JSON' # JSON::ParserError
+        expect(last_response).to be_bad_request
+      end
+      it 'when params are empty' do
+        post '/', ''
+        expect(last_response).to be_bad_request
+      end
+      it 'when saving the request fails' do
+        allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return(nil)
+        post '/', slice_instantiation.to_json
+        expect(last_response).to be_bad_request
+      end
+    end
+    it 'when the request has a wrong content-type' do
+      header 'Content-Type', 'whatever'
+      post '/', slice_instantiation.to_json
+      expect(last_response).to be_unsupported_media_type
     end
   end
 end

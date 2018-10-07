@@ -67,11 +67,11 @@ class RequestsController < ApplicationController
 
     body = request.body.read
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
-    params = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-    STDERR.puts "#{msg}: params=#{params}"
     
     begin
-      request_type = params.fetch(:request_type, 'CREATE_SERVICE')
+      json_body = JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      STDERR.puts "#{msg}: json_body=#{json_body}"
+      request_type = json_body.fetch(:request_type, 'CREATE_SERVICE')
     
       # ToDo:
       # This is temporary, the 'else' branch will disappear when we have this tested for the Slice creation only
@@ -81,9 +81,9 @@ class RequestsController < ApplicationController
         STDERR.puts "#{msg}: looking for class #{klass_name}"
         klass = constantize(klass_name)
         STDERR.puts "#{msg}: CREATE_SLICE: class #{klass.name}"
-        result = saved_request = klass.call(params.deep_symbolize_keys)
+        result = saved_request = klass.call(json_body.deep_symbolize_keys)
       else
-        saved_request = ProcessRequestService.call(params.deep_symbolize_keys) #, request.env['5gtango.user.data'])
+        saved_request = ProcessRequestService.call(json_body.deep_symbolize_keys) #, request.env['5gtango.user.data'])
         result = ProcessRequestService.enrich_one(saved_request)
       end
     
@@ -92,12 +92,11 @@ class RequestsController < ApplicationController
       halt_with_code_body(400, {error: "Error saving request"}.to_json) if !saved_request
       # for the special case of CREATE_SLICE, the returned data structure is not an Hash
       halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
-      #halt_with_code_body(201, saved_request.to_json)
       halt_with_code_body(201, result.to_json)
 
     rescue ArgumentError => e
-      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
-      halt_with_code_body(404, {error: "#{e.message}\n#{e.backtrace.join("\n\t")}"}.to_json)
+      STDERR.puts "#{msg}: #{e.message} for #{json_body}\n#{e.backtrace.join("\n\t")}"
+      halt_with_code_body(404, {error: "#{e.message} for #{json_body}"}.to_json)
     rescue JSON::ParserError => e
       halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:service_uuid]}.to_json)
     rescue StandardError => e

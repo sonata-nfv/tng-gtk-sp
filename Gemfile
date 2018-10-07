@@ -60,4 +60,5 @@ group :test do
   gem 'webmock', '3.1.1'
   gem 'rspec', '3.7.0'
   gem 'rack-test', '0.8.2'
+  gem 'response_code_matchers', '0.1.0'
 end

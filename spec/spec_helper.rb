@@ -33,6 +33,7 @@
 require 'rack/test'
 require 'rspec'
 require 'webmock/rspec'
+require "response_code_matchers"
 
 ENV['RACK_ENV'] = 'test'
 %w{ controllers models services }.each do |dir|
@@ -51,6 +52,7 @@ require 'request'
 
 RSpec.configure do |config|
   config.include Rack::Test::Methods
+  config.include ResponseCodeMatchers
   config.mock_with :rspec do |configuration|
     configuration.syntax = :expect
   end

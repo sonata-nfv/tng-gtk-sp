@@ -69,7 +69,7 @@ class ProcessCreateSliceInstanceRequest
       # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
       # the user callback is saved in the request
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"
-      request = create(enriched_params)
+      request = create_slice(enriched_params)
       STDERR.puts "#{msg}: request=#{request}"
       if (request && request.is_a?(Hash) && request.key?(:error))
         instantiation_request['status'] = 'ERROR'
@@ -156,7 +156,7 @@ class ProcessCreateSliceInstanceRequest
     uuid == $&
   end
   
-  def self.create(params)
+  def self.create_slice(params)
     msg=self.name+'.'+__method__.to_s
     # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi, with body {...}  
     STDERR.puts "#{msg}: params=#{params} site=#{SLM_URL+'/nsilcm/v1/nsi'}"
