@@ -29,36 +29,28 @@
 ## the Horizon 2020 and 5G-PPP programmes. The authors would like to
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
-# frozen_string_literal: true
 # encoding: utf-8
-source 'https://rubygems.org'
-ruby '2.4.3'
+require 'net/http'
+require 'ostruct'
+require 'json'
+require 'yaml'
+require_relative '../models/request'
 
-gem 'rake', '12.3.0'
-gem 'sinatra', '2.0.2', require: 'sinatra/base'
-gem 'sinatra-contrib', '2.0.2', require: false
-gem 'sinatra-logger', '0.3.2'
-#gem 'sinatra-active-model-serializers', '0.1.0'
-gem 'sinatra-cross_origin', '0.4.0'
-
-gem 'pg', '0.21.0'
-gem 'activesupport', '5.2', require: 'active_support'
-gem 'activerecord', '5.2'
-gem 'activesupport', '5.2'
-gem 'sinatra-activerecord', '2.0.13'
-gem 'bunny', '2.8.0'
-
-gem 'puma', '3.11.0'
-gem 'thin', '1.7.2'
-gem 'rack-timeout-puma', '0.0.1'
-gem 'activerecord-rack', '1.0.0'
-gem 'ci_reporter_rspec', '1.0.0'
-gem 'rubocop', '0.52.0'
-gem 'rubocop-checkstyle_formatter', '0.4.0', require: false
-
-group :test do
-  gem 'webmock', '3.1.1'
-  gem 'rspec', '3.7.0'
-  gem 'rack-test', '0.8.2'
-  gem 'response_code_matchers', '0.1.0'
+class ProcessRequestBase  
+  
+  def self.search(page_number, page_size)
+    Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
+  end
+  
+  def self.find(uuid)
+    Request.find(uuid).as_json
+  end
+  
+  private
+  
+  def self.valid_uuid?(uuid)
+    uuid.match /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/
+    uuid == $&
+  end
+  
 end

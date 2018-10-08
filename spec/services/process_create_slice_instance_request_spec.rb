@@ -81,12 +81,28 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
     vendor: "eu.5gTango"
   }}
   
-  describe '.call' do
-    it 'saves the request and passes it to the Slice Manager' do
+  describe '.call saves the request ' do
+    let(:error_slicer_response) {{ error: 'error from the Slice Manager'}}
+    it 'and passes it to the Slice Manager' do
+      stub_request(:post, "http://tng-slice-mngr:5998/api/nsilcm/v1/nsi").
+        with(body: {
+          request_type:"CREATE_SLICE", service_uuid:"98002ea3-71c7-4faf-af68-b39e5ec0170d",
+          callback:"http://tng-gtk-sp:5000/requests/d0b61673-224a-470e-9322-6e924357bd62/on-change"
+          }).to_return(status: 200, body: "", headers: {})
       allow(ProcessCreateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(request_params)
       allow(ProcessCreateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
       allow(Request).to receive(:create).with(request_params).and_return(saved_request)
-      allow(CreateNetworkSliceInstanceService).to receive(:call).with(request_params).and_return(slicer_response)
+      allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).and_return(slicer_response)
+      expect(described_class.call(request_params)).to eq(saved_request)
+    end
+    it 'with an error' do
+      req = double('Request')
+      allow(ProcessCreateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(request_params)
+      allow(ProcessCreateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
+      allow(Request).to receive(:create).with(request_params).and_return(saved_request)
+      allow(Request).to receive(:find).with(saved_request['id']).and_return(req)
+      allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:error])
+      allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(request_params).and_return(error_slicer_response)
       expect(described_class.call(request_params)).to eq(saved_request)
     end
   end

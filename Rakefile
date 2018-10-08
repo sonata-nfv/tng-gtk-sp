@@ -40,6 +40,7 @@ require 'sinatra/activerecord/rake'
 end
 require_relative './controllers/application_controller'
 require_relative './controllers/requests_controller'
+
 task default: ['ci:all']
 
 desc 'Run Unit Tests'

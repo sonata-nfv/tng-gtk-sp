@@ -32,14 +32,21 @@
 # encoding: utf-8
 require 'securerandom'
 require 'net/http'
+require 'uri'
 require 'ostruct'
 require 'json'
 require 'yaml'
-require_relative './create_network_slice_instance_service'
+require_relative './process_request_base'
+require_relative '../models/request'
 
-class ProcessCreateSliceInstanceRequest #< ProcessRequestService
+class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   
-  #SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change')
+  NO_SLM_URL_DEFINED_ERROR='The SLM_URL ENV variable needs to be defined and pointing to the Slice Manager component, where to request new Network Slice instances'
+  SLM_URL = ENV.fetch('SLM_URL', '')
+  if SLM_URL == ''
+    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_SLM_URL_DEFINED_ERROR]
+    raise ArgumentError.new(NO_SLM_URL_DEFINED_ERROR) 
+  end
   SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-gtk-sp:5000/requests')
   
   def self.call(params)
@@ -55,8 +62,8 @@ class ProcessCreateSliceInstanceRequest #< ProcessRequestService
       enriched_params = enrich_params(params)
       STDERR.puts "#{msg}: enriched_params params=#{enriched_params}"
       
-      instantiation_request = Request.create(enriched_params).as_json
-      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request}"
+      instantiation_request = Request.create(enriched_params)
+      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request} (class #{instantiation_request.class})"
       unless instantiation_request
         STDERR.puts "#{msg}: Failled to create instantiation_request"
         return {error: "Failled to create instantiation request for slice template '#{params[:nstId]}'"}
@@ -65,12 +72,22 @@ class ProcessCreateSliceInstanceRequest #< ProcessRequestService
       # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
       # the user callback is saved in the request
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"
-      request = CreateNetworkSliceInstanceService.call(enriched_params)
+      request = create_slice(enriched_params)
+      STDERR.puts "#{msg}: request=#{request}"
+      if (request && request.is_a?(Hash) && request.key?(:error))
+        saved_req=Request.find(instantiation_request['id'])
+        STDERR.puts "#{msg}: saved_req=#{saved_req}"
+        #instantiation_request['status'] = 'ERROR'
+        #instantiation_request['error'] = request[:error]
+        #instantiation_request.save
+        saved_req.update(status: 'ERROR', error: request[:error])
+        saved_req.as_json
+      end
+      instantiation_request
     rescue StandardError => e
       STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
       return nil
     end
-    instantiation_request
   end
   
   # "/api/nsilcm/v1/nsi/on-change"
@@ -84,6 +101,26 @@ class ProcessCreateSliceInstanceRequest #< ProcessRequestService
     STDERR.puts "#{msg}: result=#{result}"
     result
   end
+  
+  def self.enrich_one(request)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
+    request
+  end
+  
+  def self.enrich(requests)
+    msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: requests=#{requests.inspect} (class #{requests.class})"
+    unless requests.is_a?(Array)
+      STDERR.puts "#{msg}: requests needs to be an array"
+      return requests
+    end
+    enriched = []
+    requests.each do |request|
+      enriched << enrich_one(request.as_json)
+    end
+    enriched
+  end  
   
   private  
   def self.save_result(event)
@@ -138,12 +175,38 @@ class ProcessCreateSliceInstanceRequest #< ProcessRequestService
   
   def self.enrich_params(params)
     msg=self.name+'.'+__method__.to_s
+    STDERR.puts "#{msg}: params=#{params}"
     params
   end
   
-  def self.valid_uuid?(uuid)
-    uuid.match /[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}/
-    uuid == $&
+  def self.create_slice(params)
+    msg=self.name+'.'+__method__.to_s
+    # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi, with body {...}
+    site = SLM_URL+'/nsilcm/v1/nsi'
+    STDERR.puts "#{msg}: params=#{params} site=#{site}"
+    uri = URI.parse(site)
+
+    # Create the HTTP objects
+    http = Net::HTTP.new(uri.host, uri.port)
+    request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
+    request.body = params.to_json
+
+    # Send the request
+    begin
+      response = http.request(request)
+      STDERR.puts "#{msg}: response=#{response}"
+      case response
+      when Net::HTTPSuccess, Net::HTTPCreated
+        body = response.body
+        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      else
+        return {error: "#{response.code} (#{response.message}): #{params}"}
+      end
+    rescue Exception => e
+      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+    end
+    nil
   end
   
 end

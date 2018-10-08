@@ -96,7 +96,7 @@ RSpec.describe RequestsController, type: :controller do
   
     context 'with UUID given' do
       it 'and returns the existing request' do
-        allow(Request).to receive(:find).with(request_1[:id]).and_return(request_1)
+        allow(ProcessRequestBase).to receive(:find).with(request_1[:id]).and_return(request_1)
         allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
         get '/'+request_1[:id]
         STDERR.puts "last_response=#{last_response.inspect}"
@@ -104,7 +104,7 @@ RSpec.describe RequestsController, type: :controller do
         expect(last_response.body).to eq(request_1.to_json)
       end
       it 'and rejects non-existing request' do
-        allow(Request).to receive(:find).with(requestid_2).and_raise(ActiveRecord::RecordNotFound)
+        allow(ProcessRequestBase).to receive(:find).with(requestid_2).and_raise(ActiveRecord::RecordNotFound)
         get '/'+requestid_2
         STDERR.puts "last_response=#{last_response.inspect}"
         expect(last_response).to be_not_found
@@ -133,7 +133,7 @@ RSpec.describe RequestsController, type: :controller do
     end
   end
   
-  describe 'slice instantaition callback' do
+  describe 'processes slice instantiation callback' do
     context 'with valid event data' do
       let(:valid_event_data) {{
         original_event_uuid: uuid_1,
@@ -157,7 +157,7 @@ RSpec.describe RequestsController, type: :controller do
          name: nil,
          error: nil
       }}
-      it 'processes data and returns 200 (OK)' do
+      it 'returning 200 (OK)' do
         allow(ProcessCreateSliceInstanceRequest).to receive(:process_callback).with(valid_event_data).and_return(valid_result)
         post '/'+uuid_1+'/on-change', valid_event_data.to_json, {"Content-Type"=>"application/json"}
         expect(last_response).to be_created
@@ -168,12 +168,111 @@ RSpec.describe RequestsController, type: :controller do
     context 'with invalid event data' do
       let(:invalid_event_data) {{ original_event_uuid: uuid_1}}
       let(:valid_result) {{error: 'error'}}
-      it 'fails with error' do
+      it 'returning error' do
         allow(ProcessCreateSliceInstanceRequest).to receive(:process_callback).with(invalid_event_data).and_return({})
         post '/'+uuid_1+'/on-change', invalid_event_data.to_json, {"Content-Type"=>"application/json"}
         expect(last_response).not_to be_ok
         expect(last_response.body).to match(/error/)
       end
+    end
+  end
+  
+  describe 'processes instantiation request' do
+    let(:slice_instantiation) {{
+      request_type: 'CREATE_SLICE',
+      service_uuid: uuid_1
+    }}
+    let(:slicer_response) {{
+      created_at: "2018-07-16T14:03:02.204+00:00", updated_at: "2018-07-16T14:03:02.204+00:00",
+      description: "NSI_descriptor",
+      flavorId: "",
+      instantiateTime: "2018-07-16T14:01:31.447547",
+      name: "NSI_16072019_1600",
+      netServInstance_Uuid: [
+        {
+          servId: "4c7d854f-a0a1-451a-b31d-8447b4fd4fbc",
+          servInstanceId: "e1547f09-e954-4299-bd62-138045566872",
+          servName: "ns-squid-haproxy",
+          workingStatus: "READY"
+        }
+      ],
+      nsiState: "INSTANTIATED",
+      nstId: "26c540a8-1e70-4242-beef-5e77dfa05a41",
+      nstName: "Example_NST",
+      nstVersion: "1.0",
+      sapInfo: "",
+      scaleTime: "",
+      terminateTime: "",
+      updateTime: "",
+      uuid: "a75d1555-cc2c-4b96-864f-fa1ffe5c909a",
+      vendor: "eu.5gTango"
+    }}
+    let(:service_instantiation) {{
+      service_uuid: uuid_1
+    }}
+    before { header 'Content-Type', 'application/json'}
+    it 'calling the ProcessCreateSliceInstanceRequest class to handle the slice creation request' do
+      saved_request = double('Request')
+      allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return(saved_request)
+      allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(slice_instantiation).and_return(slicer_response)
+      post '/', slice_instantiation.to_json
+      stub_request(:post, "http://example.com/nsilcm/v1/nsi").
+        with(body: "{\"request_type\":\"CREATE_SLICE\",\"service_uuid\":\"de627e9d-7f04-4e6a-9c44-63c37a2f2e0f\",\"callback\":\"http://tng-gtk-sp:5000/requests/c13e3197-5afb-4d4f-a04a-2e8d25094786/on-change\"}",
+             headers: {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'text/json', 'Host'=>'example.com', 'User-Agent'=>'Ruby'}).
+        to_return(status: 200, body: "", headers: {})
+      expect(last_response).to be_created
+    end
+    it 'calling the ProcessRequestService class to handle the service creation request' do
+      saved_request = double('Request')
+      allow(ProcessRequestService).to receive(:call).with(service_instantiation).and_return(saved_request)
+      post '/', slice_instantiation.to_json
+      expect(last_response).to be_created
+    end
+  end
+  describe 'raises an error' do
+    let(:slice_instantiation) {{
+      request_type: 'CREATE_SLICE',
+      service_uuid: uuid_1
+    }}
+    let(:wrong_request_type) {{
+      request_type: 'WHATEVER_THIS_IS',
+      service_uuid: uuid_1
+    }}
+    before { header 'Content-Type', 'application/json'}
+    context '404 (not found)' do
+      it 'when it is an unknown request type' do
+        saved_request = double('Request')
+        allow(ProcessRequestService).to receive(:call).with(wrong_request_type).and_raise(ArgumentError)
+        post '/', wrong_request_type.to_json
+        STDERR.puts "last_response=#{last_response.inspect}"
+        expect(last_response).to be_not_found
+      end
+      it 'when saving returns an error' do
+        saved_request = double('Request')
+        allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return({error: 'any error'})
+        post '/', slice_instantiation.to_json
+        expect(last_response).to be_not_found
+      end
+    end
+    context '400 (bad request)' do
+      it 'when JSON params are wrong' do
+        post '/', 'this is not JSON' # JSON::ParserError
+        expect(last_response).to be_bad_request
+      end
+      it 'when params are empty' do
+        post '/', ''
+        expect(last_response).to be_bad_request
+      end
+      it 'when saving the request fails' do
+        allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return(nil)
+        post '/', slice_instantiation.to_json
+        expect(last_response).to be_bad_request
+      end
+    end
+    it 'when the request has a wrong content-type' do
+      header 'Content-Type', 'whatever'
+      post '/', slice_instantiation.to_json
+      expect(last_response).to be_unsupported_media_type
     end
   end
 end
