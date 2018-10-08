@@ -58,7 +58,8 @@ class RequestsController < ApplicationController
   STRATEGIES = {
     'CREATE_SERVICE': ProcessRequestService,
     'TERMINATE_SERVICE': ProcessRequestService,
-    'CREATE_SLICE': ProcessCreateSliceInstanceRequest
+    'CREATE_SLICE': ProcessCreateSliceInstanceRequest #,
+    #'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest
   }
 
   before do 
@@ -112,10 +113,10 @@ class RequestsController < ApplicationController
     captures=params.delete('captures') if params.key? 'captures'
     begin
       #single_request = Request.find(params[:request_uuid]).as_json
-      single_request = ProcessRequestBase.find(params[:request_uuid])
+      single_request = ProcessRequestBase.find(params[:request_uuid], RequestsController::STRATEGIES)
       STDERR.puts "#{msg}: single_request='#{single_request}'"
       halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json) if (!single_request || single_request.empty?)
-      halt_with_code_body(200, strategy(single_request[:request_type]).enrich_one(single_request).to_json)
+      halt_with_code_body(200, single_request.to_json)
     rescue Exception => e
 			ActiveRecord::Base.clear_active_connections!
       halt_with_code_body(404, {error: e.message}.to_json)
@@ -134,10 +135,10 @@ class RequestsController < ApplicationController
     STDERR.puts "#{msg}: page_number, page_size, sanitized_params=#{page_number}, #{page_size}, #{sanitized_params}"
     begin
       #       requests = Request.where(sanitized_params).limit(page_size).offset(page_number).order(updated_at: :desc)
-      requests = ProcessRequestBase.search( page_number, page_size)
+      requests = ProcessRequestBase.search( page_number, page_size, RequestsController::STRATEGIES)
       STDERR.puts "#{msg}: requests='#{requests.inspect}'"
       headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
-      halt 200, strategy(params[:request_type]).enrich(requests).to_json
+      halt 200, requests.to_json
       #halt 200, requests.to_json
     rescue ActiveRecord::RecordNotFound => e
       halt 200, '[]'

@@ -77,11 +77,8 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       if (request && request.is_a?(Hash) && request.key?(:error))
         saved_req=Request.find(instantiation_request['id'])
         STDERR.puts "#{msg}: saved_req=#{saved_req}"
-        #instantiation_request['status'] = 'ERROR'
-        #instantiation_request['error'] = request[:error]
-        #instantiation_request.save
         saved_req.update(status: 'ERROR', error: request[:error])
-        saved_req.as_json
+        return saved_req.as_json
       end
       instantiation_request
     rescue StandardError => e
