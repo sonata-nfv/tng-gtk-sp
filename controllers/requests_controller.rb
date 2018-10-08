@@ -79,6 +79,7 @@ class RequestsController < ApplicationController
     
     begin
       json_body = JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      json_body[:request_type] = 'CREATE_SERVICE' unless json_body.key?(:request_type)
       STDERR.puts "#{msg}: json_body=#{json_body}"
       STDERR.puts "#{msg}: RequestsController::STRATEGIES=#{RequestsController::STRATEGIES}"
     
