@@ -63,7 +63,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       STDERR.puts "#{msg}: enriched_params params=#{enriched_params}"
       
       instantiation_request = Request.create(enriched_params)
-      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request.inspect}"
+      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request} (class #{instantiation_request.class})"
       unless instantiation_request
         STDERR.puts "#{msg}: Failled to create instantiation_request"
         return {error: "Failled to create instantiation request for slice template '#{params[:nstId]}'"}
@@ -75,15 +75,19 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       request = create_slice(enriched_params)
       STDERR.puts "#{msg}: request=#{request}"
       if (request && request.is_a?(Hash) && request.key?(:error))
-        instantiation_request['status'] = 'ERROR'
-        instantiation_request['error'] = request[:error]
-        instantiation_request.save
+        saved_req=Request.find(instantiation_request['id'])
+        STDERR.puts "#{msg}: saved_req=#{saved_req}"
+        #instantiation_request['status'] = 'ERROR'
+        #instantiation_request['error'] = request[:error]
+        #instantiation_request.save
+        saved_req.update(status: 'ERROR', error: request[:error])
+        saved_req.as_json
       end
+      instantiation_request
     rescue StandardError => e
       STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
       return nil
     end
-    instantiation_request.as_json
   end
   
   # "/api/nsilcm/v1/nsi/on-change"

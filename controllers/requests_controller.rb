@@ -93,7 +93,7 @@ class RequestsController < ApplicationController
       STDERR.puts "#{msg}: result=#{result}"
       halt_with_code_body(201, result.to_json)
     rescue KeyError => e
-      STDERR.puts "#{msg}: #{e.message} for #{params}\n#{e.backtrace.join("\n\t")}"
+      STDERR.puts "#{msg}: #{e.message} for #{params}"
       halt_with_code_body(404, {error: "Missing code to treat the '#{json_body[:request_type]}' request type"}.to_json)
     rescue ArgumentError => e
       STDERR.puts "#{msg}: #{e.message} for #{params}\n#{e.backtrace.join("\n\t")}"
@@ -108,14 +108,14 @@ class RequestsController < ApplicationController
   # GETs a request, given an uuid
   get '/:request_uuid/?' do
     msg='RequestsController#get (single)'
-    STDERR.puts "#{msg}: entered with uuid='#{params[:request_uuid]}'"
+    STDERR.puts "#{msg}: entered with params='#{params}'"
     captures=params.delete('captures') if params.key? 'captures'
     begin
       #single_request = Request.find(params[:request_uuid]).as_json
       single_request = ProcessRequestBase.find(params[:request_uuid])
-      STDERR.puts "#{msg}: single_request='#{single_request}' (class #{single_request.class})"
+      STDERR.puts "#{msg}: single_request='#{single_request}'"
       halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json) if (!single_request || single_request.empty?)
-      halt_with_code_body(200, strategy(params[:request_type]).enrich_one(single_request).to_json)
+      halt_with_code_body(200, strategy(single_request[:request_type]).enrich_one(single_request).to_json)
     rescue Exception => e
 			ActiveRecord::Base.clear_active_connections!
       halt_with_code_body(404, {error: e.message}.to_json)
