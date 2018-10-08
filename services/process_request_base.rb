@@ -38,12 +38,27 @@ require_relative '../models/request'
 
 class ProcessRequestBase  
   
-  def self.search(page_number, page_size)
-    Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
+  def self.search(page_number, page_size, strategies)
+    requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
+    return requests if requests.empty?
+    enriched = []
+    requests.each do |request|
+      enriched << strategies[request['request_type'].to_sym].enrich_one(request)
+    end
   end
   
-  def self.find(uuid)
-    Request.find(uuid).as_json
+  def self.find(uuid, strategies)
+    request = Request.find(uuid).as_json
+    return request if request.empty?
+    strategies[request['request_type'].to_sym].enrich_one(request)
+  end
+  
+  def self.descendants
+    ObjectSpace.each_object(Class).select { |klass| klass < self }    
+  end
+  
+  def camelize(s)
+    s.split("_").each {|ss| ss.capitalize! }.join("")  
   end
   
   private

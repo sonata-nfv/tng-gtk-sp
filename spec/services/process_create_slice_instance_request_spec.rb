@@ -34,7 +34,6 @@
 require_relative '../spec_helper'
 require_relative '../../services/process_create_slice_instance_request'
 require 'request'
-require 'create_network_slice_instance_service'
 require_relative '../../services/process_request_service'
 
 RSpec.describe ProcessCreateSliceInstanceRequest do
@@ -83,6 +82,17 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
   
   describe '.call saves the request ' do
     let(:error_slicer_response) {{ error: 'error from the Slice Manager'}}
+    let(:error_saved_request) {{
+      'callback'=>'http://example.com/user-callback', 
+      'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
+      'service'=>{'uuid'=>'4c7d854f-a0a1-451a-b31d-8447b4fd4fbc', 'version'=>'0.2', 'name'=>'ns-squid-haproxy', 'vendor'=>'eu.5gtango'},
+      'id'=>uuid_2, 
+      'ingresses'=>[], 'status'=>'ERROR', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
+      'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
+      'customer_uuid'=>'', 'error'=>error_slicer_response[:error],
+      'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
+    }}
+    
     it 'and passes it to the Slice Manager' do
       stub_request(:post, "http://tng-slice-mngr:5998/api/nsilcm/v1/nsi").
         with(body: {
@@ -101,9 +111,10 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       allow(ProcessCreateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
       allow(Request).to receive(:create).with(request_params).and_return(saved_request)
       allow(Request).to receive(:find).with(saved_request['id']).and_return(req)
-      allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:error])
+      allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:error]).and_return(error_saved_request)
+      allow(req).to receive(:as_json).and_return(error_saved_request)
       allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(request_params).and_return(error_slicer_response)
-      expect(described_class.call(request_params)).to eq(saved_request)
+      expect(described_class.call(request_params)).to eq(error_saved_request)
     end
   end
   
