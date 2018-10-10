@@ -105,20 +105,6 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     request
   end
   
-  def self.enrich(requests)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: requests=#{requests.inspect} (class #{requests.class})"
-    unless requests.is_a?(Array)
-      STDERR.puts "#{msg}: requests needs to be an array"
-      return requests
-    end
-    enriched = []
-    requests.each do |request|
-      enriched << enrich_one(request.as_json)
-    end
-    enriched
-  end  
-  
   private  
   def self.save_result(event)
     msg=self.name+'.'+__method__.to_s
@@ -186,6 +172,9 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
     request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
+    # Change service_uuid into nstId
+    params[:nstID] = params.delete(:service_uuid)
+    
     request.body = params.to_json
 
     # Send the request
