@@ -63,7 +63,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       STDERR.puts "#{msg}: enriched_params params=#{enriched_params}"
       
       termination_request = Request.create(enriched_params)
-      STDERR.puts "#{msg}: termination_request=#{termination_request} (class #{termination_request.class})"
+      STDERR.puts "#{msg}: termination_request=#{termination_request.inspect} (class #{termination_request.class})"
       unless termination_request
         STDERR.puts "#{msg}: Failled to create termination request"
         return {error: "Failled to create termination request for slice template '#{params[:nstId]}'"}
@@ -76,7 +76,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       STDERR.puts "#{msg}: request=#{request}"
       if (request && request.is_a?(Hash) && request.key?(:error))
         saved_req=Request.find(termination_request['id'])
-        STDERR.puts "#{msg}: saved_req=#{saved_req}"
+        STDERR.puts "#{msg}: saved_req=#{saved_req.inspect}"
         saved_req.update(status: 'ERROR', error: request[:error])
         return saved_req.as_json
       end
