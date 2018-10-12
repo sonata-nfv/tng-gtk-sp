@@ -96,7 +96,8 @@ RSpec.describe RequestsController, type: :controller do
     let(:strategies) {{ 
       'CREATE_SERVICE': ProcessRequestService, 
       'TERMINATE_SERVICE': ProcessRequestService,
-      'CREATE_SLICE': ProcessCreateSliceInstanceRequest
+      'CREATE_SLICE': ProcessCreateSliceInstanceRequest,
+      'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest
     }}
   
     context 'with UUID given' do
