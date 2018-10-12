@@ -36,6 +36,7 @@ require_relative './application_controller'
 require_relative '../services/process_request_base'
 require_relative '../services/process_request_service'
 require_relative '../services/process_create_slice_instance_request'
+require_relative '../services/process_terminate_slice_instance_request'
 
 class RequestsController < ApplicationController
   #register Sinatra::ActiveRecordExtension
@@ -58,8 +59,8 @@ class RequestsController < ApplicationController
   STRATEGIES = {
     'CREATE_SERVICE': ProcessRequestService,
     'TERMINATE_SERVICE': ProcessRequestService,
-    'CREATE_SLICE': ProcessCreateSliceInstanceRequest #,
-    #'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest
+    'CREATE_SLICE': ProcessCreateSliceInstanceRequest,
+    'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest
   }
 
   before do 

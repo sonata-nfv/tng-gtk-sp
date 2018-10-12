@@ -39,9 +39,9 @@ require 'yaml'
 require_relative './process_request_base'
 require_relative '../models/request'
 
-class ProcessCreateSliceInstanceRequest < ProcessRequestBase
+class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
   
-  NO_SLM_URL_DEFINED_ERROR='The SLM_URL ENV variable needs to be defined and pointing to the Slice Manager component, where to request new Network Slice instances'
+  NO_SLM_URL_DEFINED_ERROR='The SLM_URL ENV variable needs to be defined and pointing to the Slice Manager component, where to request the termination of a Network Slice'
   SLM_URL = ENV.fetch('SLM_URL', '')
   if SLM_URL == ''
     STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_SLM_URL_DEFINED_ERROR]
@@ -62,28 +62,28 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       enriched_params = enrich_params(params)
       STDERR.puts "#{msg}: enriched_params params=#{enriched_params}"
       
-      instantiation_request = Request.create(enriched_params)
-      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request} (class #{instantiation_request.class})"
-      unless instantiation_request
-        STDERR.puts "#{msg}: Failled to create instantiation_request"
-        return {error: "Failled to create instantiation request for slice template '#{params[:nstId]}'"}
+      termination_request = Request.create(enriched_params)
+      STDERR.puts "#{msg}: termination_request=#{termination_request.inspect} (class #{termination_request.class})"
+      unless termination_request
+        STDERR.puts "#{msg}: Failled to create termination request"
+        return {error: "Failled to create termination request for slice template '#{params[:nstId]}'"}
       end
       # pass it to the Slice Manager
       # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
       # the user callback is saved in the request
-      enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"
-      request = create_slice(enriched_params)
+      enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{termination_request['id']}/on-change"
+      request = terminate_slice(enriched_params)
       STDERR.puts "#{msg}: request=#{request}"
       if (request && request.is_a?(Hash) && request.key?(:error))
-        saved_req=Request.find(instantiation_request['id'])
-        STDERR.puts "#{msg}: saved_req=#{saved_req}"
+        saved_req=Request.find(termination_request['id'])
+        STDERR.puts "#{msg}: saved_req=#{saved_req.inspect}"
         saved_req.update(status: 'ERROR', error: request[:error])
         return saved_req.as_json
       end
-      instantiation_request
+      termination_request
     rescue StandardError => e
       STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
-      return nil
+      return {error: "#{e.message}"}
     end
   end
   
@@ -162,20 +162,21 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     params
   end
   
-  def self.create_slice(params)
+  def self.terminate_slice(params)
     msg=self.name+'.'+__method__.to_s
-    # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi, with body {...}
-    site = SLM_URL+'/nsilcm/v1/nsi'
+    # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/<nsiId>/terminate, with body {'callback':'http://...'}
+    # curl -i -H "Content-Type:application/json" -X POST -d '{"terminateTime": "_time_", "callback":"URL_with_callback_request"}' http://{base_url}:5998/api/nsilcm/v1/nsi/<nsiId>/terminate
+    # $ http POST :4567/wtf p1=one p2=two
+    # body={"p1": "one", "p2": "two"}
+    # params={"xyz"=>"wtf"}
+    site = "#{SLM_URL}/nsilcm/v1/nsi/#{params[:instance_uuid]}/terminate"
     STDERR.puts "#{msg}: params=#{params} site=#{site}"
     uri = URI.parse(site)
 
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
     request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
-    # Change service_uuid into nstId
-    params[:nstID] = params.delete(:service_uuid)
-    
-    request.body = params.to_json
+    request.body = { terminateTime: '', callback: params[:callback]}.to_json
 
     # Send the request
     begin
@@ -191,6 +192,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       end
     rescue Exception => e
       STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+      raise
     end
     nil
   end
