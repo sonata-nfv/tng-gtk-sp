@@ -173,7 +173,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     http = Net::HTTP.new(uri.host, uri.port)
     request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
     # Change service_uuid into nstId
-    params[:nstID] = params.delete(:service_uuid)
+    params[:nstId] = params.delete(:service_uuid)
     
     request.body = params.to_json
 
