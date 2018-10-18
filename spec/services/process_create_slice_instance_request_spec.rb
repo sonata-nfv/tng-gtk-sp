@@ -93,9 +93,9 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
     }}
     let(:enriched_request_params) {{
-      nstId: request_params[:service_uuid],
-      #request_type: request_params[:request_type],
-      callback: 'http://tng-gtk-sp:5000/requests/'+error_saved_request['id']+'/on-change'
+      request_type: request_params[:request_type],
+      callback: 'http://tng-gtk-sp:5000/requests/'+error_saved_request['id']+'/on-change',
+      nstId: request_params[:service_uuid]
     }}
     
     
