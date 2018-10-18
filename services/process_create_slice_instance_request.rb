@@ -59,11 +59,8 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
         return valid
       end
       
-      enriched_params = enrich_params(params)
-      STDERR.puts "#{msg}: enriched_params params=#{enriched_params}"
-      
-      instantiation_request = Request.create(enriched_params)
-      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request} (class #{instantiation_request.class})"
+      instantiation_request = Request.create(params)
+      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request.inspect} "
       unless instantiation_request
         STDERR.puts "#{msg}: Failled to create instantiation_request"
         return {error: "Failled to create instantiation request for slice template '#{params[:nstId]}'"}
@@ -71,12 +68,15 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       # pass it to the Slice Manager
       # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
       # the user callback is saved in the request
+      enriched_params = params #enrich_params(params)
+      enriched_params[:nstId] = params.delete(:service_uuid)
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"
+      STDERR.puts "#{msg}: enriched_params=#{enriched_params}"
       request = create_slice(enriched_params)
       STDERR.puts "#{msg}: request=#{request}"
       if (request && request.is_a?(Hash) && request.key?(:error))
         saved_req=Request.find(instantiation_request['id'])
-        STDERR.puts "#{msg}: saved_req=#{saved_req}"
+        STDERR.puts "#{msg}: saved_req=#{saved_req.inspect}"
         saved_req.update(status: 'ERROR', error: request[:error])
         return saved_req.as_json
       end
@@ -173,7 +173,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     http = Net::HTTP.new(uri.host, uri.port)
     request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
     # Change service_uuid into nstId
-    params[:nstID] = params.delete(:service_uuid)
+    params[:nstId] = params.delete(:service_uuid)
     
     request.body = params.to_json
 
@@ -185,7 +185,10 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       when Net::HTTPSuccess, Net::HTTPCreated
         body = response.body
         STDERR.puts "#{msg}: #{response.code} body=#{body}"
-        return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+        json_body = JSON.parse(body, quirks_mode: true, symbolize_names: true)
+        json_body[:service_uuid] = json_body.delete(:nstId) if json_body.key?(:nstId)
+        STDERR.puts "#{msg}: json_body=#{json_body} "
+        return json_body
       else
         return {error: "#{response.code} (#{response.message}): #{params}"}
       end
