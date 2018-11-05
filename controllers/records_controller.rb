@@ -31,7 +31,9 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'securerandom'
-require 'application_controller'
+require_relative './application_controller'
+require_relative '../services/fetch_function_records_service'
+require_relative '../services/fetch_service_records_service'
 
 class RecordsController < ApplicationController
 
