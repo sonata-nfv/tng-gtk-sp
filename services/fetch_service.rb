@@ -31,8 +31,8 @@
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
 require 'net/http'
-require 'ostruct'
 require 'json'
+require_relative './cache_service'
 
 class FetchService  
   ERROR_NS_UUID_IS_MANDATORY='Network Service UUID parameter is mandatory'
@@ -41,13 +41,8 @@ class FetchService
     attr_accessor :site
   end
 
-  def site=(value)
-    self.class.site = value
-  end
-
-  def site
-    self.class.site
-  end
+  def site=(value) self.class.site = value end
+  def site() self.class.site end
   
   def self.call(params)
     msg=self.name+'#'+__method__.to_s
@@ -55,6 +50,11 @@ class FetchService
     original_params = params.dup
     begin
       if params.key?(:uuid)
+        cached = CacheService.get(params[:uuid])
+        if cached
+          STDERR.puts "#{msg}: cached=#{cached}"
+          return cached
+        end
         uuid = params.delete :uuid
         uri = URI.parse("#{self.site}/#{uuid}")
         # mind that there cany be more params, so we might need to pass params as well
@@ -71,7 +71,9 @@ class FetchService
       when Net::HTTPSuccess
         body = response.read_body
         STDERR.puts "#{msg}: 200 (Ok) body=#{body}"
-        return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+        result = JSON.parse(body, quirks_mode: true, symbolize_names: true)
+        cache_result(result)
+        return result
       when Net::HTTPNotFound
         STDERR.puts "#{msg}: 404 Not found) body=#{body}"
         return {} # ArgumentError.new("Entity chosen with params #{original_params} was not found")
@@ -90,5 +92,14 @@ class FetchService
     params[:page_size]   ||= ENV.fetch('DEFAULT_PAGE_SIZE', 100)
     params
   end
+  
+  def self.cache_result(result)
+    if result.is_a?(Hash)
+      CacheService.set(result[:uuid], result)
+      return
+    end
+    result.each do |record|
+      CacheService.set(record[:uuid], record)
+    end
+  end
 end
-
