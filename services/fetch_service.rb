@@ -75,8 +75,9 @@ class FetchService
         cache_result(result)
         return result
       when Net::HTTPNotFound
-        STDERR.puts "#{msg}: 404 Not found) body=#{body}"
-        return {} # ArgumentError.new("Entity chosen with params #{original_params} was not found")
+        STDERR.puts "#{msg}: 404 Not found body=#{body}"
+        return {} unless uuid.nil?
+        return []
       else
         return nil # ArgumentError.new("#{response.message}")
       end
