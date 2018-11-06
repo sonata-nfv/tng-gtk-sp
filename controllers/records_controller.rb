@@ -69,7 +69,7 @@ class RecordsController < ApplicationController
     STDERR.puts "#{msg}: params=#{params}"
     result = FetchFunctionRecordsService.call(symbolized_hash(params))
     STDERR.puts "#{msg}: result=#{result}"
-    halt 404, {}, {error: "No records fiting the provided parameters ('#{params}') were found"}.to_json if result.to_s.empty? # covers nil
+    halt 404, {}, {error: "No records fiting the provided parameters ('#{params}') were found"}.to_json if result.to_s.empty?
     halt 200, {}, result.to_json
   end
   
