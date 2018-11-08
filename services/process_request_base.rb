@@ -39,9 +39,13 @@ require_relative '../models/request'
 class ProcessRequestBase  
   
   def self.search(page_number, page_size, strategies)
+    msg=self.name+'.'+__method__.to_s
+    
     requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
     return requests if requests.empty?
     enriched = []
+    STDERR.puts "#{msg}: requests=#{requests}"
+    
     requests.each do |request|
       enriched << strategies[request['request_type'].to_sym].enrich_one(request)
     end
