@@ -95,12 +95,14 @@ class FetchService
   end
   
   def self.cache_result(result)
-    if result.is_a?(Hash)
-      CacheService.set(result[:uuid], result)
+    msg=self.name+'#'+__method__.to_s
+    STDERR.puts "#{msg} result=#{result})"
+    if result.is_a?(Hash)      
+      CacheService.set(result[:uuid], result) if result.key?(:uuid)
       return
     end
     result.each do |record|
-      CacheService.set(record[:uuid], record)
+      CacheService.set(record[:uuid], record) if record.key?(:uuid)
     end
   end
 end
