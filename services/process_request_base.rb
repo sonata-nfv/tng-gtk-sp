@@ -42,11 +42,13 @@ class ProcessRequestBase
     msg=self.name+'.'+__method__.to_s
     
     requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
+    STDERR.puts "#{msg}: requests=#{requests}"
     return requests if requests.empty?
     enriched = []
-    STDERR.puts "#{msg}: requests=#{requests}"
     
     requests.each do |request|
+      STDERR.puts "#{msg}: request=#{request}"
+      STDERR.puts "#{msg}: strategy=#{strategies[request['request_type'].to_sym]}"
       enriched << strategies[request['request_type'].to_sym].enrich_one(request)
     end
   end
