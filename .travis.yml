@@ -33,7 +33,7 @@
 services:
   - postgresql
   - rabbitmq
-  - redis
+  - redis-server
 language: ruby
 rvm:
   - 2.4.3
