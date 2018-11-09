@@ -38,9 +38,9 @@ require 'cache_service'
 RSpec.describe CacheService do
   let(:uuid) {SecureRandom.uuid}
   context 'using Redis' do
-    it 'it should be a RedisCache' do
-      expect(described_class.strategy.to_s).to eq(CacheService::RedisCache.to_s)
-    end
+    #it 'it should be a RedisCache' do
+    #  expect(described_class.strategy.to_s).to eq(CacheService::RedisCache.to_s)
+    #end
     context 'on a single request (using UUID)' do
       let(:data) {{uuid: uuid, other: {a:1, b:[2,3]}}}
       it 'should return what was stored' do
