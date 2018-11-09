@@ -34,9 +34,8 @@ require 'net/http'
 require 'json'
 require_relative './cache_service'
 
-class FetchService  
-  ERROR_NS_UUID_IS_MANDATORY='Network Service UUID parameter is mandatory'
-
+class FetchService
+  CACHE_PREFIX='cache'
   class << self
     attr_accessor :site
   end
@@ -50,7 +49,8 @@ class FetchService
     original_params = params.dup
     begin
       if params.key?(:uuid)
-        cached = CacheService.get(params[:uuid])
+        cached = CacheService.get("#{CACHE_PREFIX}:#{params[:uuid]}")
+        STDERR.puts "#{msg}: cached=#{cached}"
         if cached
           json_cached=JSON.parse(cached, quirks_mode: true, symbolize_names: true)
           STDERR.puts "#{msg}: json_cached=#{json_cached}"
@@ -99,11 +99,11 @@ class FetchService
     msg=self.name+'#'+__method__.to_s
     STDERR.puts "#{msg} result=#{result})"
     if result.is_a?(Hash)      
-      CacheService.set(result[:uuid], result.to_json) if result.key?(:uuid)
+      CacheService.set("#{CACHE_PREFIX}:#{result[:uuid]}", result.to_json) if result.key?(:uuid)
       return
     end
     result.each do |record|
-      CacheService.set(record[:uuid], record.to_json) if record.key?(:uuid)
+      CacheService.set("#{CACHE_PREFIX}:#{record[:uuid]}", record.to_json) if record.key?(:uuid)
     end
   end
 end
