@@ -29,36 +29,38 @@
 ## the Horizon 2020 and 5G-PPP programmes. The authors would like to
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
+# frozen_string_literal: true
 # encoding: utf-8
-services:
-  - postgresql
-  - rabbitmq
-#  - redis-server
-language: ruby
-rvm:
-  - 2.4.3
-cache: bundler
-addons:
-    postgresql: '9.6'
-env:
-  #  - DB=pgsql
-  global:
-    - DATABASE_URL=postgresql://postgres@localhost:5432/gatekeeper
-    - MQSERVER_URL=amqp://guest:guest@broker:5672
-    - CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
-    - REPOSITORY_URL=http://tng-rep:4012
-    - POLICY_MNGR_URL=http://tng-policy-mngr:8081/api/v1
-    - SLM_URL=http://tng-slice-mngr:5998/api/
-#    - SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change
-    - SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-gtk-sp:5000/requests
-#    - REDIS_URL=redis://son-redis:6379
-before_script:
-#  - cp config/database.yml.travis config/database.yml
-#  - psql -c 'create database gatekeeper;' -U postgres
-  - bundle exec rake db:create
-  - bundle exec rake db:migrate
-script: 
-#  - bundle install
-#  - bundle exec rake db:create
-#  - bundle exec rake db:migrate
-  - bundle exec rspec spec
+require_relative '../spec_helper'
+require 'uri'
+require 'cache_service'
+
+RSpec.describe CacheService do
+  let(:uuid) {SecureRandom.uuid}
+  context 'using Redis' do
+    #it 'it should be a RedisCache' do
+    #  expect(described_class.strategy.to_s).to eq(CacheService::RedisCache.to_s)
+    #end
+    context 'on a single request (using UUID)' do
+      let(:data) {{uuid: uuid, other: {a:1, b:[2,3]}}}
+      it 'should return what was stored' do
+        described_class.set(data[:uuid], data.to_json)
+        stored_data = JSON.parse(described_class.get(data[:uuid]), symbolize_names: :true)
+        expect(stored_data).to eq(data)
+      end
+    end
+    context 'on a multiple request (not using UUID)' do
+      let(:uuid_2) {SecureRandom.uuid}
+      let(:data) {[{uuid: uuid, other: {a:1, b:[2,3]}}, {uuid: uuid_2, other: {a:2, b:[4,5]}}]}
+    end
+  end
+  context 'using memory' do
+    #it 'it should be a MemoryCache' do
+    #  expect(described_class.strategy.to_s).to eq(CacheService::MemoryCache.to_s)
+    #end
+    context 'on a single request (using UUID)' do
+    end
+    context 'on a multiple request (not using UUID)' do
+    end
+  end
+end

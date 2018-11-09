@@ -80,10 +80,11 @@ class FetchService
         return {} unless uuid.nil?
         return []
       else
-        return nil # ArgumentError.new("#{response.message}")
+        STDERR.puts "#{msg}: #{response.message}"
+        return nil
       end
     rescue Exception => e
-      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+      STDERR.puts "E, #{Time.now.utc} #{msg}: #{e.message}"
     end
     nil
   end
