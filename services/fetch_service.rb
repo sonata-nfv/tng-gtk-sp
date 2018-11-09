@@ -52,8 +52,9 @@ class FetchService
       if params.key?(:uuid)
         cached = CacheService.get(params[:uuid])
         if cached
-          STDERR.puts "#{msg}: cached=#{cached}"
-          return cached
+          json_cached=JSON.parse(cached, quirks_mode: true, symbolize_names: true)
+          STDERR.puts "#{msg}: json_cached=#{json_cached}"
+          return json_cached
         end
         uuid = params.delete :uuid
         uri = URI.parse("#{self.site}/#{uuid}")
@@ -98,11 +99,11 @@ class FetchService
     msg=self.name+'#'+__method__.to_s
     STDERR.puts "#{msg} result=#{result})"
     if result.is_a?(Hash)      
-      CacheService.set(result[:uuid], result) if result.key?(:uuid)
+      CacheService.set(result[:uuid], result.to_json) if result.key?(:uuid)
       return
     end
     result.each do |record|
-      CacheService.set(record[:uuid], record) if record.key?(:uuid)
+      CacheService.set(record[:uuid], record.to_json) if record.key?(:uuid)
     end
   end
 end
