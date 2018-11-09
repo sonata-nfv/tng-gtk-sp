@@ -50,7 +50,7 @@ class CacheService
     end
     def self.set(key, val) self.store.set(key, val) end
     def self.get(key)      self.store.get(key) end
-    def self.del(key)      self.store.set(key, nil) end
+    def self.del(key)      self.store.del(key) end
   end
   
   class MemoryCache
