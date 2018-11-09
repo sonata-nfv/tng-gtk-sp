@@ -35,7 +35,7 @@ require 'json'
 require_relative './cache_service'
 
 class FetchService
-  
+  CACHE_PREFIX='cache'
   class << self
     attr_accessor :site
   end
