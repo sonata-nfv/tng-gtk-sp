@@ -33,9 +33,9 @@
 require 'net/http'
 require 'ostruct'
 require 'json'
-require_relative './fetch_service'
+require 'tng/gtk/utils/fetch'
 
-class FetchFunctionRecordsService < FetchService
+class FetchFunctionRecordsService < Tng::Gtk::Utils::Fetch
   NO_REPOSITORY_URL_DEFINED_ERROR='The REPOSITORY_URL ENV variable needs to defined and pointing to the Repository where to fetch records'
   REPOSITORY_URL = ENV.fetch('REPOSITORY_URL', '')
   if REPOSITORY_URL == ''

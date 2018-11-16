@@ -46,7 +46,6 @@ gem 'activerecord', '5.2'
 gem 'sinatra-activerecord', '2.0.13'
 gem 'bunny', '2.8.0'
 gem 'redis', '4.0.3'
-#gem 'puma', '3.11.0'
 gem 'thin', '1.7.2'
 gem 'rack-timeout-puma', '0.0.1'
 gem 'activerecord-rack', '1.0.0'
@@ -55,7 +54,7 @@ gem 'rubocop', '0.52.0'
 gem 'rubocop-checkstyle_formatter', '0.4.0', require: false
 gem 'pry', '0.12.0'
 
-gem 'tng-gtk-utils', '0.3.1'
+gem 'tng-gtk-utils', '0.4.0'
 
 group :test do
   gem 'webmock', '3.1.1'

@@ -33,9 +33,9 @@
 require 'net/http'
 require 'ostruct'
 require 'json'
-require_relative './fetch_service'
+require 'tng/gtk/utils/fetch'
 
-class ProcessPlacementPolicyService < FetchService
+class ProcessPlacementPolicyService < Tng::Gtk::Utils::Fetch
   
   NO_POLICY_MNGR_URL_DEFINED_ERROR='The POLICY_MNGR_URL ENV variable needs to defined and pointing to the Policy Manager where to manage policies'
   POLICY_MNGR_URL = ENV.fetch('POLICY_MNGR_URL', '')
