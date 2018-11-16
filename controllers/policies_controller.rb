@@ -32,9 +32,9 @@
 # encoding: utf-8
 require 'sinatra'
 require 'json'
-require 'application_controller'
+require 'tng/gtk/utils/application_controller'
 
-class PoliciesController < ApplicationController
+class PoliciesController < Tng::Gtk::Utils::ApplicationController
   ERROR_REQUEST_CONTENT_TYPE={error: "Unsupported Media Type, just accepting 'application/json' HTTP content type for now."}
   ERROR_EMPTY_BODY = <<-eos 
   The request was missing a body with:

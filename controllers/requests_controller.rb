@@ -32,13 +32,14 @@
 # encoding: utf-8
 require 'sinatra'
 require 'json'
-require_relative './application_controller'
+require 'sinatra/activerecord'
+require 'tng/gtk/utils/application_controller'
 require_relative '../services/process_request_base'
 require_relative '../services/process_request_service'
 require_relative '../services/process_create_slice_instance_request'
 require_relative '../services/process_terminate_slice_instance_request'
 
-class RequestsController < ApplicationController
+class RequestsController < Tng::Gtk::Utils::ApplicationController
   #register Sinatra::ActiveRecordExtension
   
   ERROR_REQUEST_CONTENT_TYPE={error: "Unsupported Media Type, just accepting 'application/json' HTTP content type for now."}
@@ -193,7 +194,7 @@ class RequestsController < ApplicationController
   
   def validated_fields(params_keys)
     valid_fields = [:service_uuid, :status, :created_at, :updated_at]
-    logger.info(log_msg) {" keyed_params.keys - valid_fields = #{keyed_params.keys - valid_fields}"}
+    #logger.info(log_msg) {" keyed_params.keys - valid_fields = #{keyed_params.keys - valid_fields}"}
     json_error 400, "GtkSrv: wrong parameters #{params}" unless keyed_params.keys - valid_fields == []
   end
   

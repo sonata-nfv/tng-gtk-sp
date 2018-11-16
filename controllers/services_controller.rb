@@ -31,14 +31,18 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'securerandom'
-require 'application_controller'
+require 'tng/gtk/utils/application_controller'
 
-class ServicesController < ApplicationController
+class ServicesController < Tng::Gtk::Utils::ApplicationController
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
+  @@began_at = Time.now.utc
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
 
   ERROR_SERVICE_NOT_FOUND="No service with UUID '%s' was found"
 
   @@began_at = Time.now.utc
-  settings.logger.info(self.name) {"Started at #{@@began_at}"}
+  #LOGGER.info(self.name) {"Started at #{@@began_at}"}
   before { content_type :json}
   
   get '/?' do 

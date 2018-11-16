@@ -58,3 +58,22 @@ namespace :db do
     require './controllers/requests_controller'
   end
 end
+
+# from https://opensoul.org/2012/05/30/releasing-multiple-gems-from-one-repository/
+#desc 'Build gem into the pkg directory'
+#task :build do
+#  FileUtils.rm_rf('pkg')
+#  Dir['*.gemspec'].each do |gemspec|
+#    system "gem build #{gemspec}"
+#  end
+#  FileUtils.mkdir_p('pkg')
+#  FileUtils.mv(Dir['*.gem'], 'pkg')
+#end
+
+#desc 'Tags version, pushes to remote, and pushes gem'
+#task :release => :build do
+#  sh 'git', 'tag', '-m', changelog, "v#{Qu::VERSION}"
+#  sh "git push origin master"
+#  sh "git push origin v#{Qu::VERSION}"
+#  sh "ls pkg/*.gem | xargs -n 1 gem push"
+#end

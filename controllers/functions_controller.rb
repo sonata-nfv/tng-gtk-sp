@@ -31,14 +31,14 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'securerandom'
-require 'application_controller'
+require 'tng/gtk/utils/application_controller'
 
-class FunctionsController < ApplicationController
+class FunctionsController < Tng::Gtk::Utils::ApplicationController
 
   ERROR_FUNCTION_NOT_FOUND="No function with UUID '%s' was found"
 
   @@began_at = Time.now.utc
-  settings.logger.info(self.name) {"Started at #{@@began_at}"}
+  #settings.logger.info(self.name) {"Started at #{@@began_at}"}
   before { content_type :json}
   
   get '/?' do 

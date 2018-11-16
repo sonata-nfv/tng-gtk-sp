@@ -40,7 +40,7 @@ ENV['RACK_ENV'] = 'test'
   path = File.expand_path(File.join(File.dirname(__FILE__), '../', dir))
   $LOAD_PATH << path
 end
-require 'application_controller'
+require 'tng/gtk/utils/application_controller'
 require 'requests_controller'
 require 'policies_controller'
 require 'pings_controller'

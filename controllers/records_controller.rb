@@ -31,16 +31,16 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'securerandom'
-require_relative './application_controller'
+require 'tng/gtk/utils/application_controller'
 require_relative '../services/fetch_function_records_service'
 require_relative '../services/fetch_service_records_service'
 
-class RecordsController < ApplicationController
+class RecordsController < Tng::Gtk::Utils::ApplicationController
 
   ERROR_RECORD_NOT_FOUND="No record with UUID '%s' was found"
 
   @@began_at = Time.now.utc
-  settings.logger.info(self.name) {"Started at #{@@began_at}"}
+  #settings.logger.info(self.name) {"Started at #{@@began_at}"}
   before { content_type :json}
   
   get '/services/?' do 
