@@ -32,9 +32,14 @@
 # encoding: utf-8
 require 'sinatra'
 require 'json'
-require 'application_controller'
+require 'tng/gtk/utils/logger'
+require 'tng/gtk/utils/application_controller'
 
-class PoliciesController < ApplicationController
+class PoliciesController < Tng::Gtk::Utils::ApplicationController
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
+  @@began_at = Time.now.utc
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
   ERROR_REQUEST_CONTENT_TYPE={error: "Unsupported Media Type, just accepting 'application/json' HTTP content type for now."}
   ERROR_EMPTY_BODY = <<-eos 
   The request was missing a body with:
@@ -47,8 +52,11 @@ class PoliciesController < ApplicationController
 
   # Accept service instantiation requests
   post '/placement/?' do
-    msg='PoliciesController.post'
-    halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) unless request.content_type =~ /^application\/json/
+    msg='#'+__method__.to_s+'/placement'
+    unless request.content_type =~ /^application\/json/
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Unsupported Media Type, just accepting 'application/json' HTTP content type for now.", status: '415')
+      halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) 
+    end
 
     body = request.body.read
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if (!body || body.empty?)
@@ -57,7 +65,7 @@ class PoliciesController < ApplicationController
     
     begin
       added_policy = ProcessPlacementPolicyService.add(params.deep_symbolize_keys)
-      STDERR.puts "#{msg}: added_policy='#{added_policy}'"
+      LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"added_policy='#{added_policy}'")
       halt_with_code_body(400, {error: "Placement policy '#{params[:policy]}' not added"}.to_json) if (!added_policy || added_policy.empty?)
       halt_with_code_body(404, {error: added_policy[:error]}.to_json) if (added_policy.is_a?(Hash) && added_policy.key?(:error))
       halt_with_code_body(200, added_policy.to_json)
@@ -72,7 +80,7 @@ class PoliciesController < ApplicationController
   
   # GETs a request, given an uuid
   get '/placement/:placement_policy_uuid/?' do
-    msg='PoliciesController.get (single)'
+    msg='#'+__method__.to_s+' (single)'
     captures=params.delete('captures') if params.key? 'captures'
     begin
       single_request = ProcessPlacementPolicyService.call(params[:placement_policy_uuid])
@@ -85,7 +93,7 @@ class PoliciesController < ApplicationController
 
   # GET many requests
   get '/placement/?' do
-    msg='PoliciesController.get (many)'
+    msg='#'+__method__.to_s+' (many)'
     captures=params.delete('captures') if params.key? 'captures'
     
     # get rid of :page_size and :page_number
@@ -122,4 +130,5 @@ class PoliciesController < ApplicationController
   def symbolized_hash(hash)
     Hash[hash.map{|(k,v)| [k.to_sym,v]}]
   end
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
 end

@@ -37,14 +37,13 @@ require 'active_record/rack'
   path = File.expand_path(File.join(File.dirname(__FILE__), dir))
   $LOAD_PATH.unshift(path)
 end
-require 'application_controller'
+require 'tng/gtk/utils/application_controller'
 require 'requests_controller'
 require 'policies_controller'
 require 'pings_controller'
 require 'root_controller'
 require 'records_controller'
 require 'request'
-#Dir.glob('./services/*.rb').each { |file| require file }
 
 ENV['RACK_ENV'] ||= 'production'
 

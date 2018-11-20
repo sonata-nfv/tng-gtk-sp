@@ -29,15 +29,19 @@
 # encoding: utf-8
 require 'sinatra'
 require 'json'
-require 'logger'
-require 'application_controller'
+require 'tng/gtk/utils/logger'
+require 'tng/gtk/utils/application_controller'
 
-class PingsController < ApplicationController
+class PingsController < Tng::Gtk::Utils::ApplicationController
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
+  @@began_at = Time.now.utc
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
 
-  settings.logger.info(self.name) {"Started at #{settings.began_at}"}
-  before { content_type :json}
-  
   get '/?' do
+    msg='#get (many)'
+    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:{ alive_since: settings.began_at}.to_json, status: '200')
     halt 200, {}, { alive_since: settings.began_at}.to_json
   end
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
 end

@@ -33,17 +33,21 @@
 require 'net/http'
 require 'ostruct'
 require 'json'
-require_relative './fetch_service'
+require 'tng/gtk/utils/logger'
+require 'tng/gtk/utils/fetch'
 
-class FetchServiceRecordsService < FetchService
+class FetchServiceRecordsService < Tng::Gtk::Utils::Fetch
   NO_REPOSITORY_URL_DEFINED_ERROR='The REPOSITORY_URL ENV variable needs to defined and pointing to the Repository where to fetch records'
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
+  
   REPOSITORY_URL = ENV.fetch('REPOSITORY_URL', '')
   if REPOSITORY_URL == ''
-    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_REPOSITORY_URL_DEFINED_ERROR]
+    LOGGER.error(component:LOGGED_COMPONENT, operation:'fetching REPOSITORY_URL ENV variable', message:NO_REPOSITORY_URL_DEFINED_ERROR)
     raise ArgumentError.new(NO_REPOSITORY_URL_DEFINED_ERROR) 
   end
   self.site=REPOSITORY_URL+'/nsrs'
-  STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, "self.site=#{self.site}"]
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'site definition', message:"self.site=#{self.site}")
   
   def self.call(params)
     msg=self.name+'#'+__method__.to_s
@@ -63,20 +67,20 @@ class FetchServiceRecordsService < FetchService
   private
   def self.enrich_one(record)
     msg=self.name+'#'+__method__.to_s
-    STDERR.puts "#{msg}: record=#{record}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"record=#{record}")
     request = Request.where("instance_uuid = ? AND request_type = 'CREATE_SERVICE'", record[:uuid]).as_json
-    STDERR.puts "#{msg}: request=#{request}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request=#{request}")
     case request
     when Hash
       return record if request.empty?
-      STDERR.puts "#{msg}: request name = '#{request['name']}'"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request name = '#{request['name']}'")
       record[:instance_name] = request['name']
     when Array
       return record if request.empty?
-      STDERR.puts "#{msg}: more than one request for the instance uuid '#{record[:uuid]}' were found, only the first was taken"
+      LOGGER.info(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"more than one request for the instance uuid '#{record[:uuid]}' were found, only the first was taken")
       record[:instance_name] = request[0]['name']
     else
-      STDERR.puts "#{msg}: request #{request} wasn't Hash nor Array"
+      LOGGER.error(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request #{request} was neither Hash nor Array")
     end
     record
   end
