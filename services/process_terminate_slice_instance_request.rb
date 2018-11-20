@@ -38,34 +38,37 @@ require 'json'
 require 'yaml'
 require_relative './process_request_base'
 require_relative '../models/request'
+require 'tng/gtk/utils/logger'
 
 class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
   
   NO_SLM_URL_DEFINED_ERROR='The SLM_URL ENV variable needs to be defined and pointing to the Slice Manager component, where to request the termination of a Network Slice'
   SLM_URL = ENV.fetch('SLM_URL', '')
   if SLM_URL == ''
-    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_SLM_URL_DEFINED_ERROR]
+    LOGGER.error(component:LOGGED_COMPONENT, operation:'fetching SLM_URL ENV variable', message:NO_SLM_URL_DEFINED_ERROR)
     raise ArgumentError.new(NO_SLM_URL_DEFINED_ERROR) 
   end
   SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-gtk-sp:5000/requests')
   
   def self.call(params)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: params=#{params}"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     begin
       valid = valid_request?(params)
       if (valid && valid.is_a?(Hash) && valid.key?(:error) )
-        STDERR.puts "#{msg}: validation failled with error #{valid[:error]}"
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"validation failled with error #{valid[:error]}")
         return valid
       end
       
       enriched_params = enrich_params(params)
-      STDERR.puts "#{msg}: enriched_params params=#{enriched_params}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params params=#{enriched_params}")
       
       termination_request = Request.create(enriched_params)
-      STDERR.puts "#{msg}: termination_request=#{termination_request.inspect} (class #{termination_request.class})"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"termination_request=#{termination_request.inspect} (class #{termination_request.class})")
       unless termination_request
-        STDERR.puts "#{msg}: Failled to create termination request"
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to create termination request")
         return {error: "Failled to create termination request for slice template '#{params[:nstId]}'"}
       end
       # pass it to the Slice Manager
@@ -73,16 +76,16 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       # the user callback is saved in the request
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{termination_request['id']}/on-change"
       request = terminate_slice(enriched_params)
-      STDERR.puts "#{msg}: request=#{request}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
       if (request && request.is_a?(Hash) && request.key?(:error))
         saved_req=Request.find(termination_request['id'])
-        STDERR.puts "#{msg}: saved_req=#{saved_req.inspect}"
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_req=#{saved_req.inspect}")
         saved_req.update(status: 'ERROR', error: request[:error])
         return saved_req.as_json
       end
       termination_request
     rescue StandardError => e
-      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
       return {error: "#{e.message}"}
     end
   end
@@ -91,25 +94,25 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
   # @app.route(API_ROOT+API_NSILCM+API_VERSION+API_NSI+'/update_NSIservinstance', methods=['POST'])
   # GET http://tng-slice-mngr:5998/api/nst/v1/descriptors
   def self.process_callback(event)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: event=#{event}"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event=#{event}")
     result, user_callback = save_result(event)
     notify_user(result, user_callback) unless user_callback.to_s.empty?
-    STDERR.puts "#{msg}: result=#{result}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
     result
   end
   
   def self.enrich_one(request)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request.inspect} (class #{request.class})")
     request
   end
   
   private  
   def self.save_result(event)
-    msg=self.name+'.'+__method__.to_s
+    msg='.'+__method__.to_s
     original_request = Request.find(event[:original_event_uuid]) #.as_json
-    STDERR.puts "#{msg}: original request = #{original_request.inspect}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
     body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
     original_request['status'] = body[:status]
     original_request.save
@@ -117,8 +120,8 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
   end
   
   def self.notify_user(result, user_callback)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: entered, result=#{result}, user_callback=#{user_callback}"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered, result=#{result}, user_callback=#{user_callback}")
     
     uri = URI.parse(user_callback)
 
@@ -130,47 +133,48 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     # Send the request
     begin
       response = http.request(request)
-      STDERR.puts "#{msg}: response=#{response}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"response=#{response}")
       case response
       when Net::HTTPSuccess, Net::HTTPCreated
         body = response.body
-        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} body=#{body}")
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
       else
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{response.message}")
         return {error: "#{response.message}"}
       end
     rescue Exception => e
-      STDERR.puts "%s - %s: %s", [Time.now.utc.to_s, msg, "Failled to post to user's callback #{user_callback} with message #{e.message}"]
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to post to user's callback #{user_callback} with message #{e.message}")
     end
     nil
   end
 
   def self.valid_request?(params)
-    msg=self.name+'.'+__method__.to_s
+    msg='.'+__method__.to_s
     # { "request_type":"CREATE_SLICE", "nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc", "slice_instance_ready_callback":"http://..."}
     # if params include a Network Slice Template UUID
     # template existense is tested within the SLM
     # GET http://tng-slice-mngr:5998/api/nst/v1/descriptors
-
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered")
     true
     # else {error: ''}
   end
   
   def self.enrich_params(params)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: params=#{params}"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     params
   end
   
   def self.terminate_slice(params)
-    msg=self.name+'.'+__method__.to_s
+    msg='.'+__method__.to_s
     # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/<nsiId>/terminate, with body {'callback':'http://...'}
     # curl -i -H "Content-Type:application/json" -X POST -d '{"terminateTime": "_time_", "callback":"URL_with_callback_request"}' http://{base_url}:5998/api/nsilcm/v1/nsi/<nsiId>/terminate
     # $ http POST :4567/wtf p1=one p2=two
     # body={"p1": "one", "p2": "two"}
     # params={"xyz"=>"wtf"}
     site = "#{SLM_URL}/nsilcm/v1/nsi/#{params[:instance_uuid]}/terminate"
-    STDERR.puts "#{msg}: params=#{params} site=#{site}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params} site=#{site}")
     uri = URI.parse(site)
 
     # Create the HTTP objects
@@ -181,20 +185,20 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     # Send the request
     begin
       response = http.request(request)
-      STDERR.puts "#{msg}: response=#{response}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"response=#{response}")
       case response
       when Net::HTTPSuccess, Net::HTTPCreated
         body = response.body
-        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} body=#{body}")
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
       else
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} (#{response.message}): #{params}")
         return {error: "#{response.code} (#{response.message}): #{params}"}
       end
     rescue Exception => e
-      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:e.message)
       raise
     end
     nil
   end
-  
 end

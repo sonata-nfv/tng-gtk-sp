@@ -34,13 +34,15 @@ require 'net/http'
 require 'ostruct'
 require 'json'
 require 'tng/gtk/utils/fetch'
+require 'tng/gtk/utils/logger'
 
 class ProcessPlacementPolicyService < Tng::Gtk::Utils::Fetch
-  
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
   NO_POLICY_MNGR_URL_DEFINED_ERROR='The POLICY_MNGR_URL ENV variable needs to defined and pointing to the Policy Manager where to manage policies'
   POLICY_MNGR_URL = ENV.fetch('POLICY_MNGR_URL', '')
   if POLICY_MNGR_URL == ''
-    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, 'ProcessPlacementPolicyService', NO_POLICY_MNGR_URL_DEFINED_ERROR]
+    LOGGER.error(component:LOGGED_COMPONENT, operation:'fetching POLICY_MNGR_URL ENV variable', message:NO_POLICY_MNGR_URL_DEFINED_ERROR)
     raise ArgumentError.new(NO_POLICY_MNGR_URL_DEFINED_ERROR) 
   end
   self.site=POLICY_MNGR_URL+'/placement'

@@ -33,6 +33,7 @@
 require 'sinatra'
 require 'json'
 require 'sinatra/activerecord'
+require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/application_controller'
 require 'tng/gtk/utils/services'
 require_relative '../services/process_request_base'
@@ -41,8 +42,10 @@ require_relative '../services/process_create_slice_instance_request'
 require_relative '../services/process_terminate_slice_instance_request'
 
 class RequestsController < Tng::Gtk::Utils::ApplicationController
-  #register Sinatra::ActiveRecordExtension
-  
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
+  @@began_at = Time.now.utc
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
   ERROR_REQUEST_CONTENT_TYPE={error: "Unsupported Media Type, just accepting 'application/json' HTTP content type for now."}
   ERROR_SERVICE_NOT_FOUND="Network Service with UUID '%s' was not found in the Catalogue."
   ERROR_PARSING_NS_DESCRIPTOR="There was an error parsing the NS descriptor with UUID '%s'."
@@ -50,7 +53,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   ERROR_EMPTY_BODY = <<-eos 
   The request was missing a body with:
      \tservice_uuid: the UUID of the service to be instantiated
-     \trequest_type: can be CREATE_SERVICE (default), UPDATE_SERVICE or TERMINATE_SERVICE
+     \trequest_type: can be CREATE_SERVICE (default), TERMINATE_SERVICE, CREATE_SLICE or TERMINATE_SLICE
      \tegresses: the list of required egresses (defaults to [])
      \tingresses: the list of required ingresses (defaults to [])
   eos
@@ -65,17 +68,17 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest
   }
 
-  before do 
-    # STDERR.puts "INFO: RequestsController: ActiveRecord pool size=#{ActiveRecord::Base.connection.pool.size}"
-    content_type :json
-  end
   #after  {ActiveRecord::Base.clear_active_connections!}
   after  {ActiveRecord::Base.clear_all_connections!}
 
   # Accept service instantiation requests
   post '/?' do
-    msg='RequestsController#post'
-    halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) unless request.content_type =~ /^application\/json/
+    msg='.'+__method__.to_s
+    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"entered")
+    unless request.content_type =~ /^application\/json/
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Unsupported Media Type, just accepting 'application/json' HTTP content type for now.")
+      halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) 
+    end
 
     body = request.body.read
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
@@ -83,46 +86,55 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     begin
       json_body = JSON.parse(body, quirks_mode: true, symbolize_names: true)
       json_body[:request_type] = 'CREATE_SERVICE' unless json_body.key?(:request_type)
-      STDERR.puts "#{msg}: json_body=#{json_body}"
-      STDERR.puts "#{msg}: RequestsController::STRATEGIES=#{RequestsController::STRATEGIES}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body=#{json_body}")
     
-      #chosen_strategy_class = choose_strategy(json_body)
-      #STDERR.puts "#{msg}: going to call #{STRATEGIES[json_body[:request_type]]}.call with #{json_body.deep_symbolize_keys}"
       saved_request = strategy(json_body[:request_type]).call(json_body.deep_symbolize_keys)
     
-      STDERR.puts "#{msg}: saved_request='#{saved_request.inspect}'"
-      halt_with_code_body(400, {error: "Error saving request"}.to_json) if !saved_request
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_request='#{saved_request.inspect}'")
+      if !saved_request
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error saving request")
+        halt_with_code_body(400, {error: "Error saving request"}.to_json) 
+      end
       # for the special case of CREATE_SLICE, the returned data structure is not an Hash
-      halt_with_code_body(404, {error: saved_request[:error]}.to_json) if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
+      if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:saved_request[:error].to_json)
+        halt_with_code_body(404, {error: saved_request[:error]}.to_json) 
+      end
       result = strategy(json_body[:request_type]).enrich_one(saved_request)
-      STDERR.puts "#{msg}: result=#{result}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}", status: '201')
       halt_with_code_body(201, result.to_json)
     rescue KeyError => e
-      STDERR.puts "#{msg}: #{e.message} for #{params}"
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Missing code to treat the '#{json_body[:request_type]}' request type", status: '404')
       halt_with_code_body(404, {error: "Missing code to treat the '#{json_body[:request_type]}' request type"}.to_json)
     rescue ArgumentError => e
-      STDERR.puts "#{msg}: #{e.message} for #{params}\n#{e.backtrace.join("\n\t")}"
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} for #{params}\n#{e.backtrace.join("\n\t")}", status: '404')
       halt_with_code_body(404, {error: "#{e.message} for #{params}"}.to_json)
     rescue JSON::ParserError => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:ERROR_PARSING_NS_DESCRIPTOR % params[:service_uuid], status: '400')
       halt_with_code_body(400, {error: ERROR_PARSING_NS_DESCRIPTOR % params[:service_uuid]}.to_json)
     rescue StandardError => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message}\n#{e.backtrace.join("\n\t")}", status: '500')
       halt_with_code_body(500, "#{e.message}\n#{e.backtrace.join("\n\t")}")
     end
   end
   
   # GETs a request, given an uuid
   get '/:request_uuid/?' do
-    msg='RequestsController#get (single)'
-    STDERR.puts "#{msg}: entered with params='#{params}'"
+    msg='.'+__method__.to_s
+    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"entered with params='#{params}'")
     captures=params.delete('captures') if params.key? 'captures'
     begin
-      #single_request = Request.find(params[:request_uuid]).as_json
       single_request = ProcessRequestBase.find(params[:request_uuid], RequestsController::STRATEGIES)
-      STDERR.puts "#{msg}: single_request='#{single_request}'"
-      halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json) if (!single_request || single_request.empty?)
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"single_request='#{single_request}'")
+      if (!single_request || single_request.empty?)
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:ERROR_REQUEST_NOT_FOUND % params[:request_uuid], status: '404')
+        halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json) 
+      end
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:single_request.to_json, status: '200')
       halt_with_code_body(200, single_request.to_json)
     rescue Exception => e
 			ActiveRecord::Base.clear_active_connections!
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:e.message, status: '404')
       halt_with_code_body(404, {error: e.message}.to_json)
       raise
     end
@@ -130,31 +142,31 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
 
   # GET many requests
   get '/?' do
-    msg='RequestsController#get (many)'
+    msg='.'+__method__.to_s
     captures=params.delete('captures') if params.key? 'captures'
-    STDERR.puts "#{msg}: entered with params='#{params}'"
+    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"entered with params='#{params}'")
     
     # get rid of :page_size and :page_number
     page_number, page_size, sanitized_params = sanitize(params)
-    STDERR.puts "#{msg}: page_number, page_size, sanitized_params=#{page_number}, #{page_size}, #{sanitized_params}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"page_number, page_size, sanitized_params=#{page_number}, #{page_size}, #{sanitized_params}")
     begin
-      #       requests = Request.where(sanitized_params).limit(page_size).offset(page_number).order(updated_at: :desc)
       requests = ProcessRequestBase.search( page_number, page_size, RequestsController::STRATEGIES)
-      STDERR.puts "#{msg}: requests='#{requests.inspect}'"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"requests='#{requests.inspect}'")
       headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:requests.to_json, status: '200')
       halt 200, requests.to_json
-      #halt 200, requests.to_json
     rescue ActiveRecord::RecordNotFound => e
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:'[]', status: '200')
       halt 200, '[]'
     rescue Exception => e
-      STDERR.puts "#{msg}: Exception caught, ActiveRecord::Base.clear_active_connections!"
-      STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.join("\n\t")}"
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Exception caught, ActiveRecord::Base.clear_active_connections!\n#{e.message}\n#{e.backtrace.join("\n\t")}", status: '500')
 			ActiveRecord::Base.clear_active_connections!
       raise
     end
   end
   
   options '/?' do
+    msg='.'+__method__.to_s
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Access-Control-Allow-Methods'] = 'GET,DELETE'      
     response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With'
@@ -163,23 +175,26 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   
   # Callback for the tng-slice-mngr to notify the result of processing
   post '/:request_uuid/on-change/?' do
-    msg='RequestsController#post /:request_uuid/on-change'
-    STDERR.puts "#{msg}: entered, request_uuid=#{params[:request_uuid]}, params=#{params}"
+    msg='.'+__method__.to_s+' /:request_uuid/on-change'
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered, request_uuid=#{params[:request_uuid]}, params=#{params}")
     
-    #halt 400, {}, {error: ERROR_EVENT_CONTENT_TYPE % request.content_type}.to_json unless request.content_type =~ /application\/json/
     begin
       body = request.body.read
       halt_with_code_body(400, "The callback is missing the event data") if body.empty?
       event_data = JSON.parse(body, quirks_mode: true, symbolize_names: true)
 
       event_data[:original_event_uuid] = params[:request_uuid]
-      STDERR.puts "#{msg}: event_data=#{event_data}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event_data=#{event_data}")
       result = ProcessCreateSliceInstanceRequest.process_callback(event_data)
-      STDERR.puts "#{msg}: result=#{result}"
-      halt 201, {}, result.to_json unless result.empty?
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
+      unless result.empty?
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:result.to_json, status: '201')
+        halt 201, {}, result.to_json 
+      end
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Package processing UUID not found in event #{event_data}", status: '404')
       halt 404, {}, {error: "Package processing UUID not found in event #{event_data}"}.to_json
     rescue JSON::ParserError, ActiveRecord::RecordNotFound, ArgumentError, NameError => e
-      STDERR.puts "#{msg}: #{e.message} #{params}\n#{e.backtrace.join("\n\t")}"
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} #{params}\n#{e.backtrace.join("\n\t")}", status: '400')
       halt 400, {}, {error: e.message}.to_json
     end
   end  
@@ -210,4 +225,5 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   def symbolized_hash(hash)
     Hash[hash.map{|(k,v)| [k.to_sym,v]}]
   end
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
 end

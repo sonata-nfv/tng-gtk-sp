@@ -35,20 +35,22 @@ require 'ostruct'
 require 'json'
 require 'yaml'
 require_relative '../models/request'
+require 'tng/gtk/utils/logger'
 
 class ProcessRequestBase  
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
   
   def self.search(page_number, page_size, strategies)
-    msg=self.name+'.'+__method__.to_s
+    msg='.'+__method__.to_s
     
     requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
-    STDERR.puts "#{msg}: requests=#{requests}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"requests=#{requests}")
     return requests if requests.empty?
     enriched = []
     
     requests.each do |request|
-      STDERR.puts "#{msg}: request=#{request}"
-      STDERR.puts "#{msg}: strategy=#{strategies[request['request_type'].to_sym]}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request=#{request}\nstrategy=#{strategies[request['request_type'].to_sym]}")
       enriched << strategies[request['request_type'].to_sym].enrich_one(request)
     end
   end

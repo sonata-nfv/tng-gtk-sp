@@ -31,55 +31,71 @@ require 'sinatra'
 require 'json'
 require 'logger'
 require 'securerandom'
+require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/application_controller'
 require_relative '../services/fetch_function_records_service'
 require_relative '../services/fetch_service_records_service'
 
 class RecordsController < Tng::Gtk::Utils::ApplicationController
-
   ERROR_RECORD_NOT_FOUND="No record with UUID '%s' was found"
-
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
   @@began_at = Time.now.utc
-  #settings.logger.info(self.name) {"Started at #{@@began_at}"}
-  before { content_type :json}
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
   
   get '/services/?' do 
     msg='RecordsController.get /services (many)'
     captures=params.delete('captures') if params.key? 'captures'
-    STDERR.puts "#{msg}: params=#{params}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     result = FetchServiceRecordsService.call(symbolized_hash(params))
-    STDERR.puts "#{msg}: result=#{result}"
-    halt 404, {}, {error: "No records fiting the provided parameters ('#{params}') were found"}.to_json if result.to_s.empty? # covers nil
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
+    if result.to_s.empty?
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No records fiting the provided parameters ('#{params}') were found")
+      halt 404, {}, {error: "No records fiting the provided parameters ('#{params}') were found"}.to_json 
+    end
+    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:result.to_json, status: '200')
     halt 200, {}, result.to_json
   end
   
   get '/services/:record_uuid/?' do 
-    msg='RecordsController.get /services (single)'
+    msg='.'+__method__.to_s+' /services (single)'
     captures=params.delete('captures') if params.key? 'captures'
-    STDERR.puts "#{msg}: params['record_uuid']='#{params['record_uuid']}'"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params['record_uuid']='#{params['record_uuid']}'")
     result = FetchServiceRecordsService.call(uuid: params['record_uuid'])
-    STDERR.puts "#{msg}: result=#{result}"
-    halt 404, {}, {error: ERROR_RECORD_NOT_FOUND % params['record_uuid']}.to_json if result == {}
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
+    if result == {}
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:ERROR_RECORD_NOT_FOUND % params['record_uuid'], status: '404')
+      halt 404, {}, {error: ERROR_RECORD_NOT_FOUND % params['record_uuid']}.to_json 
+    end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:result.to_json, status: '200')
     halt 200, {}, result.to_json
   end
   
   get '/functions/?' do 
-    msg='RecordsController.get /functions (many)'
+    msg='.'+__method__.to_s+' /functions (many)'
     captures=params.delete('captures') if params.key? 'captures'
-    STDERR.puts "#{msg}: params=#{params}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     result = FetchFunctionRecordsService.call(symbolized_hash(params))
-    STDERR.puts "#{msg}: result=#{result}"
-    halt 404, {}, {error: "No records fiting the provided parameters ('#{params}') were found"}.to_json if result.to_s.empty?
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
+    if result.to_s.empty?
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No records fiting the provided parameters ('#{params}') were found", status: '404')
+      halt 404, {}, {error: "No records fiting the provided parameters ('#{params}') were found"}.to_json 
+    end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:result.to_json, status: '200')
     halt 200, {}, result.to_json
   end
   
   get '/functions/:record_uuid/?' do 
-    msg='RecordsController.get /functions (single)'
+    msg='.'+__method__.to_s+' /functions (single)'
     captures=params.delete('captures') if params.key? 'captures'
-    STDERR.puts "#{msg}: params['record_uuid']='#{params['record_uuid']}'"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params['record_uuid']='#{params['record_uuid']}'")
     result = FetchFunctionRecordsService.call(uuid: params['record_uuid'])
-    STDERR.puts "#{msg}: result=#{result}"
-    halt 404, {}, {error: ERROR_RECORD_NOT_FOUND % params['record_uuid']}.to_json if result == {}
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:result.to_json)
+    if result == {}
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:ERROR_RECORD_NOT_FOUND % params['record_uuid'], status: '404')
+      halt 404, {}, {error: ERROR_RECORD_NOT_FOUND % params['record_uuid']}.to_json 
+    end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:result.to_json, status: '200')
     halt 200, {}, result.to_json
   end
 
@@ -99,4 +115,5 @@ class RecordsController < Tng::Gtk::Utils::ApplicationController
   def symbolized_hash(hash)
     Hash[hash.map{|(k,v)| [k.to_sym,v]}]
   end
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
 end

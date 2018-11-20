@@ -38,31 +38,33 @@ require 'json'
 require 'yaml'
 require_relative './process_request_base'
 require_relative '../models/request'
+require 'tng/gtk/utils/logger'
 
 class ProcessCreateSliceInstanceRequest < ProcessRequestBase
-  
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
   NO_SLM_URL_DEFINED_ERROR='The SLM_URL ENV variable needs to be defined and pointing to the Slice Manager component, where to request new Network Slice instances'
   SLM_URL = ENV.fetch('SLM_URL', '')
   if SLM_URL == ''
-    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_SLM_URL_DEFINED_ERROR]
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:'fetching SLM_URL ENV variable', message:NO_SLM_URL_DEFINED_ERROR)
     raise ArgumentError.new(NO_SLM_URL_DEFINED_ERROR) 
   end
   SLICE_INSTANCE_CHANGE_CALLBACK_URL = ENV.fetch('SLICE_INSTANCE_CHANGE_CALLBACK_URL', 'http://tng-gtk-sp:5000/requests')
   
   def self.call(params)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: params=#{params}"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     begin
       valid = valid_request?(params)
       if (valid && valid.is_a?(Hash) && valid.key?(:error) )
-        STDERR.puts "#{msg}: validation failled with error #{valid[:error]}"
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"validation failled with error #{valid[:error]}")
         return valid
       end
       
       instantiation_request = Request.create(params)
-      STDERR.puts "#{msg}: instantiation_request=#{instantiation_request.inspect} "
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"instantiation_request=#{instantiation_request.inspect}")
       unless instantiation_request
-        STDERR.puts "#{msg}: Failled to create instantiation_request"
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to create instantiation_request for slice template '#{params[:nstId]}'")
         return {error: "Failled to create instantiation request for slice template '#{params[:nstId]}'"}
       end
       # pass it to the Slice Manager
@@ -71,18 +73,18 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       enriched_params = params #enrich_params(params)
       enriched_params[:nstId] = params.delete(:service_uuid)
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"
-      STDERR.puts "#{msg}: enriched_params=#{enriched_params}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params=#{enriched_params}")
       request = create_slice(enriched_params)
-      STDERR.puts "#{msg}: request=#{request}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
       if (request && request.is_a?(Hash) && request.key?(:error))
         saved_req=Request.find(instantiation_request['id'])
-        STDERR.puts "#{msg}: saved_req=#{saved_req.inspect}"
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_req=#{saved_req.inspect}")
         saved_req.update(status: 'ERROR', error: request[:error])
         return saved_req.as_json
       end
       instantiation_request
     rescue StandardError => e
-      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} (#{e.class}):#{e.backtrace.split('\n\t')}")
       return nil
     end
   end
@@ -91,25 +93,25 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   # @app.route(API_ROOT+API_NSILCM+API_VERSION+API_NSI+'/update_NSIservinstance', methods=['POST'])
   # GET http://tng-slice-mngr:5998/api/nst/v1/descriptors
   def self.process_callback(event)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: event=#{event}"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event=#{event}")
     result, user_callback = save_result(event)
     notify_user(result, user_callback) unless user_callback.to_s.empty?
-    STDERR.puts "#{msg}: result=#{result}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
     result
   end
   
   def self.enrich_one(request)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: request=#{request.inspect} (class #{request.class})"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request.inspect} (class #{request.class})")
     request
   end
   
   private  
   def self.save_result(event)
-    msg=self.name+'.'+__method__.to_s
+    msg='.'+__method__.to_s
     original_request = Request.find(event[:original_event_uuid]) #.as_json
-    STDERR.puts "#{msg}: original request = #{original_request.inspect}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
     body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
     original_request['status'] = body[:status]
     original_request.save
@@ -117,8 +119,8 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   end
   
   def self.notify_user(result, user_callback)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: entered, result=#{result}, user_callback=#{user_callback}"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered, result=#{result}, user_callback=#{user_callback}")
     
     uri = URI.parse(user_callback)
 
@@ -130,23 +132,23 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     # Send the request
     begin
       response = http.request(request)
-      STDERR.puts "#{msg}: response=#{response}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"response=#{response}")
       case response
       when Net::HTTPSuccess, Net::HTTPCreated
         body = response.body
-        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} body=#{body}")
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
       else
         return {error: "#{response.message}"}
       end
     rescue Exception => e
-      STDERR.puts "%s - %s: %s", [Time.now.utc.to_s, msg, "Failled to post to user's callback #{user_callback} with message #{e.message}"]
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to post to user's callback #{user_callback} with message #{e.message}")
     end
     nil
   end
 
   def self.valid_request?(params)
-    msg=self.name+'.'+__method__.to_s
+    msg='.'+__method__.to_s
     # { "request_type":"CREATE_SLICE", "nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc", "slice_instance_ready_callback":"http://..."}
     # if params include a Network Slice Template UUID
     # template existense is tested within the SLM
@@ -157,16 +159,16 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   end
   
   def self.enrich_params(params)
-    msg=self.name+'.'+__method__.to_s
-    STDERR.puts "#{msg}: params=#{params}"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     params
   end
   
   def self.create_slice(params)
-    msg=self.name+'.'+__method__.to_s
+    msg='.'+__method__.to_s
     # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi, with body {...}
     site = SLM_URL+'/nsilcm/v1/nsi'
-    STDERR.puts "#{msg}: params=#{params} site=#{site}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params} site=#{site}")
     uri = URI.parse(site)
 
     # Create the HTTP objects
@@ -180,22 +182,21 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     # Send the request
     begin
       response = http.request(request)
-      STDERR.puts "#{msg}: response=#{response}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"response=#{response}")
       case response
       when Net::HTTPSuccess, Net::HTTPCreated
         body = response.body
-        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} body=#{body}")
         json_body = JSON.parse(body, quirks_mode: true, symbolize_names: true)
         json_body[:service_uuid] = json_body.delete(:nstId) if json_body.key?(:nstId)
-        STDERR.puts "#{msg}: json_body=#{json_body} "
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body=#{json_body}")
         return json_body
       else
         return {error: "#{response.code} (#{response.message}): #{params}"}
       end
     rescue Exception => e
-      STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, msg, e.message]
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message}")
     end
     nil
   end
-  
 end

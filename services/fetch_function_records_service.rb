@@ -33,15 +33,19 @@
 require 'net/http'
 require 'ostruct'
 require 'json'
+require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/fetch'
 
 class FetchFunctionRecordsService < Tng::Gtk::Utils::Fetch
   NO_REPOSITORY_URL_DEFINED_ERROR='The REPOSITORY_URL ENV variable needs to defined and pointing to the Repository where to fetch records'
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
+  
   REPOSITORY_URL = ENV.fetch('REPOSITORY_URL', '')
   if REPOSITORY_URL == ''
-    STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, NO_REPOSITORY_URL_DEFINED_ERROR]
+    LOGGER.error(component:LOGGED_COMPONENT, operation:'fetching REPOSITORY_URL ENV variable', message:NO_REPOSITORY_URL_DEFINED_ERROR)
     raise ArgumentError.new(NO_REPOSITORY_URL_DEFINED_ERROR) 
   end
   self.site=REPOSITORY_URL+'/vnfrs'
-  STDERR.puts "%s - %s: %s" % [Time.now.utc.to_s, self.name, "self.site=#{self.site}"]
+  LOGGER.info(component:LOGGED_COMPONENT, operation:'site definition', message:"self.site=#{self.site}")
 end
