@@ -151,7 +151,7 @@ class ProcessRequestService
     #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.spli('\n\t')}"
     #  return {}
     rescue StandardError => e
-      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.spli('\n\t')}"
+      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
       return nil
     end
     instantiation_request
@@ -178,7 +178,7 @@ class ProcessRequestService
       published_response = MessagePublishingService.call({'service_instance_uuid'=> params[:instance_uuid]}.to_yaml.to_s, :terminate_service, termination_request['id'])
       STDERR.puts "#{msg}: published_response=#{published_response.inspect}"
     rescue StandardError => e
-      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.spli('\n\t')}"
+      STDERR.puts "#{msg}: (#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}"
       return nil
     end
     termination_request
