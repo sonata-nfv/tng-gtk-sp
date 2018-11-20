@@ -50,8 +50,8 @@ pipeline {
           steps {
             sh 'rm -rf tng-devops || true'
             sh 'git clone https://github.com/sonata-nfv/tng-devops.git'
-            sh 'git checkout v4.0'
             dir(path: 'tng-devops') {
+              sh 'git checkout v4.0'
               sh 'ansible-playbook roles/sp.yml -i environments -e "target=sta-sp-v4.0 component=gatekeeper host_key_checking=False"'
             }
             
