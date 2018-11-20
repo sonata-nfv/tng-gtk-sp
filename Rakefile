@@ -38,7 +38,7 @@ require 'sinatra/activerecord/rake'
   path = File.expand_path(File.join(File.dirname(__FILE__), '../', dir))
   $LOAD_PATH << path
 end
-require_relative './controllers/application_controller'
+require 'tng/gtk/utils/application_controller'
 require_relative './controllers/requests_controller'
 
 task default: ['ci:all']
