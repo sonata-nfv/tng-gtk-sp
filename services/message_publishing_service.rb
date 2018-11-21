@@ -35,8 +35,11 @@ require 'ostruct'
 require 'json'
 require 'yaml'
 require 'bunny'
+require 'tng/gtk/utils/logger'
 
 class MessagePublishingService  
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
   ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
   ERROR_VNF_CATALOGUE_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
   MQSERVER_URL = ENV.fetch('MQSERVER_URL', '')
@@ -48,21 +51,25 @@ class MessagePublishingService
   }
 
   def self.call(message, queue_symbol, correlation_id)
-    msg=self.name+'#'+__method__.to_s
-    STDERR.puts "#{msg}: message=#{message}, queue_symbol=#{queue_symbol}, correlation_id=#{correlation_id}"
-    raise ArgumentError.new('No MQServer URL has been defined') if MQSERVER_URL == ''
-    raise ArgumentError.new("Queue must be one of :#{@@queues.keys.join(', :')}") unless @@queues.keys.include? queue_symbol
-    raise ArgumentError.new('No correlation has been given') if correlation_id == ''
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"customer_uuid=#{customer_uuid}, developer_name=#{developer_name}, sla_id=#{sla_id}")
+    if MQSERVER_URL == ''
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No MQServer URL has been defined")
+      raise ArgumentError.new('No MQServer URL has been defined') 
+    end
+    unless @@queues.keys.include? queue_symbol
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Queue must be one of :#{@@queues.keys.join(', :')}")
+      raise ArgumentError.new("Queue must be one of :#{@@queues.keys.join(', :')}") 
+    end
+    if correlation_id == ''
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No correlation has been given")
+      raise ArgumentError.new('No correlation has been given') 
+    end
 
-=begin
-    routing key == topic == service.instances.create
-    you queue name is independent and can have any name and then binded to the exchange "son-kernel" and routing key "service.instances.create"
-    what @tsoenen suggested is that your queue name should have different name than the routing key == topic
-=end
     begin
       channel = Bunny.new(MQSERVER_URL, automatically_recover: false).start.create_channel
     rescue Bunny::TCPConnectionFailed => e
-      STDERR.puts "#{msg}: Connection to #{MQSERVER_URL} failed"
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Connection to #{MQSERVER_URL} failed")
       return nil
     end
     
@@ -75,63 +82,59 @@ class MessagePublishingService
     # routing_key and reply_to should be the same value as routing_key on the third line
     # published = exchange.publish( message, content_type:'text/yaml', routing_key: queue.name, correlation_id: correlation_id, reply_to: queue.name, app_id: 'tng-gtk-sp')
     published = exchange.publish( message, content_type:'text/yaml', routing_key: @@queues[queue_symbol], correlation_id: correlation_id, reply_to: @@queues[queue_symbol], app_id: 'tng-gtk-sp')
-    STDERR.puts "#{msg}: published=#{published.inspect}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"published=#{published.inspect}")
     published
   end  
   
   private
   def self.service_instances_create(queue:)
-    msg=self.name+'#'+__method__.to_s
-    STDERR.puts "#{msg}: entered"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered")
     queue.subscribe do |delivery_info, properties, payload|
-      STDERR.puts "#{msg}: delivery_info: #{delivery_info}"
-      STDERR.puts "#{msg}: properties: #{properties}"
-      STDERR.puts "#{msg}: payload: #{payload}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
       begin
-
         # We know our own messages, so just skip them
         if properties[:app_id] == 'tng-gtk-sp'
-          STDERR.puts "#{msg}: leaving, we know our own messages, so just skip them..."
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving, we know our own messages, so just skip them...")
         else
-          STDERR.puts "#{msg}: properties[:app_id]: #{properties[:app_id]}"
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"properties[:app_id]: #{properties[:app_id]}")
       
           # We're interested in app_id == 'son-plugin.slm'
           parsed_payload = YAML.load(payload)
-          STDERR.puts "#{msg}: parsed_payload: #{parsed_payload}"
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
           status = parsed_payload['status']
           if status
-            STDERR.puts "#{msg}: status: #{status}"
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status: #{status}")
             request = Request.find(properties[:correlation_id])
             unless request
-              STDERR.puts "#{msg}: request #{properties[:correlation_id]} not found"
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request #{properties[:correlation_id]} not found")
               return
             end
-            STDERR.puts "#{msg}: status #{request['status']} updated to #{status}"
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status #{request['status']} updated to #{status}")
             request['status']=status
             if parsed_payload['error']
               request['error'] = parsed_payload['error']
             else
               unless parsed_payload.key?('nsr')
-                STDERR.puts "#{msg}: no 'nsr' key in #{parsed_payload}"
+                LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"no 'nsr' key in #{parsed_payload}")
               else
                 # if this is a final answer, there'll be an NSR
                 service_instance = parsed_payload['nsr']
                 if service_instance.key?('id')
-                  STDERR.puts "#{msg}: request['instance_uuid']='#{service_instance['id']}'"
+                  LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request['instance_uuid']='#{service_instance['id']}'")
                   request['instance_uuid'] = service_instance['id']
                 else
-                  STDERR.puts "#{msg}: no service instance uuid"
+                  LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"no service instance uuid")
                 end
               end
             end
             request.save
-            STDERR.puts "#{msg}: leaving with request #{request}"
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving with request #{request}")
             notify_user(request.as_json) unless request['callback'].empty?
           end
         end
       rescue Exception => e
-        STDERR.puts "#{msg}: #{e.message} (#{e.class})"
-        STDERR.puts "#{msg}: #{e.backtrace.split('\n\t')}"
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} (#{e.class}):#{e.backtrace.split('\n\t')}")
       end
     end
   end
@@ -145,55 +148,51 @@ class MessagePublishingService
   # The payload of the request is a yaml encoded dictionary that should include the following fields:
   #    instance_id : the service instance id of the service that needs to be terminated
   def self.service_instance_terminate(queue:)
-    msg=self.name+'#'+__method__.to_s
-    STDERR.puts "#{msg}: entered"
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered")
     queue.subscribe do |delivery_info, properties, payload|
-      STDERR.puts "#{msg}: delivery_info: #{delivery_info}"
-      STDERR.puts "#{msg}: properties: #{properties}"
-      STDERR.puts "#{msg}: payload: #{payload}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
       begin
 
         # We know our own messages, so just skip them
-        # We know our own messages, so just skip them
         if properties[:app_id] == 'tng-gtk-sp'
-          STDERR.puts "#{msg}: leaving, we know our own messages, so just skip them..."
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving, we know our own messages, so just skip them...")
         else
-          STDERR.puts "#{msg}: properties[:app_id]: #{properties[:app_id]}"
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"properties[:app_id]: #{properties[:app_id]}")
       
           # We're interested in app_id == 'son-plugin.slm'
           parsed_payload = YAML.load(payload)
-          STDERR.puts "#{msg}: parsed_payload: #{parsed_payload}"
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
           status = parsed_payload['status']
           unless status
-            STDERR.puts "#{msg}: no status"
+            LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"no status")
           else
-            STDERR.puts "#{msg}: status: #{status}"
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status: #{status}")
             request = Request.find(properties[:correlation_id])
             unless request
-              STDERR.puts "#{msg}: request '#{properties[:correlation_id]}' not found"
+              LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"request '#{properties[:correlation_id]}' not found")
             else
-              STDERR.puts "#{msg}: status '#{request['status']}' updated to '#{status}'"
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status '#{request['status']}' updated to '#{status}'")
               request['status']=status
               if parsed_payload['error']
                 request['error'] = parsed_payload['error']
-                STDERR.puts "#{msg}: recorded error '#{request['error']}'"
+                LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"recorded error '#{request['error']}'")
               end
               request.save
-              STDERR.puts "#{msg}: request #{request} saved"
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request #{request} saved")
               notify_user(request.as_json) unless request['callback'].empty?
             end
           end
         end
       rescue Exception => e
-        STDERR.puts "#{msg}: #{e.message} (#{e.class})"
-        STDERR.puts "#{msg}: #{e.backtrace.split('\n\t')}"
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} (#{e.class}): #{e.backtrace.split('\n\t')}")
       end
     end
   end
   
   private
   def self.notify_user(params)
-    msg=self.name+'#'+__method__.to_s
+    msg='.'+__method__.to_s
     uri = URI.parse(params['callback'])
 
     # Create the HTTP objects
@@ -204,17 +203,17 @@ class MessagePublishingService
     # Send the request
     begin
       response = http.request(request)
-      STDERR.puts "#{msg}: response=#{response}"
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"response=#{response}")
       case response
       when Net::HTTPSuccess, Net::HTTPCreated
         body = response.body
-        STDERR.puts "#{msg}: #{response.code} body=#{body}"
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} body=#{body}")
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
       else
         return {error: "#{response.message}"}
       end
     rescue Exception => e
-      STDERR.puts "%s - %s: %s", [Time.now.utc.to_s, msg, "Failled to post to user's callback #{user_callback} with message #{e.message}"]
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to post to user's callback #{user_callback} with message #{e.message}")
     end
     nil
   end

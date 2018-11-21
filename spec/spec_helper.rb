@@ -41,6 +41,8 @@ ENV['RACK_ENV'] = 'test'
   $LOAD_PATH << path
 end
 require 'tng/gtk/utils/application_controller'
+require 'tng/gtk/utils/functions'
+require 'tng/gtk/utils/services'
 require 'requests_controller'
 require 'policies_controller'
 require 'pings_controller'

@@ -48,6 +48,8 @@ class RootController < Tng::Gtk::Utils::ApplicationController
   get '/?' do
     content_type :text
     halt 200, {}, [OK_ROOT_ROUTE]
+    #api = open('./config/api.yml')
+    #halt 200, api.read.to_s
   end
 
   error Sinatra::NotFound do
