@@ -52,7 +52,7 @@ class MessagePublishingService
 
   def self.call(message, queue_symbol, correlation_id)
     msg='.'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"customer_uuid=#{customer_uuid}, developer_name=#{developer_name}, sla_id=#{sla_id}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"message=#{message}, queue_symbol=#{queue_symbol}, correlation_id=#{correlation_id}")
     if MQSERVER_URL == ''
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No MQServer URL has been defined")
       raise ArgumentError.new('No MQServer URL has been defined') 
