@@ -70,18 +70,9 @@ class FetchServiceRecordsService < Tng::Gtk::Utils::Fetch
     LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"record=#{record}")
     request = Request.where("instance_uuid = ? AND request_type = 'CREATE_SERVICE'", record[:uuid]).as_json
     LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request=#{request}")
-    case request
-    when Hash
-      return record if request.empty?
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request name = '#{request['name']}'")
-      record[:instance_name] = request['name']
-    when Array
-      return record if request.empty?
-      LOGGER.info(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"more than one request for the instance uuid '#{record[:uuid]}' were found, only the first was taken")
-      record[:instance_name] = request[0]['name']
-    else
-      LOGGER.error(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request #{request} was neither Hash nor Array")
-    end
+    return record if request.empty?
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request name = '#{request['name']}'")
+    record[:instance_name] = request['name']
     record
   end
 end
