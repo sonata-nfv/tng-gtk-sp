@@ -54,7 +54,7 @@ gem 'rubocop', '0.52.0'
 gem 'rubocop-checkstyle_formatter', '0.4.0', require: false
 gem 'pry', '0.12.0'
 
-gem 'tng-gtk-utils', '0.4.0'
+gem 'tng-gtk-utils', '0.4.1'
 
 group :test do
   gem 'webmock', '3.1.1'
