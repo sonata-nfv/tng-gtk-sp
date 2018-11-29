@@ -71,8 +71,8 @@ class FetchServiceRecordsService < Tng::Gtk::Utils::Fetch
     request = Request.where("instance_uuid = ? AND request_type = 'CREATE_SERVICE'", record[:uuid]).as_json
     LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request=#{request}")
     return record if request.empty?
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request name = '#{request['name']}'")
-    record[:instance_name] = request['name']
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"request name = '#{request[0][:name]}'")
+    record[:instance_name] = request[0][:name]
     record
   end
 end
