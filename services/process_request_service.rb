@@ -192,6 +192,7 @@ class ProcessRequestService < ProcessRequestBase
       LOGGER.error(component:@@logged_component, operation: msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
       return nil
     end
+    STDERR.puts ">>>>>>>>>>>instantiation_request=#{instantiation_request}"
     instantiation_request
   end
 

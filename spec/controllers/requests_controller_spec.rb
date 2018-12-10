@@ -186,8 +186,14 @@ RSpec.describe RequestsController, type: :controller do
   describe 'processes instantiation request' do
     let(:slice_instantiation) {{
       request_type: 'CREATE_SLICE',
-      service_uuid: uuid_1
+      nstId: uuid_1
     }}
+    let(:slicer_request) {{
+      request_type: "CREATE_SLICE",
+      nstId: "de627e9d-7f04-4e6a-9c44-63c37a2f2e0f",
+      callback: "http://tng-gtk-sp:5000/requests/c13e3197-5afb-4d4f-a04a-2e8d25094786/on-change"
+    }}
+    
     let(:slicer_response) {{
       created_at: "2018-07-16T14:03:02.204+00:00", updated_at: "2018-07-16T14:03:02.204+00:00",
       description: "NSI_descriptor",
@@ -214,25 +220,46 @@ RSpec.describe RequestsController, type: :controller do
       vendor: "eu.5gTango"
     }}
     let(:service_instantiation) {{
-      service_uuid: uuid_1
+      service_uuid: uuid_1,
+      request_type: 'CREATE_SERVICE'
     }}
+    let(:headers) {{
+      'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 
+      'Content-Type'=>'text/json', 'Host'=>'example.com', 'User-Agent'=>'Ruby'
+    }}
+    let(:saved_service_instantiation_request) {{
+       id: uuid_1, #"06a0fdeb-a5b4-4f4e-a8db-def87abdc3fb",
+       created_at: "2018-07-04 15:24:08 UTC",
+       updated_at: "2018-07-06 14:01:07 UTC",
+       service_uuid: service_instantiation[:service_uuid],
+       status: "READY",
+       request_type: "CREATE_SLICE",
+       instance_uuid: nil,
+       ingresses: [],
+       egresses: [],
+       callback: "",
+       blacklist: [],
+       customer_uuid: nil,
+       sla_id: nil,
+       name: nil,
+       error: nil
+    }}
+    
     before { header 'Content-Type', 'application/json'}
     it 'calling the ProcessCreateSliceInstanceRequest class to handle the slice creation request' do
       saved_request = double('Request')
       allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return(saved_request)
       allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(slice_instantiation).and_return(slicer_response)
       post '/', slice_instantiation.to_json
-      stub_request(:post, "http://example.com/nsilcm/v1/nsi").
-        with(body: "{\"request_type\":\"CREATE_SLICE\",\"service_uuid\":\"de627e9d-7f04-4e6a-9c44-63c37a2f2e0f\",\"callback\":\"http://tng-gtk-sp:5000/requests/c13e3197-5afb-4d4f-a04a-2e8d25094786/on-change\"}",
-             headers: {'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 'Content-Type'=>'text/json', 'Host'=>'example.com', 'User-Agent'=>'Ruby'}).
-        to_return(status: 200, body: "", headers: {})
+      stub_request(:post, "http://example.com/nsilcm/v1/nsi").with(body: slicer_request, headers: headers).to_return(status: 200, body: "", headers: {})
       expect(last_response).to be_created
     end
     it 'calling the ProcessRequestService class to handle the service creation request' do
-      saved_request = double('Request')
-      allow(ProcessRequestService).to receive(:call).with(service_instantiation).and_return(saved_request)
-      post '/', slice_instantiation.to_json
+      allow(ProcessRequestService).to receive(:call).with(service_instantiation).and_return(saved_service_instantiation_request)
+      allow(ProcessRequestService).to receive(:enrich_one).with(saved_service_instantiation_request).and_return(saved_service_instantiation_request)
+      post '/', service_instantiation.to_json
       expect(last_response).to be_created
+      expect(last_response.body).to eq(saved_service_instantiation_request.to_json)
     end
   end
   describe 'raises an error' do
