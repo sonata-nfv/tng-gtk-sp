@@ -56,8 +56,8 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     begin
       valid = valid_request?(params)
-      if (valid && valid.is_a?(Hash) && valid.key?(:error) )
-        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"validation failled with error #{valid[:error]}")
+      if (valid && valid.is_a?(Hash) && valid.key?(:error) && !valid[:error].to_s.empty?)
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"validation failled with error '#{valid[:error]}'")
         return valid
       end
       params[:service_uuid] = params.delete(:nstId)
@@ -152,6 +152,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     # { "request_type":"CREATE_SLICE", "nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc", "slice_instance_ready_callback":"http://..."}
     # template existense is tested within the SLM
     # GET http://tng-slice-mngr:5998/api/nst/v1/descriptors
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     return {error: "Request type #{params[:request_type]} is not CREATE_SLICE"} unless params[:request_type].upcase == "CREATE_SLICE"
     return {error: "Slice instantiation request needs a nstId"} unless params.key?(:nstId)
     true
