@@ -39,7 +39,7 @@ require_relative '../../services/process_request_service'
 RSpec.describe ProcessCreateSliceInstanceRequest do
   let(:uuid_1) {SecureRandom.uuid}
   let(:request_params) {{
-    service_uuid: uuid_1,
+    nestId: uuid_1,
     request_type: 'CREATE_SLICE',
     callback: 'http://example.com/user-callback'
   }}
