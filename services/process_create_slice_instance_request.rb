@@ -60,7 +60,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"validation failled with error #{valid[:error]}")
         return valid
       end
-      
+      params[:service_uuid] = params.delete(:nstId)
       instantiation_request = Request.create(params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"instantiation_request=#{instantiation_request.inspect}")
       unless instantiation_request
@@ -150,12 +150,11 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   def self.valid_request?(params)
     msg='.'+__method__.to_s
     # { "request_type":"CREATE_SLICE", "nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc", "slice_instance_ready_callback":"http://..."}
-    # if params include a Network Slice Template UUID
     # template existense is tested within the SLM
     # GET http://tng-slice-mngr:5998/api/nst/v1/descriptors
-
+    return {error: "Request type #{params[:request_type]} is not CREATE_SLICE"} unless params[:request_type].upcase == "CREATE_SLICE"
+    return {error: "Slice instantiation request needs a nstId"} unless params.key?(:nstId)
     true
-    # else {error: ''}
   end
   
   def self.enrich_params(params)
@@ -173,10 +172,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
 
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
-    request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
-    # Change service_uuid into nstId
-    params[:nstId] = params.delete(:service_uuid)
-    
+    request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})    
     request.body = params.to_json
 
     # Send the request

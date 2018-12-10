@@ -39,7 +39,7 @@ require_relative '../../services/process_request_service'
 RSpec.describe ProcessCreateSliceInstanceRequest do
   let(:uuid_1) {SecureRandom.uuid}
   let(:request_params) {{
-    service_uuid: uuid_1,
+    nstId: uuid_1,
     request_type: 'CREATE_SLICE',
     callback: 'http://example.com/user-callback'
   }}
@@ -69,7 +69,7 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       }
     ],
     nsiState: "INSTANTIATED",
-    nstId: "26c540a8-1e70-4242-beef-5e77dfa05a41",
+    nstId: request_params[:nstId],
     nstName: "Example_NST",
     nstVersion: "1.0",
     sapInfo: "",
@@ -80,12 +80,12 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
     vendor: "eu.5gTango"
   }}
   
-  describe '.call saves the request ' do
+  describe '.call saves the request' do
     let(:error_slicer_response) {{ error: 'error from the Slice Manager'}}
     let(:error_saved_request) {{
       'callback'=>'http://example.com/user-callback', 
       'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
-      'service_uuid'=>'4c7d854f-a0a1-451a-b31d-8447b4fd4fbc',
+      'service_uuid'=>request_params[:nstId],
       'id'=>uuid_2, 
       'ingresses'=>[], 'status'=>'ERROR', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
       'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
@@ -93,19 +93,18 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
     }}
     let(:enriched_request_params) {{
+      nstId: request_params[:nstId],
       request_type: request_params[:request_type],
-      callback: 'http://tng-gtk-sp:5000/requests/'+error_saved_request['id']+'/on-change',
-      nstId: request_params[:service_uuid]
+      callback: 'http://tng-gtk-sp:5000/requests/'+error_saved_request['id']+'/on-change'
     }}
-    
-    
+
     it 'and passes it to the Slice Manager' do
       stub_request(:post, "http://tng-slice-mngr:5998/api/nsilcm/v1/nsi").
         with(body: {
-          request_type:"CREATE_SLICE", service_uuid:"98002ea3-71c7-4faf-af68-b39e5ec0170d",
+          request_type:"CREATE_SLICE", nstId:"98002ea3-71c7-4faf-af68-b39e5ec0170d",
           callback:"http://tng-gtk-sp:5000/requests/d0b61673-224a-470e-9322-6e924357bd62/on-change"
           }).to_return(status: 200, body: "", headers: {})
-      allow(ProcessCreateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(request_params)
+      allow(ProcessCreateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(true)
       allow(ProcessCreateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
       allow(Request).to receive(:create).with(request_params).and_return(saved_request)
       allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).and_return(slicer_response)
@@ -113,13 +112,14 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
     end
     it 'with an error' do
       req = double('Request')
-      allow(ProcessCreateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(request_params)
+      allow(ProcessCreateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(true)
       allow(ProcessCreateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
       allow(Request).to receive(:create).with(request_params).and_return(saved_request)
       allow(Request).to receive(:find).with(saved_request['id']).and_return(req)
       allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:error]).and_return(error_saved_request)
       allow(req).to receive(:as_json).and_return(error_saved_request)
       allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(enriched_request_params).and_return(error_slicer_response)
+      STDERR.puts "request_params=#{request_params}"
       expect(described_class.call(request_params)).to eq(error_saved_request)
     end
   end

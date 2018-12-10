@@ -96,7 +96,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
         halt_with_code_body(400, {error: "Error saving request"}.to_json) 
       end
       # for the special case of CREATE_SLICE, the returned data structure is not an Hash
-      if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error))
+      if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error) && !saved_request[:error].to_s.empty?)
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:saved_request[:error].to_json)
         halt_with_code_body(404, {error: saved_request[:error]}.to_json) 
       end
