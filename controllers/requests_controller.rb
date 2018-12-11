@@ -81,6 +81,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     end
 
     body = request.body.read
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
     halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
     
     begin
@@ -89,7 +90,6 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body=#{json_body}")
     
       saved_request = strategy(json_body[:request_type]).call(json_body.deep_symbolize_keys)
-    
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_request='#{saved_request.inspect}'")
       if !saved_request
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error saving request")
