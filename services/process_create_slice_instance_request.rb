@@ -174,8 +174,8 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
     request = Net::HTTP::Post.new(uri)
-    request['CONTENT_TYPE'] = 'application/json'
     request.body = params.to_json
+    request['Content-Type'] = 'application/json'
 
     # Send the request
     begin
