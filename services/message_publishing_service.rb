@@ -197,8 +197,9 @@ class MessagePublishingService
 
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
-    request = Net::HTTP::Post.new(uri, {'Content-Type': 'text/json'})
+    request = Net::HTTP::Post.new(uri)
     request.body = params.to_json
+    request['Content-Type'] = 'application/json'
 
     # Send the request
     begin
