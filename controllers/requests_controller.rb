@@ -189,7 +189,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
       unless result.empty?
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:result.to_json, status: '201')
-        halt 201, {}, result.to_json 
+        halt 201, {'Content-Type'=>'application/json'}, result.to_json 
       end
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Package processing UUID not found in event #{event_data}", status: '404')
       halt 404, {}, {error: "Package processing UUID not found in event #{event_data}"}.to_json
