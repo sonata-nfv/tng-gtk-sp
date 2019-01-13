@@ -225,7 +225,7 @@ RSpec.describe RequestsController, type: :controller do
     }}
     let(:headers) {{
       'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 
-      'Content-Type'=>'text/json', 'Host'=>'example.com', 'User-Agent'=>'Ruby'
+      'Content-Type'=>'application/json', 'Host'=>'example.com', 'User-Agent'=>'Ruby'
     }}
     let(:saved_service_instantiation_request) {{
        id: uuid_1, #"06a0fdeb-a5b4-4f4e-a8db-def87abdc3fb",
