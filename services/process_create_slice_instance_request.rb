@@ -112,10 +112,11 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     msg='.'+__method__.to_s
     original_request = Request.find(event[:original_event_uuid]) #.as_json
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
-    body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
-    original_request['status'] = body[:status]
+    #body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
+    #original_request['status'] = body[:status]
+    original_request['status'] = event[:status]
     original_request.save
-    [original_request.as_json, body[:callback]]
+    [original_request.as_json, event[:callback]]
   end
   
   def self.notify_user(result, user_callback)
