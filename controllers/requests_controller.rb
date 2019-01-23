@@ -180,6 +180,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     
     begin
       body = request.body.read
+      STDERR.puts ">>> #{LOGGED_COMPONENT}.#{msg}: body='#{body}'"
       halt_with_code_body(400, "The callback is missing the event data") if body.empty?
       event_data = JSON.parse(body, quirks_mode: true, symbolize_names: true)
 
