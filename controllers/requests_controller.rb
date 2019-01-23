@@ -175,7 +175,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   
   # Callback for the tng-slice-mngr to notify the result of processing
   post '/:request_uuid/on-change/?' do
-    msg='.'+__method__.to_s+' /:request_uuid/on-change'
+    msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered, request_uuid=#{params[:request_uuid]}, params=#{params}")
     
     begin
@@ -193,7 +193,10 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
       end
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Package processing UUID not found in event #{event_data}", status: '404')
       halt 404, {}, {error: "Package processing UUID not found in event #{event_data}"}.to_json
-    rescue JSON::ParserError, ActiveRecord::RecordNotFound, ArgumentError, NameError => e
+    rescue JSON::ParserError => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failling JSON interpretation of '#{body}'", status: '400')
+      halt 400, {}, {error: e.message}.to_json
+    rescue ActiveRecord::RecordNotFound, ArgumentError, NameError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} #{params}\n#{e.backtrace.join("\n\t")}", status: '400')
       halt 400, {}, {error: e.message}.to_json
     end
