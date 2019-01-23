@@ -195,7 +195,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
       halt 404, {}, {error: "Package processing UUID not found in event #{event_data}"}.to_json
     rescue JSON::ParserError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failling JSON interpretation of '#{body}'", status: '400')
-      halt 400, {}, {error: e.message}.to_json
+      halt 400, {}, {error: "Failling JSON interpretation of '#{body}'"}.to_json
     rescue ActiveRecord::RecordNotFound, ArgumentError, NameError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} #{params}\n#{e.backtrace.join("\n\t")}", status: '400')
       halt 400, {}, {error: e.message}.to_json
