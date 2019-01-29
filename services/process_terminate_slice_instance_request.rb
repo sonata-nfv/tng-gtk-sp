@@ -69,7 +69,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"termination_request=#{termination_request.inspect} (class #{termination_request.class})")
       unless termination_request
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to create termination request")
-        return {error: "Failled to create termination request for slice template '#{params[:nstId]}'"}
+        return {error: "Failled to create termination request for slice instance '#{params[:instance_uuid]}'"}
       end
       # pass it to the Slice Manager
       # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
