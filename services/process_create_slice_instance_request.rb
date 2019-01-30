@@ -156,7 +156,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     # GET http://tng-slice-mngr:5998/api/nst/v1/descriptors
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     return {error: "Request type #{params[:request_type]} is not CREATE_SLICE"} unless params[:request_type].upcase == "CREATE_SLICE"
-    return {error: "Slice instantiation request needs a nstId"} unless params.key?(:nstId)
+    return {error: "Slice instantiation request needs a nst_id"} unless params.key?(:nst_id)
     true
   end
   
@@ -188,7 +188,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
         body = response.body
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} body=#{body}")
         json_body = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-        json_body[:service_uuid] = json_body.delete(:nstId) if json_body.key?(:nstId)
+        json_body[:service_uuid] = json_body.delete(:nst_id) if json_body.key?(:nst_id)
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body=#{json_body}")
         return json_body
       else
