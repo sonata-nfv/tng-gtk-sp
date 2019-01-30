@@ -171,9 +171,6 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     msg='.'+__method__.to_s
     # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/<nsiId>/terminate, with body {'callback':'http://...'}
     # curl -i -H "Content-Type:application/json" -X POST -d '{"terminateTime": "_time_", "callback":"URL_with_callback_request"}' http://{base_url}:5998/api/nsilcm/v1/nsi/<nsiId>/terminate
-    # $ http POST :4567/wtf p1=one p2=two
-    # body={"p1": "one", "p2": "two"}
-    # params={"xyz"=>"wtf"}
     site = "#{SLM_URL}/nsilcm/v1/nsi/#{params[:instance_uuid]}/terminate"
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params} site=#{site}")
     uri = URI.parse(site)
@@ -181,7 +178,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
     request = Net::HTTP::Post.new(uri)
-    request.body = { terminateTime: '', callback: params[:callback]}.to_json
+    request.body = { terminateTime: 0, callback: params[:callback]}.to_json
     request['Content-Type'] ='application/json'
     
     # Send the request
