@@ -60,7 +60,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"validation failled with error '#{valid[:error]}'")
         return valid
       end
-      params[:service_uuid] = params.delete(:nstId)
+      params[:service_uuid] = params.delete(:nst_id)
       instantiation_request = Request.create(params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"instantiation_request=#{instantiation_request.inspect}")
       unless instantiation_request
