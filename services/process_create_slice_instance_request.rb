@@ -65,7 +65,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"instantiation_request=#{instantiation_request.inspect}")
       unless instantiation_request
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to create instantiation_request for slice template '#{params[:nstId]}'")
-        return {error: "Failled to create instantiation request for slice template '#{params[:nstId]}'"}
+        return {error: "Failled to create instantiation request for slice template '#{params[:service_uuid]}'"}
       end
       # pass it to the Slice Manager
       # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
