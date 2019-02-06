@@ -245,7 +245,7 @@ class ProcessRequestService < ProcessRequestBase
   
   def self.valid_create_service_params?(params)
     msg='.'+__method__.to_s
-    if params[:service_uuid].empty?
+    if params[:service_uuid].to_s.empty?
       LOGGER.debug(component:@@logged_component, operation: msg, message:"Creation of a service needs the service UUID")
       return {error: "Creation of a service needs the service UUID"} 
     end
