@@ -39,7 +39,7 @@ require_relative '../../services/process_request_service'
 RSpec.describe ProcessCreateSliceInstanceRequest do
   let(:uuid_1) {SecureRandom.uuid}
   let(:request_params) {{
-    nstId: uuid_1,
+    nst_id: uuid_1,
     request_type: 'CREATE_SLICE',
     callback: 'http://example.com/user-callback'
   }}
@@ -69,7 +69,7 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       }
     ],
     nsiState: "INSTANTIATED",
-    nstId: request_params[:nstId],
+    nstId: request_params[:nst_id],
     nstName: "Example_NST",
     nstVersion: "1.0",
     sapInfo: "",
@@ -85,7 +85,7 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
     let(:error_saved_request) {{
       'callback'=>'http://example.com/user-callback', 
       'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
-      'service_uuid'=>request_params[:nstId],
+      'service_uuid'=>request_params[:nst_id],
       'id'=>uuid_2, 
       'ingresses'=>[], 'status'=>'ERROR', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
       'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
@@ -93,9 +93,9 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
     }}
     let(:enriched_request_params) {{
-      nstId: request_params[:nstId],
       request_type: request_params[:request_type],
-      callback: 'http://tng-gtk-sp:5000/requests/'+error_saved_request['id']+'/on-change'
+      callback: 'http://tng-gtk-sp:5000/requests/'+error_saved_request['id']+'/on-change',
+      nstId: request_params[:nst_id]
     }}
 
     it 'and passes it to the Slice Manager' do

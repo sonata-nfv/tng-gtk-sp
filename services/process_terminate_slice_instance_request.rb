@@ -72,7 +72,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
         return {error: "Failled to create termination request for slice instance '#{params[:instance_uuid]}'"}
       end
       # pass it to the Slice Manager
-      # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
+      # {"instance_uuid":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "tarminate_at":"..."}
       # the user callback is saved in the request
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{termination_request['id']}/on-change"
       request = terminate_slice(enriched_params)
@@ -152,13 +152,9 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
 
   def self.valid_request?(params)
     msg='.'+__method__.to_s
-    # { "request_type":"CREATE_SLICE", "nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc", "slice_instance_ready_callback":"http://..."}
-    # if params include a Network Slice Template UUID
-    # template existense is tested within the SLM
-    # GET http://tng-slice-mngr:5998/api/nst/v1/descriptors
+    # { "request_type":"TERMINATE_SLICE", "instance_uuid":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "terminate_at":0, "callback":"http://..."}
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered")
     true
-    # else {error: ''}
   end
   
   def self.enrich_params(params)
@@ -178,7 +174,10 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
     request = Net::HTTP::Post.new(uri)
-    request.body = { terminateTime: 0, callback: params[:callback]}.to_json
+    request_params = {}
+    request_params[:terminateTime] = params.key?(:terminate_at) ? params[:terminate_at] : 0
+    request_params[:callback] = params.key?(:callback) ? params[:callback] : ''
+    request.body = request_params.to_json
     request['Content-Type'] ='application/json'
     
     # Send the request
