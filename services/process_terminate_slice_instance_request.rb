@@ -83,7 +83,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
         saved_req.update(status: 'ERROR', error: request[:error])
         return saved_req.as_json
       end
-      termination_request
+      return termination_request
     rescue StandardError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
       return {error: "#{e.message}"}
