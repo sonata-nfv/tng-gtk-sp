@@ -153,7 +153,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
   def self.valid_request?(params)
     msg='.'+__method__.to_s
     # { "request_type":"TERMINATE_SLICE", "instance_uuid":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "terminate_at":0, "callback":"http://..."}
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     true
   end
   
