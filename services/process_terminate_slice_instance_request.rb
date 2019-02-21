@@ -74,11 +74,11 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       # pass it to the Slice Manager
       # {"instance_uuid":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "tarminate_at":"..."}
       # the user callback is saved in the request
-      enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{termination_request['id']}/on-change"
+      enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{termination_request.id}/on-change"
       request = terminate_slice(enriched_params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
       if (request && request.is_a?(Hash) && request.key?(:error))
-        saved_req=Request.find(termination_request['id'])
+        saved_req=Request.find(termination_request.id)
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_req=#{saved_req.inspect}")
         saved_req.update(status: 'ERROR', error: request[:error])
         return saved_req.as_json
@@ -153,7 +153,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
   def self.valid_request?(params)
     msg='.'+__method__.to_s
     # { "request_type":"TERMINATE_SLICE", "instance_uuid":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "terminate_at":0, "callback":"http://..."}
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     true
   end
   
