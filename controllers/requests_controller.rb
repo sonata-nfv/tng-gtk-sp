@@ -190,12 +190,12 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Request #{params[:request_uuid]} was not found", status: '404')
         halt 404, {}, {error: "Request #{params[:request_uuid]} was not found"}.to_json
       end
-      unless STRATEGIES.key?(request_type)
+      unless strategy(request_type)
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Request type #{request_type} is not valid", status: '404')
         halt 400, {}, {error: "Request type #{request_type} is not valid"}.to_json
       end
       #result = ProcessCreateSliceInstanceRequest.process_callback(event_data)
-      result = STRATEGIES[request_type].process_callback(event_data)
+      result = strategy(request_type).process_callback(event_data)
       
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
       unless result.empty?
