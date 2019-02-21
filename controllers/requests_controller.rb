@@ -180,12 +180,23 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     
     begin
       body = request.body.read
-      halt_with_code_body(400, "The callback is missing the event data") if body.empty?
-      event_data = JSON.parse(body, symbolize_names: true)
+      #halt_with_code_body(400, "The callback is missing the event data") if 
+      event_data = body.empty? ? {} : JSON.parse(body, symbolize_names: true)
 
       event_data[:original_event_uuid] = params[:request_uuid]
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event_data=#{event_data}")
-      result = ProcessCreateSliceInstanceRequest.process_callback(event_data)
+      request_type = Request.find(params[:request_uuid]).request_type
+      unless request_type
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Request #{params[:request_uuid]} was not found", status: '404')
+        halt 404, {}, {error: "Request #{params[:request_uuid]} was not found"}.to_json
+      end
+      unless STRATEGIES.key?(request_type)
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Request type #{request_type} is not valid", status: '404')
+        halt 400, {}, {error: "Request type #{request_type} is not valid"}.to_json
+      end
+      #result = ProcessCreateSliceInstanceRequest.process_callback(event_data)
+      result = STRATEGIES[request_type].process_callback(event_data)
+      
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
       unless result.empty?
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:result.to_json, status: '201')
