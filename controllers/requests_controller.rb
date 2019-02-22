@@ -91,7 +91,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     
       saved_request = strategy(json_body[:request_type]).call(json_body.deep_symbolize_keys)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_request='#{saved_request.inspect}'")
-      if !saved_request
+      unless saved_request
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error saving request")
         halt_with_code_body(400, {error: "Error saving request"}.to_json) 
       end
