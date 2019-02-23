@@ -98,8 +98,8 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
   def self.process_callback(event)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event=#{event}")
-    result, user_callback = save_result(event)
-    notify_user(result, user_callback) unless user_callback.to_s.empty?
+    result = save_result(event)
+    notify_user(result) unless result[:callback].to_s.empty?
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
     result
   end
@@ -115,17 +115,18 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     msg='.'+__method__.to_s
     original_request = Request.find(event[:original_event_uuid]) #.as_json
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
-    body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
-    original_request['status'] = body[:status]
+    #body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
+    original_request['status'] = event[:nsiState]
+    original_request['error'] = event[:error]
     original_request.save
-    [original_request.as_json, body[:callback]]
+    original_request.as_json
   end
   
-  def self.notify_user(result, user_callback)
+  def self.notify_user(result)
     msg='.'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered, result=#{result}, user_callback=#{user_callback}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered, result=#{result}")
     
-    uri = URI.parse(user_callback)
+    uri = URI.parse(result[:callback])
 
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
@@ -147,7 +148,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
         return {error: "#{response.message}"}
       end
     rescue Exception => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to post to user's callback #{user_callback} with message #{e.message}")
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to post to user's callback #{result[:callback]} with message #{e.message}")
     end
     nil
   end
