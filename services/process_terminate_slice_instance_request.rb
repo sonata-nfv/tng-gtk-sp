@@ -185,7 +185,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       case response
       when Net::HTTPSuccess, Net::HTTPCreated
         body = response.body
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} body=#{body}")
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
         return JSON.parse(body, quirks_mode: true, symbolize_names: true)
       else
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} (#{response.message}): #{params}")
