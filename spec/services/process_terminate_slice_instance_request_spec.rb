@@ -104,8 +104,8 @@ RSpec.describe ProcessTerminateSliceInstanceRequest do
     
     it 'and passes it to the Slice Manager' do
       stub_request(:post, termination_url).
-        with(body: { terminateTime: "", callback: callback_url}.to_json).to_return(status: 200, body: "", headers: {})
-      allow(ProcessTerminateSliceInstanceRequest).to receive(:terminate_slice).and_return(slicer_response)
+        with(body: { terminateTime: 0, callback: callback_url}.to_json).to_return(status: 200, body: "", headers: {})
+      allow(ProcessTerminateSliceInstanceRequest).to receive(:request_slice_termination).and_return(slicer_response)
       expect(described_class.call(request_params)).to eq(saved_request)
     end
     it 'with an error' do
@@ -115,7 +115,7 @@ RSpec.describe ProcessTerminateSliceInstanceRequest do
       allow(req).to receive(:status).and_return('ERROR')
       allow(req).to receive(:error).and_return(error_slicer_response[:error])
       allow(req).to receive(:as_json).and_return(error_saved_request)
-      allow(ProcessTerminateSliceInstanceRequest).to receive(:terminate_slice).with(request_params).and_return(error_slicer_response)
+      allow(ProcessTerminateSliceInstanceRequest).to receive(:request_slice_termination).with(request_params).and_return(error_slicer_response)
       expect(described_class.call(request_params)).to eq(error_saved_request)
     end
   end
