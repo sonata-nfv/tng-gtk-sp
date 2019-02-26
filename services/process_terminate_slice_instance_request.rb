@@ -170,7 +170,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     msg='.'+__method__.to_s
     # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/<nsiId>/terminate, with body {'callback':'http://...'}
     # curl -i -H "Content-Type:application/json" -X POST -d '{"terminateTime": "_time_", "callback":"URL_with_callback_request"}' http://{base_url}:5998/api/nsilcm/v1/nsi/<nsiId>/terminate
-    site = "#{SLM_URL}/nsilcm/v1/nsi/#{params[:instance_uuid]}/terminate"
+    site = "#{SLM_URL}/nsilcm/v1/nsi/#{params[:instance_uuid]}/terminate-change"
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params} site=#{site}")
     uri = URI.parse(site)
 
@@ -197,7 +197,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
         return {error: "#{response.code} (#{response.message}): #{params}"}
       end
     rescue Exception => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:e.message)
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} (#{response.message}): #{params}")
       raise
     end
     nil
