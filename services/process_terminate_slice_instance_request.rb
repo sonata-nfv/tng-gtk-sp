@@ -192,7 +192,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
         return {error: "#{response.code} (#{response.message}): #{params}"}
       end
     rescue Exception => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{response.message}: #{params}")
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} for #{params}\n#{e.backtrace.join("\n\t")}")
       raise
     end
     nil
