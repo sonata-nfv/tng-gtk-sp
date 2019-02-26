@@ -185,19 +185,26 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
 
       event_data[:original_event_uuid] = params[:request_uuid]
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event_data=#{event_data}")
-      request_type = Request.find(params[:request_uuid]).request_type
-      unless request_type
+      original_request = Request.find(params[:request_uuid])
+      unless original_request
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Request #{params[:request_uuid]} was not found", status: '404')
         halt 404, {}, {error: "Request #{params[:request_uuid]} was not found"}.to_json
+      end
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original_request=#{original_request.inspect}")
+      request_type = original_request.request_type
+      unless request_type
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Request type of request #{original_request.inspect} was not found", status: '404')
+        halt 404, {}, {error: "Request type of request #{original_request.inspect} was not found"}.to_json
       end
       unless strategy(request_type)
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Request type #{request_type} is not valid", status: '404')
         halt 400, {}, {error: "Request type #{request_type} is not valid"}.to_json
       end
       #result = ProcessCreateSliceInstanceRequest.process_callback(event_data)
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing callback...")
       result = strategy(request_type).process_callback(event_data)
       
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Callback processed, result=#{result}")
       unless result.empty?
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:result.to_json, status: '201')
         halt 201, {'Content-Type'=>'application/json'}, result.to_json 

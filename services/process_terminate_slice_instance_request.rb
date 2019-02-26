@@ -99,8 +99,9 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event=#{event}")
     result = save_result(event)
-    notify_user(result) unless result[:callback].to_s.empty?
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
+    notify_user(result) unless result[:callback].to_s.empty?
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"after notify user (#{result[:callback]})")
     result
   end
   
@@ -170,7 +171,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     msg='.'+__method__.to_s
     # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/<nsiId>/terminate, with body {'callback':'http://...'}
     # curl -i -H "Content-Type:application/json" -X POST -d '{"terminateTime": "_time_", "callback":"URL_with_callback_request"}' http://{base_url}:5998/api/nsilcm/v1/nsi/<nsiId>/terminate
-    site = "#{SLM_URL}/nsilcm/v1/nsi/#{params[:instance_uuid]}/terminate-change"
+    site = "#{SLM_URL}/nsilcm/v1/nsi/#{params[:instance_uuid]}/terminate"
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params} site=#{site}")
     uri = URI.parse(site)
 
