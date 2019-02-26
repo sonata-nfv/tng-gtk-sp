@@ -75,16 +75,11 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       # {"instance_uuid":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "tarminate_at":"..."}
       # the user callback is saved in the request
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{termination_request['id']}/on-change"
-      request = terminate_slice(enriched_params)
+      request = request_slice_termination(enriched_params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
       if (request && request.is_a?(Hash) && request.key?(:error))
-        #saved_req=Request.find(termination_request['id'])
-        #LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_req=#{saved_req.inspect}")
-        #saved_req.update(status: 'ERROR', error: request[:error])
         termination_request.update(status: 'ERROR', error: request[:error])
-        #return termination_request.as_json
       end
-      #return termination_request
       return termination_request.as_json
     rescue StandardError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
@@ -116,7 +111,6 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     msg='.'+__method__.to_s
     original_request = Request.find(event[:original_event_uuid]) #.as_json
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
-    #body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
     original_request['status'] = event[:nsiState]
     original_request['error'] = event[:error]
     original_request.save
@@ -167,7 +161,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     params
   end
   
-  def self.terminate_slice(params)
+  def self.request_slice_termination(params)
     msg='.'+__method__.to_s
     # POST http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/<nsiId>/terminate, with body {'callback':'http://...'}
     # curl -i -H "Content-Type:application/json" -X POST -d '{"terminateTime": "_time_", "callback":"URL_with_callback_request"}' http://{base_url}:5998/api/nsilcm/v1/nsi/<nsiId>/terminate
@@ -198,7 +192,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
         return {error: "#{response.code} (#{response.message}): #{params}"}
       end
     rescue Exception => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} (#{response.message}): #{params}")
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} for #{params}\n#{e.backtrace.join("\n\t")}")
       raise
     end
     nil
