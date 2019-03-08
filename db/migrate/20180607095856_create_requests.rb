@@ -34,9 +34,7 @@ class CreateRequests < ActiveRecord::Migration[5.2]
   def change
     create_table :requests, id: :uuid do |t| #false  do |t|
       t.timestamps
-      #t.primary_key :request_uuid
-      #t.uuid :request_uuid, primary: true, null: false
-      t.uuid :service_uuid #, null: false #, default: 'uuid_generate_v4()'
+      t.uuid :service_uuid
       t.string :status, default: 'NEW'
       t.string :request_type, default: 'CREATE_SERVICE'
       t.uuid :instance_uuid, default: ''
@@ -44,9 +42,13 @@ class CreateRequests < ActiveRecord::Migration[5.2]
       t.string :egresses, default: '[]'
       t.string :callback, default: ''
       t.string :blacklist, default: '[]'
-      t.uuid :customer_uuid, default: ''
+      t.string :customer_name, default: ''
+      t.string :customer_email, default: ''
       t.uuid :sla_id, default: ''
+      t.string :name, default: ''
+      t.string :description, default: ''
+      t.string :error, default: ''
     end
-    #add_column :requests, :service_uuid, :uuid, default: 'uuid_generate_v4()'
   end
 end
+

@@ -87,6 +87,8 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     begin
       json_body = JSON.parse(body, quirks_mode: true, symbolize_names: true)
       json_body[:request_type] = 'CREATE_SERVICE' unless json_body.key?(:request_type)
+      json_body[:customer_name] = request.env['5gtango.user.name']
+      json_body[:customer_email] = request.env['5gtango.user.email']
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body=#{json_body}")
     
       saved_request = strategy(json_body[:request_type]).call(json_body.deep_symbolize_keys)

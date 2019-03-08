@@ -61,6 +61,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
         return valid
       end
       params[:service_uuid] = params.delete(:nst_id)
+      
       instantiation_request = Request.create(params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"instantiation_request=#{instantiation_request.inspect}")
       unless instantiation_request
@@ -70,6 +71,10 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       # pass it to the Slice Manager
       # {"nstId":"3a2535d6-8852-480b-a4b5-e216ad7ba55f", "name":"Testing", "description":"Test desc"}
       # the user callback is saved in the request
+      # CREATE_SLICE doesn't need customer info
+      params.delete(:customer_name)
+      params.delete(:customer_email)
+      
       enriched_params = params #enrich_params(params)
       enriched_params[:nstId] = params.delete(:service_uuid)
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"

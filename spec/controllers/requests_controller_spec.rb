@@ -159,7 +159,8 @@ RSpec.describe RequestsController, type: :controller do
          egresses: [],
          callback: "",
          blacklist: [],
-         customer_uuid: nil,
+         customer_name: '',
+         customer_email: '',
          sla_id: nil,
          name: nil,
          error: nil
@@ -188,7 +189,9 @@ RSpec.describe RequestsController, type: :controller do
   describe 'processes instantiation request' do
     let(:slice_instantiation) {{
       request_type: 'CREATE_SLICE',
-      nstId: uuid_1
+      nstId: uuid_1,
+      customer_name: nil,
+      customer_email: nil
     }}
     let(:slicer_request) {{
       request_type: "CREATE_SLICE",
@@ -223,7 +226,9 @@ RSpec.describe RequestsController, type: :controller do
     }}
     let(:service_instantiation) {{
       service_uuid: uuid_1,
-      request_type: 'CREATE_SERVICE'
+      request_type: 'CREATE_SERVICE',
+      customer_name: nil,
+      customer_email: nil
     }}
     let(:headers) {{
       'Accept'=>'*/*', 'Accept-Encoding'=>'gzip;q=1.0,deflate;q=0.6,identity;q=0.3', 
@@ -241,7 +246,31 @@ RSpec.describe RequestsController, type: :controller do
        egresses: [],
        callback: "",
        blacklist: [],
-       customer_uuid: nil,
+       customer_name: '',
+       customer_email: '',
+       sla_id: nil,
+       name: nil,
+       error: nil
+    }}
+    let(:enriched_saved_service_instantiation_request) {{
+       id: uuid_1, #"06a0fdeb-a5b4-4f4e-a8db-def87abdc3fb",
+       created_at: "2018-07-04 15:24:08 UTC",
+       updated_at: "2018-07-06 14:01:07 UTC",
+       service: {
+         uuid: service_instantiation[:service_uuid],
+         vendor: 'vendor',
+         name: 'name',
+         version: '0.0.1'
+       },
+       status: "READY",
+       request_type: "CREATE_SLICE",
+       instance_uuid: nil,
+       ingresses: [],
+       egresses: [],
+       callback: "",
+       blacklist: [],
+       customer_name: '',
+       customer_email: '',
        sla_id: nil,
        name: nil,
        error: nil
@@ -251,14 +280,13 @@ RSpec.describe RequestsController, type: :controller do
     it 'calling the ProcessCreateSliceInstanceRequest class to handle the slice creation request' do
       saved_request = double('Request')
       allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return(saved_request)
-      allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(slice_instantiation).and_return(slicer_response)
+      #allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(slice_instantiation).and_return(slicer_response)
       post '/', slice_instantiation.to_json
       stub_request(:post, "http://example.com/nsilcm/v1/nsi").with(body: slicer_request, headers: headers).to_return(status: 200, body: "", headers: {})
       expect(last_response).to be_created
     end
     it 'calling the ProcessRequestService class to handle the service creation request' do
       allow(ProcessRequestService).to receive(:call).with(service_instantiation).and_return(saved_service_instantiation_request)
-      allow(ProcessRequestService).to receive(:enrich_one).with(saved_service_instantiation_request).and_return(saved_service_instantiation_request)
       post '/', service_instantiation.to_json
       expect(last_response).to be_created
       expect(last_response.body).to eq(saved_service_instantiation_request.to_json)
@@ -267,7 +295,9 @@ RSpec.describe RequestsController, type: :controller do
   describe 'raises an error' do
     let(:slice_instantiation) {{
       request_type: 'CREATE_SLICE',
-      service_uuid: uuid_1
+      service_uuid: uuid_1,
+      customer_name: nil,
+      customer_email: nil
     }}
     let(:wrong_request_type) {{
       request_type: 'WHATEVER_THIS_IS',
