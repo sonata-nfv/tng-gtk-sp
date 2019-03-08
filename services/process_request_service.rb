@@ -176,7 +176,7 @@ class ProcessRequestService < ProcessRequestBase
         LOGGER.error(component:@@logged_component, operation: msg, message:"Failled to create instantiation_request for service '#{params[:service_uuid]}'")
         return {error: "Failled to create instantiation request for service '#{params[:service_uuid]}'"}
       end
-      complete_user_data = FetchUserDataService.call( completed_params[:customer_uuid], stored_service[:username], completed_params[:sla_id])
+      complete_user_data = FetchUserDataService.call( completed_params[:customer_name], completed_params[:customer_email], stored_service[:username], completed_params[:sla_id])
       LOGGER.debug(component:@@logged_component, operation: msg, message:"complete_user_data=#{complete_user_data}")
       message = build_message(stored_service, stored_functions, completed_params[:egresses], completed_params[:ingresses], completed_params[:blacklist], complete_user_data)
       LOGGER.debug(component:@@logged_component, operation: msg, message:"instantiation_request['id']=#{instantiation_request['id']}")

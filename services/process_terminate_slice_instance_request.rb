@@ -112,7 +112,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     original_request = Request.find(event[:original_event_uuid]) #.as_json
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
     original_request['status'] = event[:nsiState]
-    original_request['error'] = event[:error]
+    original_request['error'] = event[:error] # Pol to add it
     original_request.save
     original_request.as_json
   end
@@ -171,6 +171,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
 
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
+    #http.read_timeout = 500 # seconds
     request = Net::HTTP::Post.new(uri)
     request_params = {}
     request_params[:terminateTime] = params.key?(:terminate_at) ? params[:terminate_at] : 0
