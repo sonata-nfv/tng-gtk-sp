@@ -45,11 +45,10 @@ RSpec.describe ProcessRequestService do
   }}
   describe '.call' do
     let(:uuid_2) {SecureRandom.uuid}
-    let(:customer_uuid) {SecureRandom.uuid}
     let(:sla_id) {SecureRandom.uuid}
     let(:service_instantiation_request) {{
-      service_uuid: uuid, egresses:[], ingresses: [], blacklist: [], request_type: "CREATE_SERVICE", customer_uuid: customer_uuid, 
-      sla_id: sla_id, callback: ''
+      service_uuid: uuid, egresses:[], ingresses: [], blacklist: [], request_type: "CREATE_SERVICE", customer_name: 'me', 
+      customer_email: 'me@example.com', sla_id: sla_id, callback: ''
     }}
     let(:service) {{uuid: uuid, nsd: { vendor: 'eu.5gtango', name: 'my_service', version: '0.1', network_functions: network_functions}, username: nil}}
     let(:saved_service_instantiation_request) {
@@ -84,18 +83,12 @@ RSpec.describe ProcessRequestService do
       'ingresses'=> [],
       'blacklist'=> [],
       'user_data'=> {
-        'customer'=>{
-          'uuid'=>customer_uuid, 'email'=>"sonata.admin@email.com", 'phone'=>nil, 
-          'keys'=>{'public'=>nil, 'private'=>nil}, 'sla_id'=>sla_id
-        }, 
+        'customer'=>{ 'name'=>'me', 'email'=>'me@example.com', 'sla_id'=>sla_id}, 
         'developer'=>{'username'=>nil, 'email'=>nil, 'phone'=>nil}
       }
     }.to_yaml.to_s}
     let(:user_data) {{
-      customer: {
-        uuid: customer_uuid, email: 'sonata.admin@email.com', phone: nil, 
-        keys: {public: nil, private: nil}, sla_id: sla_id
-      }, 
+      customer: { name: 'me', email: 'me@example.com', sla_id: sla_id}, 
       developer: {username: nil, email: nil, phone: nil}
     }}
     it 'returns {} when no request is found' do

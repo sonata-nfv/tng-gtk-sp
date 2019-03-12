@@ -70,8 +70,8 @@
         "parameters": [
           {
             "in": "body",
-            "name": "uuid",
-            "description": "The UUID of the entity to which the request is related to (Service or Slice)",
+            "name": "id",
+            "description": "The UUID of the request",
             "schema": {"$ref": "#/definitions/RequestResponseData" }
           }
         ],
@@ -89,95 +89,115 @@
       "properties": {
         "uuid": {
           "type": "string",
-          "description": "The UUID of the entity to which the request is related to (Service or Slice) -- mandatory for CREATION"
+          "description": "The UUID of the entity to which the instantiation request is related to (Service or Slice) -- mandatory for request_type CREATE_SERVICE (default) and CREATE_SLICE (nstId)"
         },
         "instance_uuid": {
           "type": "string",
-          "description": "The UUID of the instance of the entity to which the request is related to (Service or Slice) -- mandatory for UPDATE and TERMINATION"
+          "description": "The UUID of the instance of the entity to which the request is related to (Service or Slice) -- mandatory for request_type TERMINATE_SERVICE and TERMINATE_SLICE"
         },
         "egresses": {
           "type": "array",
           "description": "List of egress points to be taken into consideration during the instantiation",
-          "items": {
-            "type": "string"
-          }
+          "items": {"type": "string"}
         },
         "ingresses": {
           "type": "array",
           "description": "List of ingress points to be taken into consideration during the instantiation",
-          "items": {
-            "type": "string"
-          }
+          "items": {"type": "string"}
         },
         "blacklist": {
           "type": "array",
           "description": "List of sites where not to instantiate",
-          "items": {
-            "type": "string"
-          }
+          "items": {"type": "string"}
         },
         "callback": {
           "type": "string",
           "description": "The callback to call when the instantiation is ready"
-        }
+        },
+        "name": {
+          "type": "string",
+          "description": "The callback to call when the instantiation is ready"
+        },
+        "description": {
+          "type": "string",
+          "description": "The callback to call when the instantiation is ready"
+        },
+        "sla_id": {
+          "type": "string",
+          "description": "The callback to call when the instantiation is ready"
+        },
+        "policy_id": {
+          "type": "string",
+          "description": "The callback to call when the instantiation is ready"
+        }		
       }
     },
     "RequestResponseData":{
       "type": "object",
       "properties": {
-        "uuid": {
-          "type": "string",
-          "description": "The UUID of the entity to which the request is related to (Service or Slice) -- mandatory for CREATION"
+        "blacklist": {
+          "type": "array",
+          "description": "List of sites where not to instantiate",
+          "items": { "type": "string"}
         },
-        "instance_uuid": {
+        "callback": {
           "type": "string",
-          "description": "The UUID of the instance of the entity to which the request is related to (Service or Slice) -- mandatory for UPDATE and TERMINATION"
+          "description": "The callback to call when the request status changes"
+        },
+        "created_at": {
+          "type": "string",
+          "description": "The time at which the request has been created"
+        },
+        "customer_name": {
+          "type": "string",
+          "description": "The name of the Customer making the request"
+        },
+        "customer_email": {
+          "type": "string",
+          "description": "The email of the Customer making the request"
+        },
+		"description": {
+          "type": "string",
+          "description": "Free (optional) text describing the request"
         },
         "egresses": {
           "type": "array",
           "description": "List of egress points to be taken into consideration during the instantiation",
-          "items": {
-            "type": "string"
-          }
+          "items": { "type": "string"}
         },
-        "ingresses": {
-          "type": "array",
-          "description": "List of ingress points to be taken into consideration during the instantiation",
-          "items": {
-            "type": "string"
-          }
-        },
-        "blacklist": {
-          "type": "array",
-          "description": "List of sites where not to instantiate",
-          "items": {
-            "type": "string"
-          }
-        },
-        "callback": {
+		"error": {
           "type": "string",
-          "description": "The callback to call when the instantiation is ready"
+          "description": "Text describing the error ocurred in the request, if thre is any"
         },
-        "created_at": {
-          "type": "string",
-          "description": "The time at which the instantiation request has been created"
-        },
-        "updated_at": {
-          "type": "string",
-          "description": "The time at which the instantiation request has been updated"
-        },
-        "customer_uuid": {
-          "type": "string",
-          "description": "The UUID of the Customer requesting the change to the service"
-        }, 
         "id": {
           "type": "string",
           "description": "The ID of the request"
         }, 
+        "ingresses": {
+          "type": "array",
+          "description": "List of ingress points to be taken into consideration during the instantiation",
+          "items": {"type": "string"}
+        },
+        "instance_uuid": {
+          "type": "string",
+          "description": "The UUID of the instance of the entity to which the request is related to (Service or Slice) -- mandatory for TERMINATION"
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the request (optional)"
+        },
+		"nstId": {
+          "type": "string",
+          "description": "The UUID of the slice template to which the request is related to -- mandatory for CREATION"
+        },
         "request_type": {
           "type": "string",
-          "description": "The type of the request. Defaults to CREATE_SERVICE, but can also be TERMINATE_SERVICE and UPDATE_SERVICE"
+          "description": "The type of the request. Defaults to CREATE_SERVICE, but can also be TERMINATE_SERVICE, CREATE_SLICE or TERMINATE_SLICE"
         }, 
+		"service_uuid": {
+          "type": "string",
+          "description": "The UUID of the service to which the request is related to -- mandatory for CREATION"
+        },
         "sla_id": {
           "type": "string",
           "description": "The UUID of the SLA chosen by the customer"
@@ -188,7 +208,11 @@
         },
         "status": {
           "type": "string",
-          "description": "The status of the instantiation request: starts NEW, becomes INSTANTIATING while the MANO does the work, and finishes either READY (success) or ERROR (fail)"
+          "description": "The status of the request: starts NEW, becomes INSTANTIATING or TERMINATING while the MANO does the work, and finishes either READY (success) or ERROR (fail)"
+        },
+        "updated_at": {
+          "type": "string",
+          "description": "The time at which the request has been updated"
         }
     }
   }

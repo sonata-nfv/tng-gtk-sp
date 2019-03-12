@@ -40,7 +40,7 @@ class FetchUserDataService
   LOGGED_COMPONENT=self.name
   # We do not yet (v4) have USer Management
   def self.call(customer_name, customer_email, developer_name, sla_id)
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"customer_uuid=#{customer_uuid}, developer_name=#{developer_name}, sla_id=#{sla_id}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"customer_name=#{customer_name}, developer_name=#{developer_name}, sla_id=#{sla_id}")
     {
       customer: { name: customer_name, email: customer_email, sla_id: sla_id}, 
       developer: { username: developer_name, email: nil, phone: nil}

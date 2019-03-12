@@ -324,7 +324,8 @@ class ProcessRequestService < ProcessRequestBase
       complement[element] = [] unless params.key?(element)
     end
     complement[:request_type] = 'CREATE_SERVICE' unless params.key?(:request_type)
-    complement[:customer_uuid] = params.fetch(:customer_uuid, '')
+    complement[:customer_name] = params.fetch(:customer_name, '')
+    complement[:customer_email] = params.fetch(:customer_email, '')
     complement[:sla_id] = params.fetch(:sla_id, '')
     complement[:callback] = params.fetch(:callback, '')
     params.merge(complement)
