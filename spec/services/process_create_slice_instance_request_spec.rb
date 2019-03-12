@@ -51,7 +51,7 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
     'id'=>uuid_2, 
     'ingresses'=>[], 'status'=>'NEW', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
     'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
-    'customer_uuid'=>'', 'error'=>'',
+    'customer_name'=>'', 'customer_email'=>'', 'error'=>'',
     'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
   }}
   let(:slicer_response) {{
@@ -89,7 +89,7 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       'id'=>uuid_2, 
       'ingresses'=>[], 'status'=>'ERROR', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
       'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
-      'customer_uuid'=>'', 'error'=>error_slicer_response[:error],
+      'customer_name'=>'', 'customer_email'=>'', 'error'=>error_slicer_response[:error],
       'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
     }}
     let(:enriched_request_params) {{
