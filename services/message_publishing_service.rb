@@ -108,29 +108,29 @@ class MessagePublishingService
             request = Request.find(properties[:correlation_id])
             unless request
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request #{properties[:correlation_id]} not found")
-              return
-            end
-            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status #{request['status']} updated to #{status}")
-            request['status']=status
-            if parsed_payload['error']
-              request['error'] = parsed_payload['error']
             else
-              unless parsed_payload.key?('nsr')
-                LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"no 'nsr' key in #{parsed_payload}")
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status #{request['status']} updated to #{status}")
+              request['status']=status
+              if parsed_payload['error']
+                request['error'] = parsed_payload['error']
               else
-                # if this is a final answer, there'll be an NSR
-                service_instance = parsed_payload['nsr']
-                if service_instance.key?('id')
-                  LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request['instance_uuid']='#{service_instance['id']}'")
-                  request['instance_uuid'] = service_instance['id']
+                unless parsed_payload.key?('nsr')
+                  LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"no 'nsr' key in #{parsed_payload}")
                 else
-                  LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"no service instance uuid")
+                  # if this is a final answer, there'll be an NSR
+                  service_instance = parsed_payload['nsr']
+                  if service_instance.key?('id')
+                    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request['instance_uuid']='#{service_instance['id']}'")
+                    request['instance_uuid'] = service_instance['id']
+                  else
+                    LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"no service instance uuid")
+                  end
                 end
               end
+              request.save
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving with request #{request}")
+              notify_user(request.as_json) unless request['callback'].empty?
             end
-            request.save
-            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving with request #{request}")
-            notify_user(request.as_json) unless request['callback'].empty?
           end
         end
       rescue Exception => e
