@@ -105,14 +105,12 @@ RSpec.describe RequestsController, type: :controller do
         allow(ProcessRequestBase).to receive(:find).with(request_1[:id], strategies).and_return(request_1)
         allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
         get '/'+request_1[:id]
-        STDERR.puts "last_response=#{last_response.inspect}"
         expect(last_response).to be_ok
         expect(last_response.body).to eq(request_1.to_json)
       end
       it 'and rejects non-existing request' do
         allow(ProcessRequestBase).to receive(:find).with(requestid_2, strategies).and_raise(ActiveRecord::RecordNotFound)
         get '/'+requestid_2
-        STDERR.puts "last_response=#{last_response.inspect}"
         expect(last_response).to be_not_found
       end
     end
@@ -309,7 +307,6 @@ RSpec.describe RequestsController, type: :controller do
         saved_request = double('Request')
         allow(ProcessRequestService).to receive(:call).with(wrong_request_type).and_raise(ArgumentError)
         post '/', wrong_request_type.to_json
-        STDERR.puts "last_response=#{last_response.inspect}"
         expect(last_response).to be_not_found
       end
       it 'when saving returns an error' do

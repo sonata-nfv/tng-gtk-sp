@@ -104,7 +104,6 @@ RSpec.describe ProcessRequestService do
 #        with(message, :create_service, saved_service_instantiation_request[:id]).
 #        and_return(message)
 #      result = described_class.call({service_uuid: uuid})
-#      STDERR.puts ">>>>>>>>>>> request = #{result}"
 #     expect(result).to eq(saved_service_instantiation_request)
 #    end
   end
@@ -123,7 +122,6 @@ RSpec.describe ProcessRequestService do
         allow(FetchNSDService).to receive(:call).with({uuid: uuid}).and_return(service)
         allow(described_class).to receive(:get_service_uuid).with(instantiation_request).and_return(instantiation_request[:uuid])
         result = described_class.enrich_one(instantiation_request)
-        STDERR.puts "result=#{result}"
         expect(result).to eq(enriched)
       end
     end
@@ -138,7 +136,6 @@ RSpec.describe ProcessRequestService do
         allow(FetchNSDService).to receive(:call).with({uuid: uuid}).and_return(service)
         allow(described_class).to receive(:get_service_uuid).with(termination_request).and_return(service[:uuid])
         result = described_class.enrich_one(termination_request)
-        STDERR.puts "result=#{result}"
         expect(result).to eq(enriched)
       end
     end
