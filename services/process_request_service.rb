@@ -182,17 +182,11 @@ class ProcessRequestService < ProcessRequestBase
       LOGGER.debug(component:@@logged_component, operation: msg, message:"instantiation_request['id']=#{instantiation_request['id']}")
       published_response = MessagePublishingService.call(message, :create_service, instantiation_request['id'])
       LOGGER.debug(component:@@logged_component, operation: msg, message:"published_response=#{published_response}")
-    #rescue ActiveRecord::StatementInvalid => e
-    #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.split('\n\t')}"
-    #  return {}
-    #rescue ActiveRecord::ConnectionTimeoutError => e
-    #  STDERR.puts "#{msg}: #{e.message}\n#{e.backtrace.split('\n\t')}"
-    #  return {}
     rescue StandardError => e
       LOGGER.error(component:@@logged_component, operation: msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
       return nil
     end
-    STDERR.puts ">>>>>>>>>>>instantiation_request=#{instantiation_request}"
+    LOGGER.debug(component:@@logged_component, operation: msg, message:"instantiation_request=#{instantiation_request}")
     instantiation_request
   end
 
@@ -278,10 +272,8 @@ class ProcessRequestService < ProcessRequestBase
       return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' not found"} 
     end
     LOGGER.debug(component:@@logged_component, operation: msg, message:"found creation request for instance uuid '#{params[:instance_uuid]}': #{request}")
-    #STDERR.puts "#{msg}: request['status']='#{request['status']}'"
     #return {error: "Service instantiation request for service instance UUID '#{params[:instance_uuid]}' is #{request['status']}' (and not 'READY')"} unless request['status'] == 'READY'
     #record = FetchServiceRecordsService(uuid: params[:instance_uuid])
-    #STDERR.puts "#{msg}: record=#{record.inspect} (class #{record.class})"
     #return {error: "Service instance UUID '#{params[:instance_uuid]}' not found"} if (record.empty? || record.nil?)
     {name: request['name']}
   end

@@ -119,7 +119,6 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:error]).and_return(error_saved_request)
       allow(req).to receive(:as_json).and_return(error_saved_request)
       allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(enriched_request_params).and_return(error_slicer_response)
-      STDERR.puts "request_params=#{request_params}"
       expect(described_class.call(request_params)).to eq(error_saved_request)
     end
   end

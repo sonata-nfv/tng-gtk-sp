@@ -54,7 +54,6 @@ RSpec.describe 'Functions API', type: :api do
     it 'returns the existing function' do
       stub_request(:get, site+'/'+uuid_1).to_return(status: 200, body: function_1_metadata.to_json, headers: {})
       get '/'+uuid_1
-      STDERR.puts "response=#{response.inspect}"
       expect(response).to have_http_status(:success)
       #expect(response).to be_success
       #json = JSON.parse(response.body)
@@ -63,7 +62,6 @@ RSpec.describe 'Functions API', type: :api do
     it 'rejects non-existing function' do
       stub_request(:get, site+'/'+uuid_2).to_return(status: 404, body: '', headers: {})
       get '/'+uuid_2
-      STDERR.puts "response=#{response.inspect}"
       expect(esponse).to eq(404)
     end
 =end

@@ -10,12 +10,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2018_12_11_185739) do
+ActiveRecord::Schema.define(version: 2018_06_07_095856) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "pgcrypto"
   enable_extension "plpgsql"
   enable_extension "uuid-ossp"
+
+  create_table "permissions", force: :cascade do |t|
+    t.string "role", null: false
+    t.string "endpoint", null: false
+    t.string "verbs", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["endpoint", "role"], name: "index_permissions_on_endpoint_role", unique: true
+  end
 
   create_table "requests", id: :uuid, default: -> { "gen_random_uuid()" }, force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -28,11 +37,29 @@ ActiveRecord::Schema.define(version: 2018_12_11_185739) do
     t.string "egresses", default: "[]"
     t.string "callback", default: ""
     t.string "blacklist", default: "[]"
-    t.uuid "customer_uuid"
+    t.string "customer_name", default: ""
+    t.string "customer_email", default: ""
     t.uuid "sla_id"
-    t.string "name"
-    t.string "error"
+    t.string "name", default: ""
+    t.string "description", default: ""
+    t.string "error", default: ""
+  end
+
+  create_table "roles", primary_key: "role", id: :string, force: :cascade do |t|
     t.string "description"
   end
 
+  create_table "users", primary_key: "username", id: :string, force: :cascade do |t|
+    t.string "name"
+    t.string "password"
+    t.string "email"
+    t.string "role", null: false
+    t.string "status"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["username"], name: "index_users_on_username", unique: true
+  end
+
+  add_foreign_key "permissions", "roles", column: "role", primary_key: "role"
+  add_foreign_key "users", "roles", column: "role", primary_key: "role"
 end
