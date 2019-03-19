@@ -114,9 +114,7 @@ class MessagePublishingService
               if parsed_payload['error']
                 request['error'] = parsed_payload['error']
               else
-                unless parsed_payload.key?('nsr')
-                  LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"no 'nsr' key in #{parsed_payload}")
-                else
+                if parsed_payload.key?('nsr')
                   # if this is a final answer, there'll be an NSR
                   service_instance = parsed_payload['nsr']
                   if service_instance.key?('id')
