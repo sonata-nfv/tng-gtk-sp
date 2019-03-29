@@ -63,7 +63,12 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       params[:service_uuid] = params.delete(:nst_id)
       
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.create(#{params}): #{ActiveRecord::Base.connection_pool.stat}")
-      instantiation_request = Request.create(params)
+      begin
+        instantiation_request = Request.create(params)
+      ensure
+        ActiveRecord::Base.clear_active_connections!
+      end
+      
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.create(#{params}): #{ActiveRecord::Base.connection_pool.stat}")
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"instantiation_request=#{instantiation_request.inspect}")
       unless instantiation_request
@@ -85,7 +90,12 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
       if (request && request.is_a?(Hash) && request.key?(:error))
         LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find(#{instantiation_request['id']}): #{ActiveRecord::Base.connection_pool.stat}")
-        saved_req=Request.find(instantiation_request['id'])
+        begin
+          saved_req=Request.find(instantiation_request['id'])
+        ensure
+          ActiveRecord::Base.clear_active_connections!
+        end
+        
         LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find(#{instantiation_request['id']}): #{ActiveRecord::Base.connection_pool.stat}")
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_req=#{saved_req.inspect}")
         saved_req.update(status: 'ERROR', error: request[:error])
@@ -120,7 +130,14 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   def self.save_result(event)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find(#{event[:original_event_uuid]}): #{ActiveRecord::Base.connection_pool.stat}")
-    original_request = Request.find(event[:original_event_uuid]) #.as_json
+    #ActiveRecord::Base.with_connection do
+        # your code here
+    #  end
+    begin
+      original_request = Request.find(event[:original_event_uuid]) #.as_json
+    ensure
+      ActiveRecord::Base.clear_active_connections!
+    end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find(#{event[:original_event_uuid]}): #{ActiveRecord::Base.connection_pool.stat}")
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
     #body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
