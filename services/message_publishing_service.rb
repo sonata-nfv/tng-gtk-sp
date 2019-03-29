@@ -93,6 +93,7 @@ class MessagePublishingService
     queue.subscribe do |delivery_info, properties, payload|
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
       begin
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"properties=#{properties}")
         # We know our own messages, so just skip them
         if properties[:app_id] == 'tng-gtk-sp'
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving, we know our own messages, so just skip them...")
