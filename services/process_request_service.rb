@@ -59,7 +59,7 @@ class FetchVNFDsService < Tng::Gtk::Utils::Fetch
 end
 
 class FetchNSDService < Tng::Gtk::Utils::Fetch
-  NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch services'
+  #NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch services'
   @@logged_component=self.name
   
   self.site=CATALOGUE_URL+'/network-services'
