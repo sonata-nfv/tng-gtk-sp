@@ -65,7 +65,9 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       enriched_params = enrich_params(params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params params=#{enriched_params}")
       
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.create(#{enriched_params}'): #{ActiveRecord::Base.connection_pool.stat}")
       termination_request = Request.create(enriched_params)
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.create(#{enriched_params}'): #{ActiveRecord::Base.connection_pool.stat}")
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"termination_request=#{termination_request.inspect} (class #{termination_request.class})")
       unless termination_request
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to create termination request")
@@ -109,7 +111,9 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
   private  
   def self.save_result(event)
     msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find('#{event[:original_event_uuid]}'): #{ActiveRecord::Base.connection_pool.stat}")
     original_request = Request.find(event[:original_event_uuid]) #.as_json
+    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find('#{event[:original_event_uuid]}'): #{ActiveRecord::Base.connection_pool.stat}")
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
     original_request['status'] = event[:nsiState]
     original_request['error'] = event[:error] # Pol to add it
