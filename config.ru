@@ -32,7 +32,7 @@
 # encoding: utf-8
 require 'sinatra/base'
 require 'rack-timeout-puma'
-require 'active_record/rack'
+require 'active_record'
 %w{ controllers models services }.each do |dir|
   path = File.expand_path(File.join(File.dirname(__FILE__), dir))
   $LOAD_PATH.unshift(path)
@@ -73,7 +73,7 @@ use ConnectionManagement
 #use Rack::Timeout
 #use Rack::Timeout::Puma
 #use ActiveRecord::Rack::ConnectionManagement # this seems not to be working anynore
-
+STDERR.puts "ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
 map('/pings') { run PingsController }
 map('/policies') { run PoliciesController } 
 map('/records') { run RecordsController } 
