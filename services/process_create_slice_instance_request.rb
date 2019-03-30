@@ -61,7 +61,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
         return valid
       end
       params[:service_uuid] = params.delete(:nst_id)
-      
+      STDERR.puts ">>>>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.create(#{params}): #{ActiveRecord::Base.connection_pool.stat}")
       begin
         instantiation_request = Request.create(params)

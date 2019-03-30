@@ -44,7 +44,11 @@ class ProcessRequestBase
   def self.search(page_number, page_size, strategies)
     msg='.'+__method__.to_s
     
-    requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
+    begin
+      requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
+    ensure
+      ActiveRecord::Base.clear_active_connections!
+    end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"requests=#{requests}")
     return requests if requests.empty?
     enriched = []
@@ -56,7 +60,11 @@ class ProcessRequestBase
   end
   
   def self.find(uuid, strategies)
-    request = Request.find(uuid).as_json
+    begin
+      request = Request.find(uuid).as_json
+    ensure
+      ActiveRecord::Base.clear_active_connections!
+    end
     return request if request.empty?
     strategies[request['request_type'].to_sym].enrich_one(request)
   end

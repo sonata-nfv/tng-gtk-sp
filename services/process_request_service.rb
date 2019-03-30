@@ -170,7 +170,11 @@ class ProcessRequestService < ProcessRequestBase
       stored_functions = fetch_functions(functions_to_fetch)
       LOGGER.debug(component:@@logged_component, operation: msg, message:"stored_functions=#{stored_functions}")
       return nil if stored_functions == nil 
-      instantiation_request = Request.create(completed_params).as_json
+      begin
+        instantiation_request = Request.create(completed_params).as_json
+      ensure
+        ActiveRecord::Base.clear_active_connections!
+      end
       LOGGER.debug(component:@@logged_component, operation: msg, message:"instantiation_request=#{instantiation_request} (class #{instantiation_request.class})")
       unless instantiation_request
         LOGGER.error(component:@@logged_component, operation: msg, message:"Failled to create instantiation_request for service '#{params[:service_uuid]}'")
@@ -202,7 +206,11 @@ class ProcessRequestService < ProcessRequestBase
         return valid
       end
       params[:name] = valid[:name]
-      termination_request = Request.create(params).as_json
+      begin
+        termination_request = Request.create(params).as_json
+      ensure
+        ActiveRecord::Base.clear_active_connections!
+      end
       LOGGER.debug(component:@@logged_component, operation: msg, message:"termination_request=#{termination_request}")
       unless termination_request
         LOGGER.error(component:@@logged_component, operation: msg, message:"Failled to create termination_request")
@@ -260,7 +268,11 @@ class ProcessRequestService < ProcessRequestBase
     end
     LOGGER.debug(component:@@logged_component, operation: msg, message:"params[:instance_uuid] has a valid UUID...")
     LOGGER.debug(component:@@logged_component, operation: msg, message:"before Request.where: #{ActiveRecord::Base.connection_pool.stat}")
-    request = Request.where(instance_uuid: params[:instance_uuid], request_type: 'CREATE_SERVICE').as_json
+    begin
+      request = Request.where(instance_uuid: params[:instance_uuid], request_type: 'CREATE_SERVICE').as_json
+    ensure
+      ActiveRecord::Base.clear_active_connections!
+    end
     LOGGER.debug(component:@@logged_component, operation: msg, message:"after Request.where: #{ActiveRecord::Base.connection_pool.stat}")
     LOGGER.debug(component:@@logged_component, operation: msg, message:"request=#{request}")
     if request.is_a?(Array)
