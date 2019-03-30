@@ -47,10 +47,32 @@ require 'request'
 
 ENV['RACK_ENV'] ||= 'production'
 
+# from https://stackoverflow.com/questions/41400202/replacing-activerecordconnectionadaptersconnectionmanagement-in-activerecord
+class ConnectionManagement
+  def initialize(app)
+    @app = app
+  end
+
+  def call(env)
+    testing = env['rack.test']
+
+    status, headers, body = @app.call(env)
+    proxy = ::Rack::BodyProxy.new(body) do
+      ActiveRecord::Base.clear_active_connections! unless testing
+    end
+    [status, headers, proxy]
+  rescue Exception
+    ActiveRecord::Base.clear_active_connections! unless testing
+    raise
+  end
+end
+
+use ConnectionManagement
+
 # from https://github.com/keyme/rack-timeout-puma
-use Rack::Timeout
-use Rack::Timeout::Puma
-use ActiveRecord::Rack::ConnectionManagement
+#use Rack::Timeout
+#use Rack::Timeout::Puma
+#use ActiveRecord::Rack::ConnectionManagement # this seems not to be working anynore
 
 map('/pings') { run PingsController }
 map('/policies') { run PoliciesController } 
