@@ -35,4 +35,6 @@ require 'sinatra/activerecord'
 class Request < ActiveRecord::Base
   #self.primary_key = 'request_uuid'
   #validates :request_uuid, uniqueness: true
+  STDERR.puts ">>>>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
+  
 end

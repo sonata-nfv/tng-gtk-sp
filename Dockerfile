@@ -69,7 +69,7 @@ ENV SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-gtk-sp:5000/requests
 ENV REDIS_URL=redis://son-redis:6379
 ENV PORT=5000
 ENV LOGLEVEL=debug
-#CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0"]
+CMD ["bundle", "exec", "rackup", "-p", "5000", "--host", "0.0.0.0", "-s", "puma"]
 #CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
-CMD ["bundle", "exec", "thin", "-p", "5000", "-D", "start"]
+#CMD ["bundle", "exec", "thin", "-p", "5000", "-D", "start"]
 
