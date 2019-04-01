@@ -69,15 +69,15 @@ end
 
 use ConnectionManagement
 
-ActiveRecord::Base.establish_connection(
-  :adapter => 'postgresql',
-  :host =>  'son-postgres', #'pre-int-sp-ath.5gtango.eu',
-  :database => 'gatekeeper',
-  :password => 'sonata',
-  :username => 'sonatatest',
-  :port => 5432,
-  :pool => 128,
-  )
+#ActiveRecord::Base.establish_connection(
+#  :adapter => 'postgresql',
+#  :host =>  'son-postgres', #'pre-int-sp-ath.5gtango.eu',
+#  :database => 'gatekeeper',
+#  :password => 'sonata',
+#  :username => 'sonatatest',
+#  :port => 5432,
+#  :pool => 128,
+#  )
 
 # from https://github.com/keyme/rack-timeout-puma
 #use Rack::Timeout

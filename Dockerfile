@@ -53,12 +53,12 @@ RUN apt-get update && \
 WORKDIR /app
 COPY . /app
 EXPOSE 5000
-ENV POSTGRES_DB gatekeeper
-ENV POSTGRES_PASSWORD tango
-ENV POSTGRES_USER tangodefault
-ENV DATABASE_HOST son-postgres
-ENV DATABASE_PORT 5432
-#ENV DATABASE_URL=postgresql://tangodefault:tango@son-postgres:5432/gatekeeper
+#ENV POSTGRES_DB gatekeeper
+#ENV POSTGRES_PASSWORD tango
+#ENV POSTGRES_USER sonatatest
+#ENV DATABASE_HOST son-postgres
+#ENV DATABASE_PORT 5432
+ENV DATABASE_URL=postgresql://sonatatest:sonata@son-postgres:5432/gatekeeper?pool=64
 ENV MQSERVER_URL=amqp://guest:guest@son-broker:5672
 ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
 ENV REPOSITORY_URL=http://tng-rep:4012
