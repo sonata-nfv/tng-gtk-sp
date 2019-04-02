@@ -45,7 +45,7 @@ class ProcessRequestBase
     msg='.'+__method__.to_s
     
     begin
-      requests = Request.limit(page_size).offset(page_number).order(updated_at: :desc).as_json
+      requests = Request.order(updated_at: :desc).limit(page_size).offset(page_number).as_json
     ensure
       ActiveRecord::Base.clear_active_connections!
     end
