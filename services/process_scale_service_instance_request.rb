@@ -82,6 +82,9 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     scaling_request
   end
   
+  def self.enrich_one(request)
+    new.enrich_one(request)
+  end
   def enrich_one(request)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request.inspect} (class #{request.class})")
