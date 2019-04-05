@@ -229,7 +229,12 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   
   def reject_unsaved_requests(saved_request)
     msg='.'+__method__.to_s
-    if (saved_request.nil? || saved_request.key?(:error))
+    if saved_request.nil?
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error saving request: did not get any record")
+      halt_with_code_body(400, {error: "Error saving request: did not get any record"}.to_json) 
+    end
+      
+    if (saved_request.key?(:error) && !saved_request[:error].to_s.empty?)
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error saving request: #{saved_request[:error]}")
       halt_with_code_body(400, {error: "Error saving request: #{saved_request[:error]}"}.to_json) 
     end
