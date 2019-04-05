@@ -45,18 +45,17 @@ class MessagePublishingService
   MQSERVER_URL = ENV.fetch('MQSERVER_URL', '')
   @@queues = {
     create_service: 'service.instances.create',
-#    update_service: 'service.instances.update',
-    terminate_service: 'service.instance.terminate' #,
-#    create_vim_computation: 'infrastructure.management.compute.add'
+    terminate_service: 'service.instance.terminate',
+    scale_service: 'service.instance.scale'
   }
+  if MQSERVER_URL == ''
+    LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No MQServer URL has been defined")
+    raise ArgumentError.new('No MQServer URL has been defined') 
+  end
 
   def self.call(message, queue_symbol, correlation_id)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"message=#{message}, queue_symbol=#{queue_symbol}, correlation_id=#{correlation_id}")
-    if MQSERVER_URL == ''
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No MQServer URL has been defined")
-      raise ArgumentError.new('No MQServer URL has been defined') 
-    end
     unless @@queues.keys.include? queue_symbol
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Queue must be one of :#{@@queues.keys.join(', :')}")
       raise ArgumentError.new("Queue must be one of :#{@@queues.keys.join(', :')}") 
@@ -105,7 +104,12 @@ class MessagePublishingService
           status = parsed_payload['status']
           if status
             LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status: #{status}")
-            request = Request.find(properties[:correlation_id])
+            begin
+              request = Request.find(properties[:correlation_id])
+            ensure
+              ActiveRecord::Base.clear_active_connections!
+            end
+            
             unless request
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request #{properties[:correlation_id]} not found")
             else
@@ -166,7 +170,12 @@ class MessagePublishingService
             LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"no status")
           else
             LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status: #{status}")
-            request = Request.find(properties[:correlation_id])
+            begin
+              request = Request.find(properties[:correlation_id])
+            ensure
+              ActiveRecord::Base.clear_active_connections!
+            end
+            
             unless request
               LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"request '#{properties[:correlation_id]}' not found")
             else
@@ -184,6 +193,55 @@ class MessagePublishingService
         end
       rescue Exception => e
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} (#{e.class}): #{e.backtrace.split('\n\t')}")
+      end
+    end
+  end
+  
+  def self.service_instance_scale(queue:)
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered")
+    queue.subscribe do |delivery_info, properties, payload|
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
+      begin
+        # We know our own messages, so just skip them
+        if properties[:app_id] == 'tng-gtk-sp'
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving, we know our own messages, so just skip them...")
+        else
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"properties[:app_id]: #{properties[:app_id]}")
+      
+          # We're interested in app_id == 'son-plugin.slm'
+          parsed_payload = YAML.load(payload)
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
+          status = parsed_payload['status']
+          if status
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status: #{status}")
+            begin
+              request = Request.find(properties[:correlation_id])
+            ensure
+              ActiveRecord::Base.clear_active_connections!
+            end
+            
+            unless request
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request #{properties[:correlation_id]} not found")
+            else
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status #{request['status']} updated to #{status}")
+              request['status']=status
+              if parsed_payload['error']
+                request['error'] = parsed_payload['error']
+              else
+                request['instance_uuid'] = parsed_payload['nsr']['id'] if (parsed_payload.key?('nsr') && !parsed_payload['nsr'].empty? && parsed_payload['nsr']['id'])
+                request['scaling_type'] = parsed_payload['scaling_type'] if parsed_payload.key?('scaling_type')
+                request['duration'] = parsed_payload['duration'] if parsed_payload.key?('duration')
+                request['function_uuids'] = parsed_payload['vnfrs'] if parsed_payload.key?('vnfrs')
+              end
+              request.save
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving with request #{request.inspect}")
+              notify_user(request.as_json) unless request['callback'].empty?
+            end
+          end
+        end
+      rescue Exception => e
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} (#{e.class}):#{e.backtrace.split('\n\t')}")
       end
     end
   end

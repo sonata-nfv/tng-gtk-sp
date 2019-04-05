@@ -97,7 +97,8 @@ RSpec.describe RequestsController, type: :controller do
       'CREATE_SERVICE': ProcessRequestService, 
       'TERMINATE_SERVICE': ProcessRequestService,
       'CREATE_SLICE': ProcessCreateSliceInstanceRequest,
-      'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest
+      'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest,
+      'SCALE_SERVICE': ProcessScaleServiceInstanceRequest
     }}
   
     context 'with UUID given' do
@@ -276,7 +277,7 @@ RSpec.describe RequestsController, type: :controller do
     
     before { header 'Content-Type', 'application/json'}
     it 'calling the ProcessCreateSliceInstanceRequest class to handle the slice creation request' do
-      saved_request = double('Request')
+      saved_request = double('Request', key?: false)
       allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return(saved_request)
       #allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(slice_instantiation).and_return(slicer_response)
       post '/', slice_instantiation.to_json
@@ -313,7 +314,7 @@ RSpec.describe RequestsController, type: :controller do
         saved_request = double('Request')
         allow(ProcessCreateSliceInstanceRequest).to receive(:call).with(slice_instantiation).and_return({error: 'any error'})
         post '/', slice_instantiation.to_json
-        expect(last_response).to be_not_found
+        expect(last_response).to be_bad_request # be_not_found
       end
     end
     context '400 (bad request)' do

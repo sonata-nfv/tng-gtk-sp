@@ -40,6 +40,7 @@ require_relative '../services/process_request_base'
 require_relative '../services/process_request_service'
 require_relative '../services/process_create_slice_instance_request'
 require_relative '../services/process_terminate_slice_instance_request'
+require_relative '../services/process_scale_service_instance_request'
 
 class RequestsController < Tng::Gtk::Utils::ApplicationController
   LOGGER=Tng::Gtk::Utils::Logger
@@ -65,7 +66,8 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     'CREATE_SERVICE': ProcessRequestService,
     'TERMINATE_SERVICE': ProcessRequestService,
     'CREATE_SLICE': ProcessCreateSliceInstanceRequest,
-    'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest
+    'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest,
+    'SCALE_SERVICE': ProcessScaleServiceInstanceRequest
   }
 
   set :environments, %w(development test pre-int integration demo qualification staging)
@@ -78,33 +80,17 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   post '/?' do
     msg='.'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"entered")
-    unless request.content_type =~ /^application\/json/
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Unsupported Media Type, just accepting 'application/json' HTTP content type for now.")
-      halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) 
-    end
+    reject_non_json_content(request)
 
-    body = request.body.read
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
-    halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if body.empty?
-    
     begin
-      json_body = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-      json_body[:request_type] = 'CREATE_SERVICE' unless json_body.key?(:request_type)
-      json_body[:customer_name] = request.env['5gtango.user.name']
-      json_body[:customer_email] = request.env['5gtango.user.email']
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body=#{json_body}")
-    
-      saved_request = strategy(json_body[:request_type]).call(json_body.deep_symbolize_keys)
+      json_body = complete_body(request)  
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body='#{json_body}'")
+      reject_unsupported_request_type(json_body[:request_type])
+      saved_request = strategy(json_body[:request_type]).call(json_body)
+      reject_unsaved_requests(saved_request)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_request='#{saved_request.inspect}'")
-      unless saved_request
-        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error saving request")
-        halt_with_code_body(400, {error: "Error saving request"}.to_json) 
-      end
-      # for the special case of CREATE_SLICE, the returned data structure is not an Hash
-      if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error) && !saved_request[:error].to_s.empty?)
-        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:saved_request[:error].to_json)
-        halt_with_code_body(404, {error: saved_request[:error]}.to_json) 
-      end
+      
+      reject_errored_saved_requests(saved_request)
       result = strategy(json_body[:request_type]).enrich_one(saved_request)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}", status: '201')
       halt_with_code_body(201, result.to_json)
@@ -226,8 +212,62 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   end  
   
   private
+  def reject_non_json_content(request)
+    msg='.'+__method__.to_s
+    unless request.content_type =~ /^application\/json/
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Unsupported Media Type, just accepting 'application/json' HTTP content type for now.")
+      halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) 
+    end
+  end
+  def reject_unsupported_request_type(request_type)
+    msg='.'+__method__.to_s
+    if RequestsController::STRATEGIES.key?(request_type)
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Unsupported request type, just accepting #{supported_request_types}")
+      halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) 
+    end
+  end
+  
+  def reject_unsaved_requests(saved_request)
+    msg='.'+__method__.to_s
+    if saved_request.nil?
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error saving request: did not get any record")
+      halt_with_code_body(400, {error: "Error saving request: did not get any record"}.to_json) 
+    end
+      
+    if (saved_request.key?(:error) && !saved_request[:error].to_s.empty?)
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error saving request: #{saved_request[:error]}")
+      halt_with_code_body(400, {error: "Error saving request: #{saved_request[:error]}"}.to_json) 
+    end
+  end
+  
+  def reject_errored_saved_requests(saved_request)
+    msg='.'+__method__.to_s
+    if (saved_request && saved_request.is_a?(Hash) && saved_request.key?(:error) && !saved_request[:error].to_s.empty?)
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:saved_request[:error].to_json)
+      halt_with_code_body(404, {error: saved_request[:error]}.to_json) 
+    end
+  end
+  
+  def complete_body(request)
+    msg='.'+__method__.to_s
+    json_body = request.body.read
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body=#{json_body}")
+    halt_with_code_body(400, ERROR_EMPTY_BODY.to_json) if json_body.empty?
+    
+    body = JSON.parse(json_body, quirks_mode: true, symbolize_names: true).deep_symbolize_keys
+    body[:request_type] = 'CREATE_SERVICE' unless body.key?(:request_type)
+    body[:customer_name] = request.env['5gtango.user.name']
+    body[:customer_email] = request.env['5gtango.user.email']
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
+    body
+  end
+  
   def strategy(req_type)
     RequestsController::STRATEGIES.fetch(req_type.to_sym)
+  end
+  
+  def supported_request_types
+    RequestsController::STRATEGIES.keys.map(&:to_s).join ', '
   end
   
   def halt_with_code_body(code, body)
