@@ -49,7 +49,7 @@ class MessagePublishingService
     scale_service: 'service.instance.scale'
   }
   if MQSERVER_URL == ''
-    LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No MQServer URL has been defined")
+    LOGGER.error(component:LOGGED_COMPONENT, operation:'starting', message:"No MQServer URL has been defined")
     raise ArgumentError.new('No MQServer URL has been defined') 
   end
 
