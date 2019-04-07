@@ -97,7 +97,7 @@ RSpec.describe RequestsController, type: :controller do
       'CREATE_SERVICE': ProcessRequestService, 
       'TERMINATE_SERVICE': ProcessRequestService,
       'CREATE_SLICE': ProcessCreateSliceInstanceRequest,
-      'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest,
+      'TERMINATE_SLICE': RequestStrategies::Slices::TerminateInstance,
       'SCALE_SERVICE': ProcessScaleServiceInstanceRequest
     }}
   

@@ -39,7 +39,7 @@ require 'tng/gtk/utils/services'
 require_relative '../services/process_request_base'
 require_relative '../services/process_request_service'
 require_relative '../services/process_create_slice_instance_request'
-require_relative '../services/process_terminate_slice_instance_request'
+require_relative '../services/request_strategies/slices/terminate_instance'
 require_relative '../services/process_scale_service_instance_request'
 
 class RequestsController < Tng::Gtk::Utils::ApplicationController
@@ -66,7 +66,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     'CREATE_SERVICE': ProcessRequestService,
     'TERMINATE_SERVICE': ProcessRequestService,
     'CREATE_SLICE': ProcessCreateSliceInstanceRequest,
-    'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest,
+    'TERMINATE_SLICE': RequestStrategies::Slices::TerminateInstance,
     'SCALE_SERVICE': ProcessScaleServiceInstanceRequest
   }
 
