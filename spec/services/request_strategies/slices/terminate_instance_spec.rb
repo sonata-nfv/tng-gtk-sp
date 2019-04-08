@@ -61,11 +61,11 @@ RSpec.describe RequestStrategies::Slices::TerminateInstance do
 #        described_class.call(request_params)
       end
       it 'and the Slice Manager rejects it, it is saved with an error' do
-        #allow(Request).to receive(:create).with(request_params).and_return(request)
-        #stub_request(:post, terminate_url).with(body: terminate_request_body).to_return(status: 200, body: not_ok_slm_body.to_json, headers: {})
-        #expect(request).to receive(:update).with({status: not_ok_slm_body[:status], error: not_ok_slm_body[:error]})
-        #allow(request).to receive(:reload)
-        #described_class.call(request_params)
+        allow(Request).to receive(:create).with(request_params).and_return(request)
+        stub_request(:post, terminate_url).with(body: terminate_request_body).to_return(status: 200, body: not_ok_slm_body.to_json, headers: {})
+        expect(request).to receive(:update).with({status: not_ok_slm_body[:status], error: not_ok_slm_body[:error]})
+        allow(request).to receive(:reload)
+#        described_class.call(request_params)
       end
     end
     context 'when the requests is not well built, ' do
