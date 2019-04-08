@@ -33,7 +33,5 @@
 require 'sinatra/activerecord'
 
 class Request < ActiveRecord::Base
-  attr_accessor :status, :error, :callback
-  attr_reader :id
   STDERR.puts ">>>>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
 end
