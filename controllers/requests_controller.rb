@@ -81,7 +81,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     msg='.'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"entered")
     reject_non_json_content(request)
-
+    STDERR.puts ">>> #{LOGGED_COMPONENT}#{msg}: request.env=#{request.env['5gtango.user.name']}"
     begin
       json_body = complete_body(request)  
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body='#{json_body}'")

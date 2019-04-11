@@ -42,7 +42,7 @@ RSpec.describe RequestsController, type: :controller do
   let(:instance_uuid_1) {SecureRandom.uuid}
 
   describe 'accepts service instantiation requests' 
-=begin
+
   describe 'accepts service instance creation queries' do
     let(:request_1) {{ id: requestid_1, service_uuid: uuid_1, request_type:"CREATE_SERVICE"}}
     let(:service){{uuid: uuid_1, vendor: 'vendor', name: 'name', version: 'version'}}
@@ -50,11 +50,13 @@ RSpec.describe RequestsController, type: :controller do
     let(:record_1) { {descriptor_reference: uuid_1}}
   
     context 'with UUID given' do
+=begin
       it 'and returns the existing request' do
-        allow(Request).to receive(:find).with(request_1[:id]).and_return(request_1)
+        allow(Request).to receive(:find).with(request_1[:id]).and_return(double)
         allow(ProcessRequestService).to receive(:enrich_one).with(request_1).and_return(enriched_request_1)
         allow(FetchNSDService).to receive(:call).with(uuid: request_1[:service_uuid]).and_return(service)
         get '/'+request_1[:id]
+        STDERR.puts ">>> last_response=#{last_response.inspect}"
         expect(last_response).to be_ok
         expect(last_response.body).to eq(request_1.to_json)
       end
@@ -63,7 +65,9 @@ RSpec.describe RequestsController, type: :controller do
         get '/'+requestid_2
         expect(last_response).to be_not_found
       end
+=end
     end
+=begin
     context 'without UUID given' do
       let(:uuid_2) {SecureRandom.uuid}
       let(:instance_uuid_2) {SecureRandom.uuid}
@@ -88,8 +92,8 @@ RSpec.describe RequestsController, type: :controller do
         expect(last_response.body).to eq([].to_json)
       end
     end
-  end
 =end
+  end
   describe 'accepts service instance termination queries' do
     let(:request_1) {{ id: requestid_1, instance_uuid: instance_uuid_1, request_type:"TERMINATE_SERVICE"}}
     let(:record_1) { {descriptor_reference: uuid_1}}
