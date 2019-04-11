@@ -153,12 +153,11 @@ class ProcessRequestService < ProcessRequestBase
         LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"validation failled with error #{valid[:error]}")
         return valid
       end
-      
       completed_params = complete_params(params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"completed params=#{completed_params}")
-      stored_service = FetchNSDService.call(uuid: completed_params[:service_uuid])
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"stored_service=#{stored_service} (#{stored_service.class})")
+      stored_service = FetchNSDService.call(uuid: params[:service_uuid])
       return stored_service if (!stored_service || stored_service.empty?)
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"stored_service=#{stored_service} (#{stored_service.class})")
       functions_to_fetch = stored_service[:nsd][:network_functions]
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"functions_to_fetch=#{functions_to_fetch}")
       stored_functions = fetch_functions(functions_to_fetch)
@@ -174,7 +173,7 @@ class ProcessRequestService < ProcessRequestBase
         LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Failled to create instantiation_request for service '#{params[:service_uuid]}'")
         return {error: "Failled to create instantiation request for service '#{params[:service_uuid]}'"}
       end
-      user_data = complete_user_data( completed_params[:customer_name], completed_params[:customer_email], stored_service[:username], completed_params[:sla_id])
+      user_data = complete_user_data(completed_params[:customer_name], completed_params[:customer_email], stored_service[:username], completed_params[:sla_id])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"user_data=#{user_data}")
       message = build_message(stored_service, stored_functions, completed_params[:egresses], completed_params[:ingresses], completed_params[:blacklist], user_data)
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"instantiation_request['id']=#{instantiation_request['id']}")
@@ -322,8 +321,8 @@ class ProcessRequestService < ProcessRequestBase
       complement[element] = [] unless params.key?(element)
     end
     complement[:request_type] = 'CREATE_SERVICE' unless params.key?(:request_type)
-    complement[:customer_name] = params.fetch(:customer_name, '')
-    complement[:customer_email] = params.fetch(:customer_email, '')
+    #complement[:customer_name] = params.fetch(:customer_name, '')
+    #complement[:customer_email] = params.fetch(:customer_email, '')
     complement[:sla_id] = params.fetch(:sla_id, '')
     complement[:callback] = params.fetch(:callback, '')
     params.merge(complement)
