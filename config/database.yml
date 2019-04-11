@@ -52,16 +52,21 @@ test:
 
 pre-int:
   <<: *common_settings
+  pool: 128
 
 integration:
   <<: *common_settings
+  pool: 128
 
 demo:
   <<: *common_settings
+  pool: 128
 
 qualification:
   <<: *common_settings
+  pool: 128
 
 staging:
   <<: *common_settings
+  pool: 128
 
