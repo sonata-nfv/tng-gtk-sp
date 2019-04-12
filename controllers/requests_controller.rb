@@ -81,7 +81,6 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     msg='.'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"entered")
     reject_non_json_content(request)
-    STDERR.puts ">>> #{LOGGED_COMPONENT}#{msg}: request.env=#{request.env['5gtango.user.name']}"
     begin
       json_body = complete_body(request)  
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body='#{json_body}'")
@@ -256,8 +255,8 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     
     body = JSON.parse(json_body, quirks_mode: true, symbolize_names: true).deep_symbolize_keys
     body[:request_type] = 'CREATE_SERVICE' unless body.key?(:request_type)
-    body[:customer_name] = request.env.fetch('5gtango.user.name', '')
-    body[:customer_email] = request.env.fetch('5gtango.user.email', '')
+    #body[:customer_name] = request.env.fetch('5gtango.user.name', '')
+    #body[:customer_email] = request.env.fetch('5gtango.user.email', '')
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
     body
   end
