@@ -33,6 +33,5 @@
 require 'sinatra/activerecord'
 
 class Request < ActiveRecord::Base
-  STDERR.puts ">>>>> ActiveRecord::Base.configurations=#{ActiveRecord::Base.configurations}"
-  STDERR.puts ">>>>> ActiveRecord::Base.connection_pool.stat=#{ActiveRecord::Base.connection_pool.stat}"  
+  STDERR.puts ">>>>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
 end

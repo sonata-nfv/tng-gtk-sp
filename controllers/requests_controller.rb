@@ -70,8 +70,8 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     'SCALE_SERVICE': ProcessScaleServiceInstanceRequest
   }
 
-  #set :environments, %w(development test pre-int integration demo qualification staging)
-  #register Sinatra::ActiveRecordExtension
+  set :environments, %w(development test pre-int integration demo qualification staging)
+  register Sinatra::ActiveRecordExtension
   
   #after  {ActiveRecord::Base.clear_active_connections!}
   after  {ActiveRecord::Base.clear_all_connections!}
@@ -85,17 +85,12 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
       json_body = complete_body(request)  
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body='#{json_body}'")
       reject_unsupported_request_type(json_body[:request_type])
-      
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before strategy(#{json_body[:request_type]}).call(#{json_body}): #{ActiveRecord::Base.connection_pool.stat}")
       saved_request = strategy(json_body[:request_type]).call(json_body)
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after strategy(#{json_body[:request_type]}).call(#{json_body}): #{ActiveRecord::Base.connection_pool.stat}")
       reject_unsaved_requests(saved_request)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_request='#{saved_request.inspect}'")
       
       reject_errored_saved_requests(saved_request)
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before strategy(#{json_body[:request_type]}).enrich_one(#{saved_request}): #{ActiveRecord::Base.connection_pool.stat}")
       result = strategy(json_body[:request_type]).enrich_one(saved_request)
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after strategy(#{json_body[:request_type]}).enrich_one(#{saved_request}): #{ActiveRecord::Base.connection_pool.stat}")
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}", status: '201')
       halt_with_code_body(201, result.to_json)
     rescue KeyError => e
@@ -118,23 +113,21 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     msg='.'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"entered with params='#{params}'")
     captures=params.delete('captures') if params.key? 'captures'
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before ProcessRequestBase.find(#{params[:request_uuid]}, RequestsController::STRATEGIES)): #{ActiveRecord::Base.connection_pool.stat}")
     begin
       single_request = ProcessRequestBase.find(params[:request_uuid], RequestsController::STRATEGIES)
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"single_request='#{single_request}'")
+      if (!single_request || single_request.empty?)
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:ERROR_REQUEST_NOT_FOUND % params[:request_uuid], status: '404')
+        halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json) 
+      end
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:single_request.to_json, status: '200')
+      halt_with_code_body(200, single_request.to_json)
     rescue Exception => e
 			ActiveRecord::Base.clear_active_connections!
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:e.message, status: '404')
       halt_with_code_body(404, {error: e.message}.to_json)
       raise
     end
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after ProcessRequestBase.find( #{params[:request_uuid]}, RequestsController::STRATEGIES)): #{ActiveRecord::Base.connection_pool.stat}")
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"single_request='#{single_request}'")
-    if (!single_request || single_request.empty?)
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:ERROR_REQUEST_NOT_FOUND % params[:request_uuid], status: '404')
-      halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json) 
-    end
-    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:single_request.to_json, status: '200')
-    halt_with_code_body(200, single_request.to_json)
   end
 
   # GET many requests
@@ -146,9 +139,12 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     # get rid of :page_size and :page_number
     page_number, page_size, sanitized_params = sanitize(params)
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"page_number, page_size, sanitized_params=#{page_number}, #{page_size}, #{sanitized_params}")
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before ProcessRequestBase.search( #{page_number}, #{page_size}, RequestsController::STRATEGIES)): #{ActiveRecord::Base.connection_pool.stat}")
     begin
       requests = ProcessRequestBase.search( page_number, page_size, RequestsController::STRATEGIES)
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"requests='#{requests.inspect}'")
+      headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:requests.to_json, status: '200')
+      halt 200, requests.to_json
     rescue ActiveRecord::RecordNotFound => e
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:'[]', status: '200')
       halt 200, '[]'
@@ -157,11 +153,6 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
 			ActiveRecord::Base.clear_active_connections!
       raise
     end
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after ProcessRequestBase.search( #{page_number}, #{page_size}, RequestsController::STRATEGIES)): #{ActiveRecord::Base.connection_pool.stat}")
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"requests='#{requests.inspect}'")
-    headers 'Record-Count'=>requests.size.to_s, 'Content-Type'=>'application/json'
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:requests.to_json, status: '200')
-    halt 200, requests.to_json
   end
   
   options '/?' do
