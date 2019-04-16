@@ -47,9 +47,19 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
   let(:saved_request) {{
     'callback'=>'http://example.com/user-callback', 
     'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
-    'service_uuid'=>'4c7d854f-a0a1-451a-b31d-8447b4fd4fbc',
+    'service_uuid'=>uuid_1,
     'id'=>uuid_2, 
     'ingresses'=>[], 'status'=>'NEW', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
+    'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
+    'customer_name'=>'', 'customer_email'=>'', 'error'=>'',
+    'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
+  }}
+  let(:instantiating_saved_request) {{
+    'callback'=>'http://example.com/user-callback', 
+    'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
+    'service_uuid'=>uuid_1,
+    'id'=>uuid_2, 
+    'ingresses'=>[], 'status'=>'INSTANTIATING', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
     'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
     'customer_name'=>'', 'customer_email'=>'', 'error'=>'',
     'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
@@ -107,7 +117,11 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       allow(ProcessCreateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(true)
       allow(ProcessCreateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
       allow(Request).to receive(:create).with(request_params).and_return(saved_request)
+      req = double('Request')
+      allow(req).to receive(:update).with(status: instantiating_saved_request['status']).and_return(instantiating_saved_request)
       allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).and_return(slicer_response)
+      STDERR.puts ">>>> #{described_class}.call(#{request_params})=#{described_class.call(request_params)}"
+      STDERR.puts ">>>> saved_request=#{saved_request}"
       expect(described_class.call(request_params)).to eq(saved_request)
     end
     it 'with an error' do

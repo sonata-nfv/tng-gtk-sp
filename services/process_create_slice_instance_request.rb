@@ -89,19 +89,20 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       request = create_slice(enriched_params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
       if (request && request.is_a?(Hash) && request.key?(:error))
-        LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find(#{instantiation_request['id']}): #{ActiveRecord::Base.connection_pool.stat}")
-        begin
-          saved_req=Request.find(instantiation_request['id'])
-        ensure
-          ActiveRecord::Base.clear_active_connections!
-        end
-        
-        LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find(#{instantiation_request['id']}): #{ActiveRecord::Base.connection_pool.stat}")
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_req=#{saved_req.inspect}")
-        saved_req.update(status: 'ERROR', error: request[:error])
-        return saved_req.as_json
+        #LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find(#{instantiation_request['id']}): #{ActiveRecord::Base.connection_pool.stat}")
+        #begin
+        #  saved_req=Request.find(instantiation_request['id'])
+        #ensure
+        #  ActiveRecord::Base.clear_active_connections!
+        #end
+        #LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find(#{instantiation_request['id']}): #{ActiveRecord::Base.connection_pool.stat}")
+        #LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_req=#{saved_req.inspect}")
+        #saved_req.update(status: 'ERROR', error: request[:error])
+        instantiation_request.update('status'=>'ERROR', 'error'=>request[:error])
+      else
+        instantiation_request.update('status'=>request[:nsiState])
       end
-      instantiation_request
+      return instantiation_request.as_json
     rescue StandardError => e
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} (#{e.class}):#{e.backtrace.split('\n\t')}")
       return nil
