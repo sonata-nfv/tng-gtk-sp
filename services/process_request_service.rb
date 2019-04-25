@@ -175,7 +175,8 @@ class ProcessRequestService < ProcessRequestBase
       end
       user_data = complete_user_data(completed_params[:customer_name], completed_params[:customer_email], stored_service.fetch(:username, ''), completed_params[:sla_id])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"user_data=#{user_data}")
-      message = build_message(stored_service, stored_functions, completed_params[:egresses], completed_params[:ingresses], completed_params[:blacklist], user_data)
+      message = build_message(stored_service, stored_functions, completed_params[:egresses], completed_params[:ingresses],
+                              completed_params[:blacklist], user_data, completed_params[:flavor], completed_params[:mapping])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"instantiation_request['id']=#{instantiation_request['id']}")
       published_response = MessagePublishingService.call(message, :create_service, instantiation_request['id'])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"published_response=#{published_response}")
@@ -218,7 +219,7 @@ class ProcessRequestService < ProcessRequestBase
     termination_request
   end
   
-  def self.build_message(service, functions, egresses, ingresses, blacklist, user_data)
+  def self.build_message(service, functions, egresses, ingresses, blacklist, user_data, flavor, mapping)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"service=#{service}\nfunctions=#{functions}")
     message = {}
@@ -234,6 +235,8 @@ class ProcessRequestService < ProcessRequestBase
     message['ingresses'] = ingresses
     message['blacklist'] = blacklist
     message['user_data'] = user_data
+    message['flavor'] = flavor
+    message['mapping'] = mapping
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"message=#{message}")
     recursive_stringify_keys(message).to_yaml.to_s
   end
@@ -325,6 +328,8 @@ class ProcessRequestService < ProcessRequestBase
     #complement[:customer_email] = params.fetch(:customer_email, '')
     complement[:sla_id] = params.fetch(:sla_id, '')
     complement[:callback] = params.fetch(:callback, '')
+    complement[:flavor] = params.fetch(:flavor, '')
+    complement[:mapping] = params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}')
     params.merge(complement)
   end
   
