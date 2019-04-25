@@ -34,4 +34,6 @@ require 'sinatra/activerecord'
 
 class Request < ActiveRecord::Base
   STDERR.puts ">>>>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
+   #self.inheritance_column = 'request_type'
+   serialize :mapping
 end
