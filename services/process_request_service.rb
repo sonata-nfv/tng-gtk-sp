@@ -331,11 +331,11 @@ class ProcessRequestService < ProcessRequestBase
     complement[:callback] = params.fetch(:callback, '')
     complement[:flavor] = params.fetch(:flavor, '')
     begin
-      complement[:mapping] = JSON.parse(params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}')).to_yaml
+      complement[:mapping] = JSON.parse(params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}')).to_yaml.gsub("---\n", '')
     rescue JSON::ParserError
       LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Could not parse '#{params[:mapping]}'")
-      complement[:mapping] = {network_functions:[], virtual_links:[]}.to_yaml
-    end
+      complement[:mapping] = {network_functions:[], virtual_links:[]}.to_yaml.gsub("---\n", '')
+    end 
     params.merge(complement)
   end
   
