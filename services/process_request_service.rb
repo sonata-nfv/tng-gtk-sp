@@ -329,7 +329,11 @@ class ProcessRequestService < ProcessRequestBase
     complement[:sla_id] = params.fetch(:sla_id, '')
     complement[:callback] = params.fetch(:callback, '')
     complement[:flavor] = params.fetch(:flavor, '')
-    complement[:mapping] = params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}')
+    begin
+      complement[:mapping] = JSON.parse(params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}')).to_yaml
+    rescue JSON::ParserError
+      complement[:mapping] = {network_functions:[], virtual_links:[]}.to_yaml
+    end
     params.merge(complement)
   end
   
