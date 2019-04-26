@@ -319,6 +319,7 @@ class ProcessRequestService < ProcessRequestBase
   end
   
   def self.complete_params(params)
+    msg='.'+__method__.to_s
     complement = {}
     [:egresses, :ingresses, :blacklist].each do |element|
       complement[element] = [] unless params.key?(element)
@@ -332,6 +333,7 @@ class ProcessRequestService < ProcessRequestBase
     begin
       complement[:mapping] = JSON.parse(params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}')).to_yaml
     rescue JSON::ParserError
+      LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Could not parse '#{params[:mapping]}'")
       complement[:mapping] = {network_functions:[], virtual_links:[]}.to_yaml
     end
     params.merge(complement)
