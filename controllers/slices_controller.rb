@@ -52,40 +52,21 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   # VIMs
   get '/vims/?' do
     msg='#'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Geting VIMs resources...")
-=begin
-    vims_request = SliceVimResourcesRequest.create
-    unless vims_request
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error creating SliceVimResourcesRequest")
-      halt 500, {}, "Error creating SliceVimResourcesRequest"
-    end
-      
-    ms=FetchVimResourcesMessagingService.new
-    ms.call(vims_request)
-    loop do
-      break if ms.done
-    end
-    result = vims_request.reload.as_json
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
-=end
+    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Geting VIMs resources...")
     message_service = MessagingService.build('infrastructure.management.compute.list')
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"message_service: #{message_service}")
     @lock = Mutex.new
     @condition = ConditionVariable.new
     @call_id = SecureRandom.uuid
     message_service.queue.subscribe do |delivery_info, properties, payload|
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
-      #if properties[:correlation_id] == @call_id
-      #unless properties[:app_id] == 'tng-gtk-sp'
-        @remote_response = payload
-        @lock.synchronize { @condition.signal }
-        #end
+      @remote_response = payload
+      @lock.synchronize { @condition.signal }
     end
     message_service.publish( '', @call_id)
     @lock.synchronize { @condition.wait(@lock) }
     parsed_payload = YAML.load(@remote_response)
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-    halt 200, {}, "{\"vim_list\":#{parsed_payload['vim_list']}, \"nep_list\":#{parsed_payload['nep_list']}}" if parsed_payload.is_a?(Hash)
+    halt 200, {}, "{\"vim_list\":#{parsed_payload['vim_list'].to_json}, \"nep_list\":#{parsed_payload['nep_list'].to_json}}" if parsed_payload.is_a?(Hash)
     halt 500, {}, {error: "#{LOGGED_COMPONENT}#{msg}: Payload with resources not valid"}
   end
   
