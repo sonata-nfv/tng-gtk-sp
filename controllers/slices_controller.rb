@@ -86,7 +86,7 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     parsed_payload = YAML.load(@remote_response)
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
     halt 200, {}, "{\"vim_list\":#{parsed_payload['vim_list']}, \"nep_list\":#{parsed_payload['nep_list']}}" if parsed_payload.is_a?(Hash)
-    helt 500, {}, {error: "#{LOGGED_COMPONENT}#{msg}: Payload with resources not valid"}
+    halt 500, {}, {error: "#{LOGGED_COMPONENT}#{msg}: Payload with resources not valid"}
   end
   
   # Networks
