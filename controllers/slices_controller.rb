@@ -32,6 +32,7 @@
 # encoding: utf-8
 require 'sinatra'
 require 'json'
+require 'securerandom'
 require 'sinatra/activerecord'
 require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/application_controller'
@@ -42,6 +43,7 @@ require_relative '../services/fetch_vim_resources_messaging_service'
 class SlicesController < Tng::Gtk::Utils::ApplicationController
   LOGGER=Tng::Gtk::Utils::Logger
   LOGGED_COMPONENT=self.name
+
   @@began_at = Time.now.utc
   LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
   
@@ -51,30 +53,72 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   get '/vims/?' do
     msg='#'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Geting VIMs resources...")
+=begin
     vims_request = SliceVimResourcesRequest.create
-    FetchVimResourcesMessagingService.new.call(vims_request)
+    unless vims_request
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error creating SliceVimResourcesRequest")
+      halt 500, {}, "Error creating SliceVimResourcesRequest"
+    end
+      
+    ms=FetchVimResourcesMessagingService.new
+    ms.call(vims_request)
+    loop do
+      break if ms.done
+    end
     result = vims_request.reload.as_json
-    halt 200, {}, "{\"vim_list\":#{result['vim_list']}, \"nep_list\":#{result['nep_list']}}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
+=end
+    message_service = MessagingService.build('infrastructure.management.compute.list')
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"message_service: #{message_service}")
+    @lock = Mutex.new
+    @condition = ConditionVariable.new
+    @call_id = SecureRandom.uuid
+    message_service.queue.subscribe do |delivery_info, properties, payload|
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
+      #if properties[:correlation_id] == @call_id
+      #unless properties[:app_id] == 'tng-gtk-sp'
+        @remote_response = payload
+        @lock.synchronize { @condition.signal }
+        #end
+    end
+    message_service.publish( '', @call_id)
+    @lock.synchronize { @condition.wait(@lock) }
+    parsed_payload = YAML.load(@remote_response)
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
+    halt 200, {}, "{\"vim_list\":#{parsed_payload['vim_list']}, \"nep_list\":#{parsed_payload['nep_list']}}"
   end
   
   # Networks
+=begin
   post '/networks/?' do
+    msg='#'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Creating networks...")
+    networks_request = SliceNetworksCreationRequest.create(instance_uuid: params['instance_id'], vim_list: params['vim_list'])
+    unless networks_request
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error creating SliceNetworksCreationRequest")
+      halt 500, {}, "Error creating SliceNetworksCreationRequest"
+    end
+    CreateNetworksMessagingService.new.call(networks_request)
+    result = networks_request.reload.as_json
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
+    halt 200, {}, "{\"instance_id\":\"#{result['instance_id']}\", \"vim_list\":#{result['vim_list']}}"
   end
   
   delete '/networks/?' do
+    msg='#'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Deleting networks...")
   end
   
   # WAN Networks
   post '/wan-networks/?' do
+    msg='#'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Creating WAN networks...")
   end
   
   delete '/wan-networks/?' do
+    msg='#'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Deleting WAN networks...")
   end
-    
-  private
-  
-  def halt_with_code_body(code, body)
-    halt code, {'Content-Type'=>'application/json', 'Content-Length'=>body.length.to_s}, body
-  end
+=end
   LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
 end
