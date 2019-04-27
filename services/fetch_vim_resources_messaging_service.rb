@@ -67,44 +67,15 @@ class FetchVimResourcesMessagingService
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
         if parsed_payload['vim_list']
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_list: #{parsed_payload['vim_list']}")
-          vims_request.update(vim_list: parsed_payload['vim_list']) #.to_yaml.gsub('---\n', ''))
+          vims_request.update(vim_list: parsed_payload['vim_list'].to_json) #.to_yaml.gsub('---\n', ''))
         end
         if parsed_payload['nep_list']
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"nep_list: #{parsed_payload['nep_list']}")
-          vims_request.update(nep_list: parsed_payload['nep_list']) #.to_yaml.gsub('---\n', ''))
+          vims_request.update(nep_list: parsed_payload['nep_list'].to_json) #.to_yaml.gsub('---\n', ''))
         end
       end
     end
     message_service.publish( '', vims_request.id)
-  end
-  
-  private
-  def self.notify_user(params)
-    msg='.'+__method__.to_s
-    uri = URI.parse(params['callback'])
-
-    # Create the HTTP objects
-    http = Net::HTTP.new(uri.host, uri.port)
-    request = Net::HTTP::Post.new(uri)
-    request.body = params.to_json
-    request['Content-Type'] = 'application/json'
-
-    # Send the request
-    begin
-      response = http.request(request)
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"response=#{response}")
-      case response
-      when Net::HTTPSuccess, Net::HTTPCreated
-        body = response.body
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{response.code} body=#{body}")
-        return JSON.parse(body, quirks_mode: true, symbolize_names: true)
-      else
-        return {error: "#{response.message}"}
-      end
-    rescue Exception => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to post to user's callback #{user_callback} with message #{e.message}")
-    end
-    nil
   end
 end
 
