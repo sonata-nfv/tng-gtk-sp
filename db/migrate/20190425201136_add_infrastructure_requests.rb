@@ -30,9 +30,16 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-class AddFlavourAndMapping < ActiveRecord::Migration[5.2]
+class AddInfrastructureRequests < ActiveRecord::Migration[5.2]
   def change
-    add_column :requests, :flavor, :string
-    add_column :requests, :mapping, :string
+    create_table :infrastructure_requests, id: :uuid do |t|
+      t.timestamps
+      t.string :status, default: 'NEW'
+      t.string :type, default: ''
+      t.uuid :instance_uuid, default: ''
+      t.string :vim_list, default: '[]'
+      t.string :nep_list, default: '[]'
+      t.string :error, default: ''
+    end
   end
 end

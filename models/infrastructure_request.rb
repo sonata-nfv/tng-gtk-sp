@@ -30,9 +30,31 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
-class AddFlavourAndMapping < ActiveRecord::Migration[5.2]
-  def change
-    add_column :requests, :flavor, :string
-    add_column :requests, :mapping, :string
+require 'sinatra/activerecord'
+require 'tng/gtk/utils/logger'
+require_relative '../services/messaging_service'
+
+LOGGER=Tng::Gtk::Utils::Logger
+
+class InfrastructureRequest < ActiveRecord::Base
+  STDERR.puts ">>>>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
+   #self.inheritance_column = 'request_type'
+   serialize :vim_list
+   serialize :nep_list
+end
+
+class SliceVimResourcesRequest < InfrastructureRequest
+  LOGGED_COMPONENT=self.name
+  
+  def as_json
+    msg='#'+__method__.to_s
+    {
+      blacklist: self[:blacklist],
+      created_at: self[:created_at],
+      id: self[:id],
+      nep_list: self[:nep_list] ||= '[]',
+      updated_at: self[:updated_at],
+      vim_list: self[:vim_list] ||= '[]'
+    }
   end
 end

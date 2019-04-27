@@ -43,6 +43,7 @@ require 'policies_controller'
 require 'pings_controller'
 require 'root_controller'
 require 'records_controller'
+require 'slices_controller'
 require 'request'
 
 ENV['RACK_ENV'] ||= 'production'
@@ -68,7 +69,7 @@ class ConnectionManagement
 end
 
 use ConnectionManagement
-
+=begin
 ActiveRecord::Base.establish_connection(
   :adapter => 'postgresql',
   :host =>  'son-postgres', #'pre-int-sp-ath.5gtango.eu',
@@ -78,15 +79,15 @@ ActiveRecord::Base.establish_connection(
   :port => 5432,
   :pool => 128,
   )
-
+=end
 # from https://github.com/keyme/rack-timeout-puma
 #use Rack::Timeout
 #use Rack::Timeout::Puma
 #use ActiveRecord::Rack::ConnectionManagement # this seems not to be working anynore
-STDERR.puts "ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
-map('/pings') { run PingsController }
+STDERR.puts "ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations[ENV['RACK_ENV'].to_sym]}"
+map('/pings')    { run PingsController }
 map('/policies') { run PoliciesController } 
-map('/records') { run RecordsController } 
+map('/records')  { run RecordsController } 
 map('/requests') { run RequestsController } 
-#map('/configurations/infra') { run ConfigurationsInfraController } 
-map('/') { run RootController }
+map('/slices')   { run SlicesController}
+map('/')         { run RootController }
