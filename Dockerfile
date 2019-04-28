@@ -64,6 +64,7 @@ ENV CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
 ENV REPOSITORY_URL=http://tng-rep:4012
 ENV POLICY_MNGR_URL=http://tng-policy-mngr:8081/api/v1
 ENV SLM_URL=http://tng-slice-mngr:5998/api
+ENV SLA_MNGR_URL=http://tng-sla-mgmt:8080/tng-sla-mgmt/api/slas/v1
 ENV SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-gtk-sp:5000/requests
 #ENV SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-slice-mngr:5998/api/nsilcm/v1/nsi
 ENV REDIS_URL=redis://son-redis:6379

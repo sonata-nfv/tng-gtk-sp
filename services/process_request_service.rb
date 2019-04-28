@@ -60,6 +60,44 @@ class FetchNSDService < Tng::Gtk::Utils::Fetch
   LOGGER.info(component:self.name, operation:'site definition', message:"self.site=#{self.site}")
 end
 
+SLA_MNGR_URL = ENV.fetch('SLA_MNGR_URL', '')
+NO_SLA_MNGR_URL_DEFINED_ERROR='The SLA_MNGR_URL ENV variable needs to defined and pointing to the SLA Manager'  
+if SLA_MNGR_URL == ''
+  LOGGER.error(component:'ProcessRequestService', operation:'fetching SLA_MNGR_URL ENV variable', message:NO_SLA_MNGR_URL_DEFINED_ERROR)
+  raise ArgumentError.new(NO_SLA_MNGR_URL_DEFINED_ERROR) 
+end
+
+class FetchFlavourFromSLAService < Tng::Gtk::Utils::Fetch
+  self.site=SLA_MNGR_URL+'/mgmt/deploymentflavours'
+  LOGGER.info(component:self.name, operation:'site definition', message:"self.site=#{self.site}")
+  
+  def self.call(service_uuid, sla_uuid)
+    msg=self.name+'#'+__method__.to_s
+    began_at=Time.now.utc
+    LOGGER.info(start_stop: 'START', component:self.name, operation:msg, message:"params=#{params}")
+    #curl -v -H "Content-type:application/json" http://int-sp-ath.5gtango.eu:8080/tng-sla-mgmt/api/slas/v1/mgmt/deploymentflavours/{nsd_uuid}/{sla_uuid}
+    
+    uri = URI.parse("#{self.site}/#{service_uuid}/#{sla_uuid}")
+    request = Net::HTTP::Get.new(uri)
+    request['content-type'] = 'application/json'
+    response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
+    LOGGER.debug(component:self.name, operation:msg, message:"response=#{response.inspect}")
+    case response
+    when Net::HTTPSuccess
+      body = response.read_body
+      LOGGER.debug(component:self.name, operation:msg, message:"body=#{body}", status: '200')
+      result = JSON.parse(body, quirks_mode: true, symbolize_names: true)
+      LOGGER.info(start_stop: 'STOP', component:self.name, operation:msg, message:"result=#{result} site=#{self.site}", time_elapsed: Time.now.utc - began_at)
+      return result[:d_flavour_name]
+    when Net::HTTPNotFound
+      LOGGER.info(start_stop: 'STOP', component:self.name, operation:msg, message:"body=#{body}", status:'404', time_elapsed: Time.now.utc - began_at)
+      return ''
+    else
+      LOGGER.error(start_stop: 'STOP', component:self.name, operation:msg, message:"#{response.message}", status:'404', time_elapsed: Time.now.utc - began_at)
+      return nil
+    end
+  end
+end
 
 class ProcessRequestService < ProcessRequestBase
   ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
@@ -327,9 +365,10 @@ class ProcessRequestService < ProcessRequestBase
     complement[:request_type] = 'CREATE_SERVICE' unless params.key?(:request_type)
     #complement[:customer_name] = params.fetch(:customer_name, '')
     #complement[:customer_email] = params.fetch(:customer_email, '')
-    complement[:sla_id] = params.fetch(:sla_id, '')
     complement[:callback] = params.fetch(:callback, '')
-    complement[:flavor] = params.fetch(:flavor, '')
+    complement[:sla_id] = params.fetch(:sla_id, '')
+    complement[:flavor] = ''
+    complement[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], complement[:sla_id]) unless complement[:sla_id] == ''
     begin
       complement[:mapping] = JSON.parse(params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}')) #.to_yaml.gsub("---\n", '')
     rescue JSON::ParserError
