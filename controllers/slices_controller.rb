@@ -37,8 +37,7 @@ require 'sinatra/activerecord'
 require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/application_controller'
 require 'tng/gtk/utils/services'
-require_relative '../models/infrastructure_request'
-require_relative '../services/fetch_vim_resources_messaging_service'
+require_relative '../services/messaging_service'
 
 class SlicesController < Tng::Gtk::Utils::ApplicationController
   LOGGER=Tng::Gtk::Utils::Logger
@@ -75,7 +74,7 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     msg='#'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Creating networks...")
     body = JSON.parse(request.body.read)
-    message_service = MessagingService.build('infrastructure.management.compute.list')
+    message_service = MessagingService.build('infrastructure.service.network.create')
     @lock = Mutex.new
     @condition = ConditionVariable.new
     @call_id = SecureRandom.uuid
@@ -88,7 +87,7 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     @lock.synchronize { @condition.wait(@lock) }
     parsed_payload = YAML.load(@remote_response)
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-    halt 200, {}, "{\"request_status\":#{parsed_payload['request_status']}, \"message\":#{parsed_payload['message']}}" if parsed_payload.is_a?(Hash)
+    halt 200, {}, "{\"request_status\":\"#{parsed_payload['request_status']}\", \"message\":\"#{parsed_payload['message']}\"}" if parsed_payload.is_a?(Hash)
     halt 500, {}, {error: "#{LOGGED_COMPONENT}#{msg}: Payload with resources not valid"}
   end
   
@@ -113,7 +112,7 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     message = {}
     message['instance_id'] = instance_id
     message['vim_list'] = vim_list
-    message.to_ymal
+    message.to_yaml
   end
   
   LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
