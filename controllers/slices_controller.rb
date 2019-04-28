@@ -37,8 +37,7 @@ require 'sinatra/activerecord'
 require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/application_controller'
 require 'tng/gtk/utils/services'
-require_relative '../models/infrastructure_request'
-require_relative '../services/fetch_vim_resources_messaging_service'
+require_relative '../services/messaging_service'
 
 class SlicesController < Tng::Gtk::Utils::ApplicationController
   LOGGER=Tng::Gtk::Utils::Logger
@@ -71,19 +70,25 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   end
   
   # Networks
-=begin
   post '/networks/?' do
     msg='#'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Creating networks...")
-    networks_request = SliceNetworksCreationRequest.create(instance_uuid: params['instance_id'], vim_list: params['vim_list'])
-    unless networks_request
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error creating SliceNetworksCreationRequest")
-      halt 500, {}, "Error creating SliceNetworksCreationRequest"
+    body = JSON.parse(request.body.read)
+    message_service = MessagingService.build('infrastructure.service.network.create')
+    @lock = Mutex.new
+    @condition = ConditionVariable.new
+    @call_id = SecureRandom.uuid
+    message_service.queue.subscribe do |delivery_info, properties, payload|
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
+      @remote_response = payload
+      @lock.synchronize { @condition.signal }
     end
-    CreateNetworksMessagingService.new.call(networks_request)
-    result = networks_request.reload.as_json
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
-    halt 200, {}, "{\"instance_id\":\"#{result['instance_id']}\", \"vim_list\":#{result['vim_list']}}"
+    message_service.publish( build_creation_message(body[:instance_id], body[:vim_list]), @call_id)
+    @lock.synchronize { @condition.wait(@lock) }
+    parsed_payload = YAML.load(@remote_response)
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
+    halt 200, {}, "{\"request_status\":\"#{parsed_payload['request_status']}\", \"message\":\"#{parsed_payload['message']}\"}" if parsed_payload.is_a?(Hash)
+    halt 500, {}, {error: "#{LOGGED_COMPONENT}#{msg}: Payload with resources not valid"}
   end
   
   delete '/networks/?' do
@@ -101,6 +106,14 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     msg='#'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Deleting WAN networks...")
   end
-=end
+  
+  private
+  def build_creation_message(instance_id, vim_list)
+    message = {}
+    message['instance_id'] = instance_id
+    message['vim_list'] = vim_list
+    message.to_yaml
+  end
+  
   LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'STOP', message:"Ended at #{Time.now.utc}", time_elapsed:"#{Time.now.utc-began_at}")
 end
