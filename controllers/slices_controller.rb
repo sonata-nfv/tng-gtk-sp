@@ -72,8 +72,9 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   # Networks
   post '/networks/?' do
     msg='#'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Creating networks...")
+    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Creating networks...")
     body = JSON.parse(request.body.read)
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
     message_service = MessagingService.build('infrastructure.service.network.create')
     @lock = Mutex.new
     @condition = ConditionVariable.new
@@ -87,7 +88,10 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     @lock.synchronize { @condition.wait(@lock) }
     parsed_payload = YAML.load(@remote_response)
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-    halt 200, {}, "{\"request_status\":\"#{parsed_payload['request_status']}\", \"message\":\"#{parsed_payload['message']}\"}" if parsed_payload.is_a?(Hash)
+    if parsed_payload.is_a?(Hash)
+      # maybe should return 400?
+      halt 200, {}, "{\"request_status\":\"#{parsed_payload['request_status']}\", \"message\":\"#{parsed_payload['message']}\"}" 
+    end
     halt 500, {}, {error: "#{LOGGED_COMPONENT}#{msg}: Payload with resources not valid"}
   end
   
