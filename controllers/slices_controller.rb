@@ -76,15 +76,14 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     body = JSON.parse(request.body.read)
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
     message_service = MessagingService.build('infrastructure.service.network.create')
+    message_service.publish( build_creation_message(body[:instance_id], body[:vim_list]), SecureRandom.uuid)
     @lock = Mutex.new
     @condition = ConditionVariable.new
-    @call_id = SecureRandom.uuid
     message_service.queue.subscribe do |delivery_info, properties, payload|
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
       @remote_response = payload
       @lock.synchronize { @condition.signal }
     end
-    message_service.publish( build_creation_message(body[:instance_id], body[:vim_list]), @call_id)
     @lock.synchronize { @condition.wait(@lock) }
     parsed_payload = YAML.load(@remote_response)
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
