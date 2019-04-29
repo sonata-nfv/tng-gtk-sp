@@ -51,6 +51,7 @@ env:
     - SLM_URL=http://tng-slice-mngr:5998/api/
 #    - SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/on-change
     - SLICE_INSTANCE_CHANGE_CALLBACK_URL=http://tng-gtk-sp:5000/requests
+    - SLA_MNGR_URL=http://tng-sla-mgmt:8080/tng-sla-mgmt/api/slas/v1
 #    - REDIS_URL=redis://son-redis:6379
 before_script:
 #  - cp config/database.yml.travis config/database.yml
