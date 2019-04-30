@@ -58,6 +58,8 @@ class SliceVimResourcesRequest < InfrastructureRequest
 end
 
 class SliceNetworksCreationRequest < InfrastructureRequest
+  validates :instance_uuid, presence: true
+  
   def as_json
     {
       created_at: self[:created_at],
