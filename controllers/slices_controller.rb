@@ -60,7 +60,6 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   get '/vims/?' do
     msg='#'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Geting VIMs resources...")
-    message_service = MessagingService.build('infrastructure.management.compute.list')
     vim_request=SliceVimResourcesRequest.create
     FetchVimResourcesMessagingService.new.call vim_request
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_request.vim_list=#{vim_request.vim_list} vim_request.nep_list=#{vim_request.nep_list}")
@@ -81,6 +80,37 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   post '/networks/?' do
     msg='#'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Creating networks...")
+    original_body = request.body.read
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original_body=#{original_body}")
+    begin
+      body = JSON.parse(original_body)
+    rescue JSON::ParserError => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing network creation request #{original_body}")
+      halt 404, {}, {error:"Error parsing network creation request #{original_body}"}.to_json
+    end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body['instance_uuid']=#{body['instance_uuid']} body['vim_list']=#{body['vim_list']}")
+    network_creation = SliceNetworksCreationRequest.create body
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation=#{network_creation.as_json}")
+    halt 500, {}, {error: "Problem saving request #{original_body} with errors #{network_creation.errors.messages}"}.to_json unless network_creation.save
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation=#{network_creation.as_json}")
+    CreateNetworksMessagingService.new.call network_creation
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation.status=#{network_creation.status}")
+    times = 10
+    result = nil
+    loop do
+      sleep 1
+      result = SliceNetworksCreationRequest.find network_creation.id
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.status=#{result.status} result.error=#{result.error}")
+      times -= 1
+      break if (times == 0 || result.status != '' || result.error != '')
+    end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.as_json}")
+    halt 201, {}, result.as_json.to_json 
+  end
+  
+  delete '/networks/?' do
+    msg='#'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Deleting networks...")
     begin
       original_body = request.body.read
       body = JSON.parse(original_body)
@@ -103,11 +133,6 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.inspect}")
     halt 201, {}, result.as_json.to_json 
-  end
-  
-  delete '/networks/?' do
-    msg='#'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Deleting networks...")
   end
   
   # WAN Networks

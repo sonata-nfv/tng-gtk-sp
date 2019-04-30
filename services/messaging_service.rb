@@ -50,13 +50,13 @@ class MessagingService
   end
 
   attr_accessor :exchange, :queue_name, :queue
-  def initialize(exchange, queue_name, queue)
+  def initialize(exchange, queue_name, queue, consumer_method = nil)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Initializing with exchange=#{exchange.inspect}, queue_name=#{exchange}, queue=#{exchange.inspect}")
-    @exchange, @queue_name, @queue = exchange, queue_name, queue
+    @exchange, @queue_name, @queue, @consumer_method = exchange, queue_name, queue, consumer_method
   end
   
-  def self.build(queue_name)
+  def self.build(queue_name, method = nil)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"queue_name= #{queue_name}")
     begin
@@ -67,7 +67,7 @@ class MessagingService
     end
     exchange = channel.topic( TOPIC, auto_delete: false)
     queue = channel.queue(GK_QUEUE_PREFIX+queue_name).bind(exchange, routing_key: queue_name) 
-    new exchange, queue_name, queue
+    new exchange, queue_name, queue, method
   end
   
   def publish(message, correlation_id)

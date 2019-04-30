@@ -57,9 +57,16 @@ class CreateNetworksMessagingService
     queue.subscribe do |delivery_info, properties, payload|
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
       # We know our own messages, so just skip them
-      unless properties[:app_id] == 'tng-gtk-sp'
+      if properties[:app_id] == 'sonata.kernel.InfrAdaptor'
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing: properties[:app_id]: #{properties[:app_id]}")
-        parsed_payload = YAML.load(payload)
+        begin
+          parsed_payload = JSON.parse(payload)
+        rescue JSON::ParserError => e
+          LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing answer '#{payload}'")
+          parsed_payload['request_status'] = 'ERROR'
+          parsed_payload['message'] = "Error parsing answer '#{payload}'"
+        end
+          
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
         if parsed_payload['request_status']
           update_attributes = {status: parsed_payload['request_status']}
@@ -68,6 +75,7 @@ class CreateNetworksMessagingService
             update_attributes[:error] = parsed_payload['message']
           end
           networks_request.update(update_attributes)
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
         end
       end
     end
@@ -76,10 +84,18 @@ class CreateNetworksMessagingService
   
   private
   def build_message(obj)
+    msg='#'+__method__.to_s
     message = {}
     message['instance_id'] = obj.instance_uuid
-    message['vim_list'] = obj.vim_list
-    message.to_yaml
+    begin
+      vim_list = JSON.parse(obj.vim_list)
+      message['vim_list'] = vim_list
+      return message.to_yaml
+    rescue JSON::ParserError => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing VIM list '#{obj.vim_list}'")
+      message['vim_list'] = ''
+      return message.to_yaml
+    end
   end
 end
 
