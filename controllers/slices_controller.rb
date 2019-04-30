@@ -73,7 +73,6 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
       break if (times == 0 || result.vim_list != '[]' || result.nep_list != '[]')
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.inspect}")
-    #halt 200, {}, "{\"vim_list\":#{result['vim_list'].to_json}, \"nep_list\":#{result['nep_list'].to_json}}"
     halt 200, {}, "{\"vim_list\":#{result.vim_list}, \"nep_list\":#{result.nep_list}}"
   end
   
