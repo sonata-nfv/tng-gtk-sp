@@ -37,7 +37,9 @@ require 'sinatra/activerecord'
 require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/application_controller'
 require 'tng/gtk/utils/services'
+require_relative '../models/infrastructure_request'
 require_relative '../services/messaging_service'
+require_relative '../services/fetch_vim_resources_messaging_service'
 
 class SlicesController < Tng::Gtk::Utils::ApplicationController
   LOGGER=Tng::Gtk::Utils::Logger
@@ -45,6 +47,11 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
 
   @@began_at = Time.now.utc
   LOGGER.info(component:LOGGED_COMPONENT, operation:'initializing', start_stop: 'START', message:"Started at #{@@began_at}")
+  MQSERVER_URL = ENV.fetch('MQSERVER_URL', '')
+  if MQSERVER_URL == ''
+    LOGGER.error(component:LOGGED_COMPONENT, operation:'starting', message:"No MQServer URL has been defined")
+    raise ArgumentError.new('No MQServer URL has been defined') 
+  end
   
   before { content_type :json}
   
@@ -53,20 +60,20 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     msg='#'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Geting VIMs resources...")
     message_service = MessagingService.build('infrastructure.management.compute.list')
-    @lock = Mutex.new
-    @condition = ConditionVariable.new
-    @call_id = SecureRandom.uuid
-    message_service.queue.subscribe do |delivery_info, properties, payload|
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
-      @remote_response = payload
-      @lock.synchronize { @condition.signal }
+    vim_request=SliceVimResourcesRequest.create
+    FetchVimResourcesMessagingService.new.call vim_request
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_request.vim_list=#{vim_request.vim_list} vim_request.nep_list=#{vim_request.nep_list}")
+    times = 10
+    result = nil
+    loop do
+      sleep 1
+      result = SliceVimResourcesRequest.find vim_request.id
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.vim_list=#{result.vim_list} result.nep_list=#{result.nep_list}")
+      times -= 1
+      break if (times == 0 || result.vim_list != '[]' || result.nep_list != '[]')
     end
-    message_service.publish( '', @call_id)
-    @lock.synchronize { @condition.wait(@lock) }
-    parsed_payload = YAML.load(@remote_response)
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-    halt 200, {}, "{\"vim_list\":#{parsed_payload['vim_list'].to_json}, \"nep_list\":#{parsed_payload['nep_list'].to_json}}" if parsed_payload.is_a?(Hash)
-    halt 500, {}, {error: "#{LOGGED_COMPONENT}#{msg}: Payload with resources not valid"}
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.inspect}")
+    halt 200, {}, "{\"vim_list\":#{result.vim_list}, \"nep_list\":#{result.nep_list}}"
   end
   
   # Networks
