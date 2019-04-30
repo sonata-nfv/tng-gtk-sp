@@ -117,6 +117,7 @@ class MessagePublishingService
               request['status']=status
               if parsed_payload['error']
                 request['error'] = parsed_payload['error']
+                LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"leaving with error #{request['error']}")
               else
                 if parsed_payload.key?('nsr')
                   # if this is a final answer, there'll be an NSR
