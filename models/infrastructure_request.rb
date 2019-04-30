@@ -63,7 +63,7 @@ class SliceNetworksCreationRequest < InfrastructureRequest
       created_at: self[:created_at],
       error: self[:error],
       id: self[:id],
-      instance_id: self[:instance_uuid],
+      instance_uuid: self[:instance_uuid],
       status: self[:status],
       updated_at: self[:updated_at],
       vim_list: self[:vim_list] ||= '[]'
