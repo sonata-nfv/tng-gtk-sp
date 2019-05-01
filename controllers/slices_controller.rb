@@ -41,6 +41,7 @@ require_relative '../models/infrastructure_request'
 require_relative '../services/messaging_service'
 require_relative '../services/fetch_vim_resources_messaging_service'
 require_relative '../services/create_networks_messaging_service'
+require_relative '../services/delete_networks_messaging_service'
 
 class SlicesController < Tng::Gtk::Utils::ApplicationController
   LOGGER=Tng::Gtk::Utils::Logger
@@ -115,18 +116,17 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
       original_body = request.body.read
       body = JSON.parse(original_body)
     rescue JSON::ParserError => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing network creation request #{original_body}")
-      hast 404, {}, {error:"Error parsing network creation request #{original_body}"}.to_json
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing network deletion request #{original_body}")
+      hast 404, {}, {error:"Error parsing network deletion request #{original_body}"}.to_json
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
-    message_service = MessagingService.build('infrastructure.service.network.create')
-    network_creation = SliceNetworksCreationRequest.create body
-    CreateNetworksMessagingService.new.call network_creation
+    network_deletion = SliceNetworksDeletionRequest.create body
+    DeleteNetworksMessagingService.new.call network_deletion
     times = 10
     result = nil
     loop do
       sleep 1
-      result = SliceNetworksCreationRequest.find network_creation.id
+      result = SliceNetworksDeletionRequest.find network_deletion.id
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.status=#{result.status} result.error=#{result.error}")
       times -= 1
       break if (times == 0 || result.status != '' || result.error != '')
