@@ -74,7 +74,7 @@ class FetchFlavourFromSLAService < Tng::Gtk::Utils::Fetch
   def self.call(service_uuid, sla_uuid)
     msg=self.name+'#'+__method__.to_s
     began_at=Time.now.utc
-    LOGGER.info(start_stop: 'START', component:self.name, operation:msg, message:"params=#{params}")
+    LOGGER.info(start_stop: 'START', component:self.name, operation:msg, message:"service_uuid=#{service_uuid} sla_uuid=#{sla_uuid}")
     #curl -v -H "Content-type:application/json" http://int-sp-ath.5gtango.eu:8080/tng-sla-mgmt/api/slas/v1/mgmt/deploymentflavours/{nsd_uuid}/{sla_uuid}
     
     uri = URI.parse("#{self.site}/#{service_uuid}/#{sla_uuid}")
