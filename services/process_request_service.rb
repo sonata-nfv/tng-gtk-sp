@@ -35,73 +35,16 @@ require 'ostruct'
 require 'json'
 require 'yaml'
 require 'active_support'
-#require 'tng/gtk/utils/functions'
-#require 'tng/gtk/utils/services'
+require_relative './fetch_nsd_service'
+require_relative './fetch_vnfds_service'
 require_relative './fetch_service_records_service'
+require_relative './fetch_flavour_from_sla_service'
 require_relative './message_publishing_service'
 require_relative '../models/request'
 require_relative './process_request_base'
 require 'tng/gtk/utils/logger'
 
-NO_CATALOGUE_URL_DEFINED_ERROR='The CATALOGUE_URL ENV variable needs to defined and pointing to the Catalogue where to fetch functions'  
-CATALOGUE_URL = ENV.fetch('CATALOGUE_URL', '')
-if CATALOGUE_URL == ''
-  LOGGER.error(component:'ProcessRequestService', operation:'fetching CATALOGUE_URL ENV variable', message:NO_CATALOGUE_URL_DEFINED_ERROR)
-  raise ArgumentError.new(NO_CATALOGUE_URL_DEFINED_ERROR) 
-end
-
-class FetchVNFDsService < Tng::Gtk::Utils::Fetch
-  self.site=CATALOGUE_URL+'/vnfs'
-  LOGGER.info(component:self.name, operation:'site definition', message:"self.site=#{self.site}")
-end
-
-class FetchNSDService < Tng::Gtk::Utils::Fetch
-  self.site=CATALOGUE_URL+'/network-services'
-  LOGGER.info(component:self.name, operation:'site definition', message:"self.site=#{self.site}")
-end
-
-SLA_MNGR_URL = ENV.fetch('SLA_MNGR_URL', '')
-NO_SLA_MNGR_URL_DEFINED_ERROR='The SLA_MNGR_URL ENV variable needs to defined and pointing to the SLA Manager'  
-if SLA_MNGR_URL == ''
-  LOGGER.error(component:'ProcessRequestService', operation:'fetching SLA_MNGR_URL ENV variable', message:NO_SLA_MNGR_URL_DEFINED_ERROR)
-  raise ArgumentError.new(NO_SLA_MNGR_URL_DEFINED_ERROR) 
-end
-
-class FetchFlavourFromSLAService < Tng::Gtk::Utils::Fetch
-  self.site=SLA_MNGR_URL+'/mgmt/deploymentflavours'
-  LOGGER.info(component:self.name, operation:'site definition', message:"self.site=#{self.site}")
-  
-  def self.call(service_uuid, sla_uuid)
-    msg=self.name+'#'+__method__.to_s
-    began_at=Time.now.utc
-    LOGGER.info(start_stop: 'START', component:self.name, operation:msg, message:"service_uuid=#{service_uuid} sla_uuid=#{sla_uuid}")
-    #curl -v -H "Content-type:application/json" http://int-sp-ath.5gtango.eu:8080/tng-sla-mgmt/api/slas/v1/mgmt/deploymentflavours/{nsd_uuid}/{sla_uuid}
-    
-    uri = URI.parse("#{self.site}/#{service_uuid}/#{sla_uuid}")
-    request = Net::HTTP::Get.new(uri)
-    request['content-type'] = 'application/json'
-    response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
-    LOGGER.debug(component:self.name, operation:msg, message:"response=#{response.inspect}")
-    case response
-    when Net::HTTPSuccess
-      body = response.read_body
-      LOGGER.debug(component:self.name, operation:msg, message:"body=#{body}", status: '200')
-      result = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-      LOGGER.info(start_stop: 'STOP', component:self.name, operation:msg, message:"result=#{result} site=#{self.site}", time_elapsed: Time.now.utc - began_at)
-      return result[:d_flavour_name]
-    when Net::HTTPNotFound
-      LOGGER.info(start_stop: 'STOP', component:self.name, operation:msg, message:"body=#{body}", status:'404', time_elapsed: Time.now.utc - began_at)
-      return ''
-    else
-      LOGGER.error(start_stop: 'STOP', component:self.name, operation:msg, message:"#{response.message}", status:'404', time_elapsed: Time.now.utc - began_at)
-      return nil
-    end
-  end
-end
-
 class ProcessRequestService < ProcessRequestBase
-  ERROR_VNFS_ARE_MANDATORY='VNFs parameter is mandatory'
-  ERROR_VNF_CATALOGUE_URL_NOT_FOUND='VNF Catalogue URL not found in the ENV.'
   LOGGER=Tng::Gtk::Utils::Logger
   LOGGED_COMPONENT=self.name
 
