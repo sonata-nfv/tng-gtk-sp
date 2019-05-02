@@ -72,3 +72,19 @@ class SliceNetworksCreationRequest < InfrastructureRequest
     }
   end
 end
+
+class SliceNetworksDeletionRequest < InfrastructureRequest
+  validates :instance_uuid, presence: true
+  
+  def as_json
+    {
+      created_at: self[:created_at],
+      error: self[:error],
+      id: self[:id],
+      instance_uuid: self[:instance_uuid],
+      status: self[:status],
+      updated_at: self[:updated_at],
+      vim_list: self[:vim_list] ||= '[]'
+    }
+  end
+end
