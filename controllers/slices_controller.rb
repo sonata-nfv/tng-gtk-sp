@@ -92,7 +92,8 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing network creation request #{original_body}")
       halt 404, {}, {error:"Error parsing network creation request #{original_body}"}.to_json
     end
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body['instance_uuid']=#{body['instance_uuid']} body['vim_list']=#{body['vim_list']}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body['instance_id']=#{body['instance_id']} body['vim_list']=#{body['vim_list']}")
+    body['instance_uuid'] = body.delete 'instance_id'
     network_creation = SliceNetworksCreationRequest.create body
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation=#{network_creation.as_json}")
     halt 500, {}, {error: "Problem saving request #{original_body} with errors #{network_creation.errors.messages}"}.to_json unless network_creation.save
@@ -150,9 +151,9 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   end
   
   private
-  def build_creation_message(instance_uuid, vim_list)
+  def build_creation_message(instance_id, vim_list)
     message = {}
-    message['instance_uuid'] = instance_uuid
+    message['instance_id'] = instance_id
     message['vim_list'] = vim_list
     message.to_yaml
   end
