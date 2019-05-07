@@ -43,6 +43,9 @@ require_relative '../services/fetch_vim_resources_messaging_service'
 require_relative '../services/create_networks_messaging_service'
 require_relative '../services/delete_networks_messaging_service'
 
+SLEEPING_TIME = 2 # seconds
+NUMBER_OF_ITERATIONS = 20
+
 class SlicesController < Tng::Gtk::Utils::ApplicationController
   LOGGER=Tng::Gtk::Utils::Logger
   LOGGED_COMPONENT=self.name
@@ -64,14 +67,14 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     vim_request=SliceVimResourcesRequest.create
     FetchVimResourcesMessagingService.new.call vim_request
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_request.vim_list=#{vim_request.vim_list} vim_request.nep_list=#{vim_request.nep_list}")
-    times = 10
+    times = NUMBER_OF_ITERATIONS
     result = nil
     loop do
-      sleep 1
       result = SliceVimResourcesRequest.find vim_request.id
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.vim_list=#{result.vim_list} result.nep_list=#{result.nep_list}")
       times -= 1
       break if (times == 0 || result.vim_list != '[]' || result.nep_list != '[]')
+      sleep SLEEPING_TIME
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.inspect}")
     halt 200, {}, "{\"vim_list\":#{result.vim_list}, \"nep_list\":#{result.nep_list}}"
@@ -96,14 +99,14 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation=#{network_creation.as_json}")
     CreateNetworksMessagingService.new.call network_creation
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation.status=#{network_creation.status}")
-    times = 10
+    times = NUMBER_OF_ITERATIONS
     result = nil
     loop do
-      sleep 1
       result = SliceNetworksCreationRequest.find network_creation.id
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.status=#{result.status} result.error=#{result.error}")
       times -= 1
       break if (times == 0 || result.status != '' || result.error != '')
+      sleep SLEEPING_TIME
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.as_json}")
     halt 201, {}, result.as_json.to_json 
@@ -122,14 +125,14 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
     network_deletion = SliceNetworksDeletionRequest.create body
     DeleteNetworksMessagingService.new.call network_deletion
-    times = 10
+    times = NUMBER_OF_ITERATIONS
     result = nil
     loop do
-      sleep 1
       result = SliceNetworksDeletionRequest.find network_deletion.id
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.status=#{result.status} result.error=#{result.error}")
       times -= 1
       break if (times == 0 || result.status != '' || result.error != '')
+      sleep SLEEPING_TIME
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.inspect}")
     halt 201, {}, result.as_json.to_json 
