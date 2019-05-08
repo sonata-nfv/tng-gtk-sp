@@ -91,7 +91,7 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
   }}
   
   describe '.call saves the request' do
-    let(:error_slicer_response) {{ error: 'error from the Slice Manager'}}
+    let(:error_slicer_response) {{ errorLog: 'error from the Slice Manager'}}
     let(:error_saved_request) {{
       'callback'=>'http://example.com/user-callback', 
       'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
@@ -99,7 +99,7 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       'id'=>uuid_2, 
       'ingresses'=>[], 'status'=>'ERROR', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
       'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
-      'customer_name'=>'', 'customer_email'=>'', 'error'=>error_slicer_response[:error],
+      'customer_name'=>'', 'customer_email'=>'', 'error'=>error_slicer_response[:errorLog],
       'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
     }}
     let(:enriched_request_params) {{
@@ -130,7 +130,7 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
       allow(ProcessCreateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
       allow(Request).to receive(:create).with(request_params).and_return(saved_request)
       allow(Request).to receive(:find).with(saved_request['id']).and_return(req)
-      allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:error]).and_return(error_saved_request)
+      allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:errorLog]).and_return(error_saved_request)
       allow(req).to receive(:as_json).and_return(error_saved_request)
       allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(enriched_request_params).and_return(error_slicer_response)
       expect(described_class.call(request_params)).to eq(error_saved_request)

@@ -36,7 +36,6 @@ require 'securerandom'
 require 'sinatra/activerecord'
 require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/application_controller'
-require 'tng/gtk/utils/services'
 require_relative '../models/infrastructure_request'
 require_relative '../services/messaging_service'
 require_relative '../services/fetch_vim_resources_messaging_service'
@@ -97,7 +96,7 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     network_creation = SliceNetworksCreationRequest.create body
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation=#{network_creation.as_json}")
     halt 500, {}, {error: "Problem saving request #{original_body} with errors #{network_creation.errors.messages}"}.to_json unless network_creation.save
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation=#{network_creation.as_json}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Saved network_creation=#{network_creation.as_json}")
     CreateNetworksMessagingService.new.call network_creation
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation.status=#{network_creation.status}")
     times = NUMBER_OF_ITERATIONS
