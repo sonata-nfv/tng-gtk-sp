@@ -30,6 +30,7 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
+require 'json'
 require 'sinatra/activerecord'
 require 'tng/gtk/utils/logger'
 require_relative '../services/messaging_service'
@@ -37,8 +38,6 @@ require_relative '../services/messaging_service'
 #LOGGER=Tng::Gtk::Utils::Logger
 
 class InfrastructureRequest < ActiveRecord::Base
-  STDERR.puts ">>>>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
-   #self.inheritance_column = 'request_type'
    serialize :vim_list
    serialize :nep_list
 end
@@ -60,6 +59,14 @@ end
 class SliceNetworksCreationRequest < InfrastructureRequest
   validates :instance_uuid, presence: true
   
+  def vim_from_json
+    begin
+      JSON.parse self[:vim_list]
+    rescue
+      []
+    end
+  end
+  
   def as_json
     {
       created_at: self[:created_at],
@@ -68,7 +75,7 @@ class SliceNetworksCreationRequest < InfrastructureRequest
       instance_id: self[:instance_uuid],
       status: self[:status],
       updated_at: self[:updated_at],
-      vim_list: self[:vim_list] ||= '[]'
+      vim_list: vim_from_json
     }
   end
 end
@@ -84,7 +91,7 @@ class SliceNetworksDeletionRequest < InfrastructureRequest
       instance_id: self[:instance_uuid],
       status: self[:status],
       updated_at: self[:updated_at],
-      vim_list: self[:vim_list] ||= '[]'
+      vim_list: vim_from_json
     }
   end
 end
