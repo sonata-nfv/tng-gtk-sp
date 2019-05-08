@@ -84,17 +84,16 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     msg='#'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Creating networks...")
     original_body = request.body.read
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original_body=#{original_body}")
     begin
       body = JSON.parse(original_body)
     rescue JSON::ParserError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing network creation request #{original_body}")
       halt 404, {}, {error:"Error parsing network creation request #{original_body}"}.to_json
     end
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body['instance_id']=#{body['instance_id']} body['vim_list']=#{body['vim_list']}")
-    body['instance_uuid'] = body.delete 'instance_id'
-    network_creation = SliceNetworksCreationRequest.create body
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation=#{network_creation.as_json}")
+    body 
+    network_creation = SliceNetworksCreationRequest.new
+    network_creation['instance_uuid']= body.delete 'instance_id'
+    network_creation['vim_list']= body['vim_list'].to_json
     halt 500, {}, {error: "Problem saving request #{original_body} with errors #{network_creation.errors.messages}"}.to_json unless network_creation.save
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Saved network_creation=#{network_creation.as_json}")
     CreateNetworksMessagingService.new.call network_creation
