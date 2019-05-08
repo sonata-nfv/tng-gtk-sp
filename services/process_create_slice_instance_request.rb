@@ -88,19 +88,10 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params=#{enriched_params}")
       request = create_slice(enriched_params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
-      if (request && request.is_a?(Hash) && request.key?(:error))
-        #LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find(#{instantiation_request['id']}): #{ActiveRecord::Base.connection_pool.stat}")
-        #begin
-        #  saved_req=Request.find(instantiation_request['id'])
-        #ensure
-        #  ActiveRecord::Base.clear_active_connections!
-        #end
-        #LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find(#{instantiation_request['id']}): #{ActiveRecord::Base.connection_pool.stat}")
-        #LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_req=#{saved_req.inspect}")
-        #saved_req.update(status: 'ERROR', error: request[:error])
-        instantiation_request.update('status'=>'ERROR', 'error'=>request[:error])
+      if (request && request.is_a?(Hash) && request.key?(:errorLog))
+        instantiation_request.update('status'=>'ERROR', 'error'=>request[:errorLog])
       else
-        instantiation_request.update('status'=>request[:nsiState])
+        instantiation_request.update('status'=>request[:"nsi-status"])
       end
       return instantiation_request.as_json
     rescue StandardError => e
