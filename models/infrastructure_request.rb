@@ -40,6 +40,15 @@ require_relative '../services/messaging_service'
 class InfrastructureRequest < ActiveRecord::Base
    serialize :vim_list
    serialize :nep_list
+   
+   def vim_from_json
+     begin
+       JSON.parse self[:vim_list]
+     rescue
+       []
+     end
+   end
+
 end
 
 class SliceVimResourcesRequest < InfrastructureRequest
@@ -58,15 +67,7 @@ end
 
 class SliceNetworksCreationRequest < InfrastructureRequest
   validates :instance_uuid, presence: true
-  
-  def vim_from_json
-    begin
-      JSON.parse self[:vim_list]
-    rescue
-      []
-    end
-  end
-  
+    
   def as_json
     {
       created_at: self[:created_at],
