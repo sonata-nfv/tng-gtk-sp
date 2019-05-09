@@ -40,7 +40,20 @@ require_relative '../services/messaging_service'
 class InfrastructureRequest < ActiveRecord::Base
    serialize :vim_list
    serialize :nep_list
-   
+   self.establish_connection(
+     adapter:  "postgresql",
+     host:     ENV.fetch('DATABASE_HOST','son-postgres'),
+     port:     ENV.fetch('DATABASE_PORT', 5432),
+     username: ENV.fetch('POSTGRES_USER', 'postgres'),
+     password: ENV.fetch('POSTGRES_PASSWORD', 'sonatatest'),
+     database: ENV.fetch('DATABASE_NAME', 'gatekeeper'),
+     pool:     64,
+     timeout:  10000,
+     encoding: 'unicode'
+   )
+   STDERR.puts ">>> InfrastructureRequest is Connected to #{self.connection.current_database}"
+   STDERR.puts ">>> InfrastructureRequest.configurations=:#{InfrastructureRequest.configurations}"
+   STDERR.puts ">>> InfrastructureRequest.connection_pool.stat=#{InfrastructureRequest.connection_pool.stat}"
    def vim_from_json
      begin
        JSON.parse self[:vim_list]
