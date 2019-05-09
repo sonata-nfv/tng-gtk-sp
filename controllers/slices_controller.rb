@@ -46,6 +46,11 @@ SLEEPING_TIME = 2 # seconds
 NUMBER_OF_ITERATIONS = 20
 
 class SlicesController < Tng::Gtk::Utils::ApplicationController
+  set :database_file, 'config/database.yml'
+  LOGGER.debug(component:LOGGED_COMPONENT, operation:'SlicesController', message:">>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}")
+  LOGGER.debug(component:LOGGED_COMPONENT, operation:'SlicesController', message:">>> ActiveRecord::Base.connection_pool.stat=#{ActiveRecord::Base.connection_pool.stat}")
+  
+  
   LOGGER=Tng::Gtk::Utils::Logger
   LOGGED_COMPONENT=self.name
 
