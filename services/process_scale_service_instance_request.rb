@@ -121,10 +121,12 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"scaling_type=#{scaling_type} instance_uuid=#{instance_uuid} vnfd_uuid=#{vnfd_uuid}")
     message = {}
     message['scaling_type'] = scaling_type
-    message['service_instance_id'] = instance_uuid
+    message['service_instance_uuid'] = instance_uuid
     message['vnfd_uuid'] = vnfd_uuid
     message['number_of_instances'] = number_of_instances
-    message['vim_uuid'] = vim_uuid
+    if vim_uuid
+      message['constraints'] = {'vim_uuid'=>vim_uuid}
+    end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"message=#{message}")
     message.to_yaml.to_s
   end  
