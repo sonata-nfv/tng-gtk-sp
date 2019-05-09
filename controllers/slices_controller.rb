@@ -102,7 +102,6 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     result = nil
     loop do
       result = SliceNetworksCreationRequest.find network_creation.id
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.status=#{result.status} result.error=#{result.error}")
       times -= 1
       break if (times == 0 || result.status != '' || result.error != '')
       sleep SLEEPING_TIME
@@ -122,13 +121,17 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
       hast 404, {}, {error:"Error parsing network deletion request #{original_body}"}.to_json
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
-    network_deletion = SliceNetworksDeletionRequest.create body
+    network_deletion = SliceNetworksDeletionRequest.new
+    network_deletion['instance_uuid']= body.delete 'instance_id'
+    network_deletion['vim_list']= body['vim_list'].to_json
+    halt 500, {}, {error: "Problem saving request #{original_body} with errors #{network_deletion.errors.messages}"}.to_json unless network_deletion.save
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Saved network_deletion=#{network_deletion.as_json}")
     DeleteNetworksMessagingService.new.call network_deletion
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_deletion.status=#{network_deletion.status}")
     times = NUMBER_OF_ITERATIONS
     result = nil
     loop do
       result = SliceNetworksDeletionRequest.find network_deletion.id
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.status=#{result.status} result.error=#{result.error}")
       times -= 1
       break if (times == 0 || result.status != '' || result.error != '')
       sleep SLEEPING_TIME
