@@ -99,13 +99,13 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     return {error: "The type of scaling must be present"} unless params.key?(:scaling_type)
     return {error: "The type of scaling must be either ADD_VNF or REMOVE_VNF"} unless (params[:scaling_type].upcase == "ADD_VNF" || params[:scaling_type].upcase == "REMOVE_VNF")
     return {error: "The service instance UUID must be present"} unless params.key?(:instance_uuid)
-    #return {error: "The service instance UUID must be valid"} unless uuid_valid?(:instance_uuid)
+    return {error: "The service instance UUID must be valid"} unless uuid_valid?(params[:instance_uuid])
     return {error: "The VNFD UUID must be present"} unless params.key?(:vnfd_uuid)
-    #return {error: "The VNFD UUID must be valid"} unless uuid_valid?(:vnfd_uuid)
-    return {error: "The number of instances must be greater than 0 (defaults to one, if absent)"} if (params.key?(:number_of_instances) && params[:number_of_instances] < 1)
+    return {error: "The VNFD UUID must be valid"} unless uuid_valid?(params[:vnfd_uuid])
+    return {error: "The number of instances must be greater than 0 (defaults to one, if absent)"} if (params.key?(:number_of_instances) && params[:number_of_instances].to_i < 1)
     return {error: "The VNFD UUID must be present"} unless params.key?(:vnfd_uuid)
-    #return {error: "The VNFD UUID must be valid"} unless uuid_valid?(:vnfd_uuid)
-    return {error: "The VIM UUID must be valid"} if (params[:scaling_type].upcase == "ADD_VNF" && params.key?(:vim_uuid) && !Tng::Gtk::Utils.uuid_valid?(:vim_uuid))
+    return {error: "The VNFD UUID must be valid"} unless uuid_valid?(params[:vnfd_uuid])
+    return {error: "The VIM UUID must be valid"} if (params[:scaling_type].upcase == "ADD_VNF" && params.key?(:vim_uuid) && !uuid_valid?(params[:vim_uuid]))
     {}
   end
   
@@ -123,7 +123,7 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     message['scaling_type'] = scaling_type
     message['service_instance_uuid'] = instance_uuid
     message['vnfd_uuid'] = vnfd_uuid
-    message['number_of_instances'] = number_of_instances
+    message['number_of_instances'] = number_of_instances.to_i
     if vim_uuid
       message['constraints'] = {'vim_uuid'=>vim_uuid}
     end
@@ -135,11 +135,6 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     params
-  end
-  
-  def uuid_valid?(uuid)
-    return true if (uuid =~ /[a-f0-9]{8}-([a-f0-9]{4}-){3}[a-f0-9]{12}/) == 0
-    false
   end
   
   def uuid_valid?(uuid)
