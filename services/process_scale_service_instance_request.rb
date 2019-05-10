@@ -123,7 +123,7 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     message['scaling_type'] = scaling_type
     message['service_instance_uuid'] = instance_uuid
     message['vnfd_uuid'] = vnfd_uuid
-    message['number_of_instances'] = number_of_instances
+    message['number_of_instances'] = number_of_instances.to_i
     if vim_uuid
       message['constraints'] = {'vim_uuid'=>vim_uuid}
     end
