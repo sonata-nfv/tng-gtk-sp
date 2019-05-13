@@ -43,7 +43,12 @@ addons:
 env:
   #  - DB=pgsql
   global:
-    - DATABASE_URL=postgresql://postgres@localhost:5432/gatekeeper
+#    - DATABASE_URL=postgresql://postgres@localhost:5432/gatekeeper
+    - DATABASE_HOST=localhost
+    - DATABASE_PORTi=5432
+    - POSTGRES_USER=postgres
+#     - POSTGRES_PASSWORD=sonatatest
+    - DATABASE_NAME=gatekeeper
     - MQSERVER_URL=amqp://guest:guest@broker:5672
     - CATALOGUE_URL=http://tng-cat:4011/catalogues/api/v2
     - REPOSITORY_URL=http://tng-rep:4012
