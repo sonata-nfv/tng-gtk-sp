@@ -30,10 +30,31 @@
 ## acknowledge the contributions of their colleagues of the 5GTANGO
 ## partner consortium (www.5gtango.eu).
 # encoding: utf-8
+require 'json'
 require 'sinatra/activerecord'
 
 class Request < ActiveRecord::Base
-  STDERR.puts ">>>>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}"
-   #self.inheritance_column = 'request_type'
-   serialize :mapping
+  self.establish_connection(
+    adapter:  "postgresql",
+    host:     ENV.fetch('DATABASE_HOST','son-postgres'),
+    port:     ENV.fetch('DATABASE_PORT', 5432),
+    username: ENV.fetch('POSTGRES_USER', 'postgres'),
+    password: ENV.fetch('POSTGRES_PASSWORD', 'sonatatest'),
+    database: ENV.fetch('DATABASE_NAME', 'gatekeeper'),
+    pool:     64,
+    timeout:  10000,
+    encoding: 'unicode'
+  )
+  STDERR.puts ">>> Request is Connected to #{Request.connection.current_database}"
+  STDERR.puts ">>> Request.configurations=:#{Request.configurations}"
+  STDERR.puts ">>> Request.connection_pool.stat=#{Request.connection_pool.stat}"
+  serialize :mapping
+  
+  def vim_from_json
+    begin
+      JSON.parse self[:vim_list]
+    rescue
+      []
+    end
+  end
 end
