@@ -103,7 +103,7 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     return {error: "The VNFD UUID must be present"} unless (params[:scaling_type].upcase == "ADD_VNF" && params.key?(:vnfd_uuid))
     return {error: "The VNFD UUID must be valid"} unless (params.key?(:vnfd_uuid) && uuid_valid?(params[:vnfd_uuid]))
     return {error: "Either the VNFD UUID or the VNF UUID must be present on a scale in (REMOVE_VNF)"} if (params[:scaling_type].upcase == "REMOVE_VNF" && !(params.key?(:vnfd_uuid) || params.key?(:vnf_uuid)))
-    return {error: "The VNF UUID must be valid"} unless (params.key?(:vnf_uuid) && uuid_valid?(params[:vnf_uuid]))
+    return {error: "The VNF UUID must be valid"} if (params.key?(:vnf_uuid) && !uuid_valid?(params[:vnf_uuid]))
     return {error: "The number of instances must be greater than 0 (defaults to one, if absent)"} if (params.key?(:number_of_instances) && params[:number_of_instances].to_i < 1)
     return {error: "The VIM UUID must be valid"} if (params[:scaling_type].upcase == "ADD_VNF" && params.key?(:vim_uuid) && !uuid_valid?(params[:vim_uuid]))
     {}
