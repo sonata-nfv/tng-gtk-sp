@@ -68,13 +68,14 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   get '/vims/?' do
     msg='#'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Geting VIMs resources...")
-    vim_request=SliceVimResourcesRequest.create
-    FetchVimResourcesMessagingService.new.call vim_request
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_request.vim_list=#{vim_request.vim_list} vim_request.nep_list=#{vim_request.nep_list}")
+    @vim_request=SliceVimResourcesRequest.create
+    FetchVimResourcesMessagingService.new.call @vim_request
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"@vim_request.vim_list=#{@vim_request.vim_list} @vim_request.nep_list=#{@vim_request.nep_list}")
     times = NUMBER_OF_ITERATIONS
     result = nil
     loop do
-      result = SliceVimResourcesRequest.find vim_request.id
+      #result = SliceVimResourcesRequest.find @vim_request.id
+      result = @vim_request.reload
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.vim_list=#{result.vim_list} result.nep_list=#{result.nep_list}")
       times -= 1
       break if (times == 0 || result.vim_list != '[]' || result.nep_list != '[]')
