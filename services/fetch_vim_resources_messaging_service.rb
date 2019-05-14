@@ -63,7 +63,7 @@ class FetchVimResourcesMessagingService
         if (parsed_payload['vim_list'] || parsed_payload['nep_list'])
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_list: #{parsed_payload['vim_list']}")
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"nep_list: #{parsed_payload['nep_list']}")
-          vims_request.update(vims_request.id, vim_list: parsed_payload['vim_list'].to_json, nep_list: parsed_payload['nep_list'].to_json)
+          vims_request.update(vim_list: parsed_payload['vim_list'].to_json, nep_list: parsed_payload['nep_list'].to_json)
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vims_request: #{vims_request.inspect} ")
         end
       end
