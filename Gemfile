@@ -41,7 +41,7 @@ gem 'sinatra-logger', '0.3.2'
 gem 'sinatra-cross_origin', '0.4.0'
 
 gem 'pg', '1.1.4'
-gem 'activesupport', '5.2', require: 'active_support'
+gem 'activesupport', '5.2.3', require: 'active_support'
 gem 'activerecord', '5.2.3'
 gem 'sinatra-activerecord', '2.0.13'
 gem 'bunny', '2.8.0'
