@@ -65,8 +65,8 @@ class FetchVimResourcesMessagingService
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_list: #{parsed_payload['vim_list']}")
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"nep_list: #{parsed_payload['nep_list']}")
           begin
-            vim_request['vim_list'] = parsed_payload['vim_list']
-            vim_request['nep_list'] = parsed_payload['nep_list']
+            vim_request['vim_list'] = parsed_payload['vim_list'].to_json
+            vim_request['nep_list'] = parsed_payload['nep_list'].to_json
             vim_request.save
             LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vims_request: #{vim_request.inspect} ")
           rescue Exception => e
