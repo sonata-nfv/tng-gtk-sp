@@ -60,15 +60,22 @@ class FetchVimResourcesMessagingService
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing: properties[:app_id]: #{properties[:app_id]}")
         parsed_payload = YAML.load(payload)
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
+        vim_request = SliceVimResourcesRequest.find_by(id: properties[:correlation_id])
         if (parsed_payload['vim_list'] || parsed_payload['nep_list'])
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_list: #{parsed_payload['vim_list']}")
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"nep_list: #{parsed_payload['nep_list']}")
-          vims_request.update(vim_list: parsed_payload['vim_list'].to_json, nep_list: parsed_payload['nep_list'].to_json)
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vims_request: #{vims_request.inspect} ")
+          begin
+            vim_request['vim_list'] = parsed_payload['vim_list']
+            vim_request['nep_list'] = parsed_payload['nep_list']
+            vim_request.save
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vims_request: #{vim_request.inspect} ")
+          rescue Exception => e
+            LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"vims_request_error: #{e.message} #{e.backtrace.inspect} ")
+          end
         end
       end
     end
-    @@message_service.publish( '', vims_request.id)
+    @@message_service.publish('', vims_request.id)
   end
 end
 
