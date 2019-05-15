@@ -50,13 +50,14 @@ class ProcessRequestBase
       ActiveRecord::Base.clear_active_connections!
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"requests=#{requests}")
-    return requests if requests.empty?
-    enriched = []
+    requests
+    #return requests if requests.empty?
+    #enriched = []
     
-    requests.each do |request|
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request=#{request}\nstrategy=#{strategies[request['request_type'].to_sym]}")
-      enriched << strategies[request['request_type'].to_sym].enrich_one(request)
-    end
+    #requests.each do |request|
+    #  LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request=#{request}\nstrategy=#{strategies[request['request_type'].to_sym]}")
+    #  enriched << strategies[request['request_type'].to_sym].enrich_one(request)
+    #end
   end
   
   def self.find(uuid, strategies)
