@@ -69,12 +69,17 @@ class DeleteNetworksMessagingService
           
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
         if parsed_payload['request_status']
-          update_attributes = {status: parsed_payload['request_status']}
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request_status: #{parsed_payload['request_status']}")
-          if parsed_payload['request_status'] == 'ERROR'
-            update_attributes[:error] = parsed_payload['message']
+          begin
+            networks_request = SliceNetworksDeletionRequest.find properties[:correlation_id]
+          rescue => e
+            LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Netwrok Deletion record with id #{properties[:correlation_id]}")
           end
-          networks_request.update(update_attributes)
+          networks_request['status'] = parsed_payload['request_status']
+          if parsed_payload['request_status'] == 'ERROR'
+            networks_request['error'] = parsed_payload['message']
+          end
+          networks_request.save
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
         end
       end
