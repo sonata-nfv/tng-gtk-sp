@@ -78,7 +78,7 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
         workingStatus: "READY"
       }
     ],
-    nsiState: "INSTANTIATED",
+    :"nsi-status"=>"INSTANTIATED",
     nstId: request_params[:nst_id],
     nstName: "Example_NST",
     nstVersion: "1.0",
@@ -91,7 +91,10 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
   }}
   
   describe '.call saves the request' do
-    let(:error_slicer_response) {{ errorLog: 'error from the Slice Manager'}}
+    let(:error_slicer_response) {{ 
+      errorLog: 'error from the Slice Manager',
+      :"nsi-status"=>"ERROR"
+    }}
     let(:error_saved_request) {{
       'callback'=>'http://example.com/user-callback', 
       'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
@@ -109,30 +112,33 @@ RSpec.describe ProcessCreateSliceInstanceRequest do
     }}
 
     it 'and passes it to the Slice Manager' do
-      stub_request(:post, "http://tng-slice-mngr:5998/api/nsilcm/v1/nsi").
-        with(body: {
-          request_type:"CREATE_SLICE", nstId:"98002ea3-71c7-4faf-af68-b39e5ec0170d",
-          callback:"http://tng-gtk-sp:5000/requests/d0b61673-224a-470e-9322-6e924357bd62/on-change"
-          }).to_return(status: 200, body: "", headers: {})
-      allow(ProcessCreateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(true)
-      allow(ProcessCreateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
-      allow(Request).to receive(:create).with(request_params).and_return(saved_request)
+      allow(described_class).to receive(:valid_request?).with(request_params).and_return(true)
+      allow(described_class).to receive(:enrich_params).with(request_params).and_return(request_params)
+      allow(described_class).to receive(:create_slice).and_return(slicer_response)
       req = double('Request')
-      allow(req).to receive(:update).with(status: instantiating_saved_request['status']).and_return(instantiating_saved_request)
-      allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).and_return(slicer_response)
-      STDERR.puts ">>>> #{described_class}.call(#{request_params})=#{described_class.call(request_params)}"
-      STDERR.puts ">>>> saved_request=#{saved_request}"
+      allow(Request).to receive(:create).with(request_params).and_return(req)
+      allow(req).to receive(:[]).with('id').and_return(saved_request['id'])
+      allow(req).to receive(:[]=).with('status', slicer_response[:'nsi-status'])
+      allow(req).to receive(:save).and_return(true)
+      allow(req).to receive(:as_json).and_return(saved_request)
       expect(described_class.call(request_params)).to eq(saved_request)
     end
     it 'with an error' do
       req = double('Request')
-      allow(ProcessCreateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(true)
-      allow(ProcessCreateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
-      allow(Request).to receive(:create).with(request_params).and_return(saved_request)
+      allow(described_class).to receive(:valid_request?).with(request_params).and_return(true)
+      allow(described_class).to receive(:enrich_params).with(request_params).and_return(request_params)
+      allow(described_class).to receive(:create_slice).and_return(error_slicer_response) #with(enriched_request_params).
+      allow(Request).to receive(:create).with(request_params).and_return(req) #saved_request)
+      allow(req).to receive(:[]).with('id').and_return(saved_request['id'])
+      allow(req).to receive(:[]=).with('status', error_slicer_response[:'nsi-status'])
+      allow(req).to receive(:[]=).with('error', error_slicer_response[:errorLog])
+      allow(req).to receive(:save).and_return(true)
       allow(Request).to receive(:find).with(saved_request['id']).and_return(req)
       allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:errorLog]).and_return(error_saved_request)
       allow(req).to receive(:as_json).and_return(error_saved_request)
-      allow(ProcessCreateSliceInstanceRequest).to receive(:create_slice).with(enriched_request_params).and_return(error_slicer_response)
+      STDERR.puts ">>>> #{described_class}.call(#{request_params})=#{described_class.call(request_params)}"
+      STDERR.puts ">>>> error_saved_request=#{error_saved_request}"
+      
       expect(described_class.call(request_params)).to eq(error_saved_request)
     end
   end
