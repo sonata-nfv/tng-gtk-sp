@@ -85,8 +85,12 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       request = request_slice_termination(enriched_params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
       if (request && request.is_a?(Hash) && request.key?(:error))
-        termination_request.update(status: 'ERROR', error: request[:error])
+        termination_request['status'] = 'ERROR'
+        termination_request['error']  = request[:error]
+      else
+        termination_request['status'] = request[:status]
       end
+      termination_request.save
       return termination_request.as_json
     rescue StandardError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
