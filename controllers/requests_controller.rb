@@ -174,7 +174,16 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
 
       event_data[:original_event_uuid] = params[:request_uuid]
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event_data=#{event_data}")
-      original_request = Request.find(params[:request_uuid])
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before SliceNetworksCreationRequest.find: #{ActiveRecord::Base.connection_pool.stat}")
+      begin
+        original_request = Request.find_by(id: params[:request_uuid])
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before SliceNetworksCreationRequest.find: #{ActiveRecord::Base.connection_pool.stat}")
+      rescue Exception => e
+			  ActiveRecord::Base.clear_active_connections!
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:e.message, status: '404')
+        halt_with_code_body(404, {error: e.message}.to_json)
+      end
+        
       unless original_request
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Request #{params[:request_uuid]} was not found", status: '404')
         halt 404, {}, {error: "Request #{params[:request_uuid]} was not found"}.to_json
