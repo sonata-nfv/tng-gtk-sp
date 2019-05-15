@@ -67,6 +67,7 @@ class FetchVimResourcesMessagingService
           begin
             vim_request['vim_list'] = parsed_payload['vim_list'].to_json
             vim_request['nep_list'] = parsed_payload['nep_list'].to_json
+            vim_request['status'] = 'COMPLETED'
             vim_request.save
             LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vims_request: #{vim_request.inspect} ")
           rescue Exception => e
