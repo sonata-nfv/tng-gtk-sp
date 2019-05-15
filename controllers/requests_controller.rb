@@ -73,7 +73,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   register Sinatra::ActiveRecordExtension
   
   #after  {ActiveRecord::Base.clear_active_connections!}
-  after  {ActiveRecord::Base.clear_all_connections!}
+  # after  {ActiveRecord::Base.clear_all_connections!}
 
   # Accept service instantiation requests
   post '/?' do
