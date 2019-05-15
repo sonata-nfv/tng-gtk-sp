@@ -42,8 +42,8 @@ require_relative '../services/fetch_vim_resources_messaging_service'
 require_relative '../services/create_networks_messaging_service'
 require_relative '../services/delete_networks_messaging_service'
 
-SLEEPING_TIME = 2 # seconds
-NUMBER_OF_ITERATIONS = 20
+SLEEPING_TIME = 1 # seconds
+NUMBER_OF_ITERATIONS = 40
 
 class SlicesController < Tng::Gtk::Utils::ApplicationController
   set :database_file, 'config/database.yml'
