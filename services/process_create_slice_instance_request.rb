@@ -89,10 +89,12 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       request = create_slice(enriched_params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
       if (request && request.is_a?(Hash) && request.key?(:errorLog))
-        instantiation_request.update('status'=>'ERROR', 'error'=>request[:errorLog])
+        instantiation_request['status'] = 'ERROR'
+        instantiation_request['error'] = request[:errorLog]
       else
-        instantiation_request.update('status'=>request[:"nsi-status"])
+        instantiation_request['status'] = request[:"nsi-status"]
       end
+      instantiation_request.save
       return instantiation_request.as_json
     rescue StandardError => e
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} (#{e.class}):#{e.backtrace.split('\n\t')}")
