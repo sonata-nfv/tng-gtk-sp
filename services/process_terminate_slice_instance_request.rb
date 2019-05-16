@@ -88,7 +88,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
         termination_request['status'] = 'ERROR'
         termination_request['error']  = request[:error]
       else
-        termination_request['status'] = request[:status]
+        termination_request['status'] = request[:'nsi-status']
       end
       termination_request.save
       return termination_request.as_json

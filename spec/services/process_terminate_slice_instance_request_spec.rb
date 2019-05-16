@@ -32,28 +32,37 @@
 # frozen_string_literal: true
 # encoding: utf-8
 require_relative '../spec_helper'
-require_relative '../../services/process_terminate_slice_instance_request'
+require_relative '../../services/process_create_slice_instance_request'
 require 'request'
 require_relative '../../services/process_request_service'
 
 RSpec.describe ProcessTerminateSliceInstanceRequest do
   let(:uuid_1) {SecureRandom.uuid}
-  let(:callback) {'http://example.com/user-callback'}
   let(:request_params) {{
-    instance_uuid: uuid_1,
+    nst_id: uuid_1,
     request_type: 'TERMINATE_SLICE',
-    callback: callback
+    callback: 'http://example.com/user-callback'
   }}
   let(:uuid_2) {SecureRandom.uuid}
   let(:saved_request) {{
-    'callback'=>callback, 
+    'callback'=>'http://example.com/user-callback', 
     'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
-    'service'=>{'uuid'=>'4c7d854f-a0a1-451a-b31d-8447b4fd4fbc', 'version'=>'0.2', 'name'=>'ns-squid-haproxy', 'vendor'=>'eu.5gtango'},
+    'service_uuid'=>uuid_1,
     'id'=>uuid_2, 
-    'ingresses'=>[], 'status'=>'NEW', 'egresses'=>[], 'request_type'=>'TERMINATE_SLICE', 
+    'ingresses'=>[], 'status'=>'NEW', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
     'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
     'customer_name'=>'', 'customer_email'=>'', 'error'=>'',
-    'instance_uuid'=>uuid_2, 'blacklist'=>[], 'sla_id'=>''
+    'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
+  }}
+  let(:terminating_saved_request) {{
+    'callback'=>'http://example.com/user-callback', 
+    'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
+    'service_uuid'=>uuid_1,
+    'id'=>uuid_2, 
+    'ingresses'=>[], 'status'=>'INSTANTIATING', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
+    'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
+    'customer_name'=>'', 'customer_email'=>'', 'error'=>'',
+    'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
   }}
   let(:slicer_response) {{
     created_at: "2018-07-16T14:03:02.204+00:00", updated_at: "2018-07-16T14:03:02.204+00:00",
@@ -69,8 +78,8 @@ RSpec.describe ProcessTerminateSliceInstanceRequest do
         workingStatus: "READY"
       }
     ],
-    nsiState: "INSTANTIATED",
-    nstId: "26c540a8-1e70-4242-beef-5e77dfa05a41",
+    :"nsi-status"=>"INSTANTIATED",
+    nstId: request_params[:nst_id],
     nstName: "Example_NST",
     nstVersion: "1.0",
     sapInfo: "",
@@ -81,41 +90,53 @@ RSpec.describe ProcessTerminateSliceInstanceRequest do
     vendor: "eu.5gTango"
   }}
   
-  describe '.call saves the request ' do
-    let(:error_slicer_response) {{ error: 'error from the Slice Manager'}}
+  describe '.call saves the request' do
+    let(:error_slicer_response) {{ 
+      errorLog: 'error from the Slice Manager',
+      :"nsi-status"=>"ERROR"
+    }}
     let(:error_saved_request) {{
       'callback'=>'http://example.com/user-callback', 
       'created_at'=>'2018-09-25T12:56:26.754Z', 'updated_at'=>'2018-09-25T12:56:26.754Z', 
-      'service'=>{'uuid'=>'4c7d854f-a0a1-451a-b31d-8447b4fd4fbc', 'version'=>'0.2', 'name'=>'ns-squid-haproxy', 'vendor'=>'eu.5gtango'},
+      'service_uuid'=>request_params[:nst_id],
       'id'=>uuid_2, 
-      'ingresses'=>[], 'status'=>'ERROR', 'egresses'=>[], 'request_type'=>'TERMINATE_SLICE', 
+      'ingresses'=>[], 'status'=>'ERROR', 'egresses'=>[], 'request_type'=>'CREATE_SLICE', 
       'name'=>'NSI_Example_MYNS_1-squid-haProxy-1', 
-      'customer_name'=>'', 'customer_email'=>'', 'error'=>error_slicer_response[:error],
-      'instance_uuid'=>uuid_2, 'blacklist'=>[], 'sla_id'=>''
+      'customer_name'=>'', 'customer_email'=>'', 'error'=>error_slicer_response[:errorLog],
+      'instance_uuid'=>'', 'blacklist'=>[], 'sla_id'=>''
     }}
-    let(:termination_url) {"http://tng-slice-mngr:5998/api/nsilcm/v1/nsi/#{request_params[:instance_uuid]}/terminate"}
-    let(:callback_url) {"http://tng-gtk-sp:5000/requests/#{uuid_2}/on-change"}
-    
-    before do
-      allow(ProcessTerminateSliceInstanceRequest).to receive(:valid_request?).with(request_params).and_return(request_params)
-      allow(ProcessTerminateSliceInstanceRequest).to receive(:enrich_params).with(request_params).and_return(request_params)
-      allow(Request).to receive(:create).with(request_params).and_return(saved_request)
-    end
-    
+    let(:enriched_request_params) {{
+      request_type: request_params[:request_type],
+      callback: 'http://tng-gtk-sp:5000/requests/'+error_saved_request['id']+'/on-change',
+      nstId: request_params[:nst_id]
+    }}
+
     it 'and passes it to the Slice Manager' do
-      stub_request(:post, termination_url).
-        with(body: { terminateTime: 0, callback: callback_url}.to_json).to_return(status: 200, body: "", headers: {})
-      allow(ProcessTerminateSliceInstanceRequest).to receive(:request_slice_termination).and_return(slicer_response)
+      allow(described_class).to receive(:valid_request?).with(request_params).and_return(true)
+      allow(described_class).to receive(:enrich_params).with(request_params).and_return(request_params)
+      allow(described_class).to receive(:request_slice_termination).and_return(slicer_response)
+      req = double('Request')
+      allow(Request).to receive(:create).with(request_params).and_return(req)
+      allow(req).to receive(:[]).with('id').and_return(saved_request['id'])
+      allow(req).to receive(:[]=).with('status', slicer_response[:'nsi-status'])
+      allow(req).to receive(:save).and_return(true)
+      allow(req).to receive(:as_json).and_return(saved_request)
       expect(described_class.call(request_params)).to eq(saved_request)
     end
+    
     it 'with an error' do
       req = double('Request')
+      allow(described_class).to receive(:valid_request?).with(request_params).and_return(true)
+      allow(described_class).to receive(:enrich_params).with(request_params).and_return(request_params)
+      allow(described_class).to receive(:request_slice_termination).and_return(error_slicer_response) #with(enriched_request_params).
+      allow(Request).to receive(:create).with(request_params).and_return(req) #saved_request)
+      allow(req).to receive(:[]).with('id').and_return(saved_request['id'])
+      allow(req).to receive(:[]=).with('status', error_slicer_response[:'nsi-status'])
+      allow(req).to receive(:[]=).with('error', error_slicer_response[:errorLog])
+      allow(req).to receive(:save).and_return(true)
       allow(Request).to receive(:find).with(saved_request['id']).and_return(req)
-      allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:error]).and_return(error_saved_request)
-      allow(req).to receive(:status).and_return('ERROR')
-      allow(req).to receive(:error).and_return(error_slicer_response[:error])
+      allow(req).to receive(:update).with(status: 'ERROR', error: error_slicer_response[:errorLog]).and_return(error_saved_request)
       allow(req).to receive(:as_json).and_return(error_saved_request)
-      allow(ProcessTerminateSliceInstanceRequest).to receive(:request_slice_termination).with(request_params).and_return(error_slicer_response)
       expect(described_class.call(request_params)).to eq(error_saved_request)
     end
   end
@@ -126,9 +147,11 @@ RSpec.describe ProcessTerminateSliceInstanceRequest do
       status: 'READY'
     }}
     it 'processes the callback of the Slice Manager when the slice is ready' do
-      #request = double(id: uuid_2)
-      #allow(Request).to receive(:find).with(uuid_2).and_return(request)
-      allow(ProcessTerminateSliceInstanceRequest).to receive(:save_result).with(event_data).and_return(event_data)
+      request = double(id: uuid_2)
+      allow(Request).to receive(:find).with(uuid_2).and_return(request)
+      allow(described_class).to receive(:save_result).with(event_data).and_return(event_data)
+      STDERR.puts ">>>> #{described_class}.call(#{event_data})=#{event_data}"
+      
       expect(described_class.process_callback(event_data)).to eq(event_data)
     end
   end
