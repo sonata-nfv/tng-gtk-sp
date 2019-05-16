@@ -310,13 +310,15 @@ class ProcessRequestService < ProcessRequestBase
     #complement[:customer_email] = params.fetch(:customer_email, '')
     complement[:callback] = params.fetch(:callback, '')
     complement[:sla_id] = params.fetch(:sla_id, '')
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"complement[:sla_id]=#{complement[:sla_id]}")
     complement[:flavor] = ''
     complement[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], complement[:sla_id]) unless complement[:sla_id] == ''
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"complement[:flavor]=#{complement[:flavor]}")
     begin
-      complement[:mapping] = JSON.parse(params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}')) #.to_yaml.gsub("---\n", '')
+      complement[:mapping] = JSON.parse(params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}'))
     rescue JSON::ParserError
       LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Could not parse '#{params[:mapping]}'")
-      complement[:mapping] = {network_functions:[], virtual_links:[]} #.to_yaml.gsub("---\n", '')
+      complement[:mapping] = {network_functions:[], virtual_links:[]}
     end 
     params.merge(complement)
   end
