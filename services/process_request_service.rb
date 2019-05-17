@@ -67,7 +67,7 @@ class ProcessRequestService < ProcessRequestBase
   def self.enrich_one(request)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request=#{request.inspect} (class #{request.class})")
-    case request['request_type']
+    case request[:request_type]
     when 'CREATE_SERVICE'
       service_uuid = request.delete 'service_uuid'
       if (!service_uuid || service_uuid.empty?)
