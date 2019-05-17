@@ -88,7 +88,7 @@ class Request < ActiveRecord::Base
         number_of_instances: self[:number_of_instances],
         request_type: self[:request_type],
         scaling_type: self[:scaling_type],
-        service_uuid: self[:status],
+        service_uuid: self[:service_uuid],
         #"service": {
         #    "name": "communication-pilot",
         #    "uuid": "0ebd49da-9db2-4418-8211-190a6d74ed2d",
