@@ -136,7 +136,7 @@ class ProcessRequestService < ProcessRequestBase
       end
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params[:sla_id]=#{params[:sla_id]} (class #{params[:sla_id].class})")
       
-      params[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], params[:sla_id]) if valid_sla_id?(params[:sla_id]) 
+      params[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], params[:sla_id]) unless invalid_sla_id?(params[:sla_id]) 
       
       # mapping is stored in JSON
       params[:mapping] = params[:mapping].to_json if params.key?(:mapping)
@@ -302,7 +302,7 @@ class ProcessRequestService < ProcessRequestBase
     end
   end
     
-  def self.valid_sla_id?(uuid)
+  def self.invalid_sla_id?(uuid)
     uuid.nil? || uuid.empty?
   end
   
