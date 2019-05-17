@@ -244,7 +244,8 @@ class MessagePublishingService
   private
   def self.notify_user(params)
     msg='.'+__method__.to_s
-    uri = URI.parse(params['callback'])
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
+    uri = URI.parse(params[:callback])
 
     # Create the HTTP objects
     http = Net::HTTP.new(uri.host, uri.port)
@@ -265,7 +266,7 @@ class MessagePublishingService
         return {error: "#{response.message}"}
       end
     rescue Exception => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to post to user's callback #{user_callback} with message #{e.message}")
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to post to user's callback #{params[:callback]} with message #{e.message}")
     end
     nil
   end
