@@ -302,25 +302,25 @@ class ProcessRequestService < ProcessRequestBase
   def self.complete_params(params)
     msg='.'+__method__.to_s
     complement = {}
-    [:egresses, :ingresses, :blacklist].each do |element|
-      complement[element] = [] unless params.key?(element)
-    end
-    complement[:request_type] = 'CREATE_SERVICE' unless params.key?(:request_type)
-    complement[:callback] = params.fetch(:callback, '')
-    complement[:sla_id] = params.fetch(:sla_id, '')
+    #[:egresses, :ingresses, :blacklist].each do |element|
+    #  complement[element] = [] unless params.key?(element)
+    #end
+    #complement[:request_type] = 'CREATE_SERVICE' unless params.key?(:request_type)
+    #complement[:callback] = params.fetch(:callback, '')
+    #complement[:sla_id] = params.fetch(:sla_id, '')
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"complement[:sla_id]='#{complement[:sla_id]}'")
     complement[:flavor] = complement[:sla_id] == '' ? '' : FetchFlavourFromSLAService.call(params[:service_uuid], complement[:sla_id])
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"complement[:flavor]='#{complement[:flavor]}'")
-    if params.key?(:mapping)
-      begin
-        complement[:mapping] = JSON.parse(params[:mapping]) #.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}'))
-      rescue JSON::ParserError
-        LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Could not parse '#{params[:mapping]}'")
-        complement[:mapping] = {network_functions:[], virtual_links:[]}
-      end
-    else
-      complement[:mapping] = {network_functions:[], virtual_links:[]}
-    end
+    #if params.key?(:mapping)
+    #  begin
+    #    complement[:mapping] = JSON.parse(params[:mapping]) #.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}'))
+    #  rescue JSON::ParserError
+    #    LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Could not parse '#{params[:mapping]}'")
+    #    complement[:mapping] = {network_functions:[], virtual_links:[]}
+    #  end
+    #else
+    #  complement[:mapping] = {network_functions:[], virtual_links:[]}
+    #end
     params.merge(complement)
   end
   
