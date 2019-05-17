@@ -93,9 +93,7 @@ class MessagePublishingService
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
       begin
         # We know our own messages, so just skip them
-        if properties[:app_id] == 'tng-gtk-sp'
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving, we know our own messages, so just skip them...")
-        else
+        unless properties[:app_id] == 'tng-gtk-sp'
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"properties[:app_id]: #{properties[:app_id]}")
       
           # We're interested in app_id == 'son-plugin.slm'
@@ -158,9 +156,7 @@ class MessagePublishingService
       begin
 
         # We know our own messages, so just skip them
-        if properties[:app_id] == 'tng-gtk-sp'
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving, we know our own messages, so just skip them...")
-        else
+        unless properties[:app_id] == 'tng-gtk-sp'
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"properties[:app_id]: #{properties[:app_id]}")
       
           # We're interested in app_id == 'son-plugin.slm'
@@ -205,9 +201,7 @@ class MessagePublishingService
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
       begin
         # We know our own messages, so just skip them
-        if properties[:app_id] == 'tng-gtk-sp'
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving, we know our own messages, so just skip them...")
-        else
+        unless properties[:app_id] == 'tng-gtk-sp'
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"properties[:app_id]: #{properties[:app_id]}")
       
           # We're interested in app_id == 'son-plugin.slm'

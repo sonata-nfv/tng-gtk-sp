@@ -67,7 +67,7 @@ class ProcessRequestService < ProcessRequestBase
   def self.enrich_one(request)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request=#{request.inspect} (class #{request.class})")
-    case request['request_type']
+    case request[:request_type]
     when 'CREATE_SERVICE'
       service_uuid = request.delete 'service_uuid'
       if (!service_uuid || service_uuid.empty?)
@@ -161,8 +161,8 @@ class ProcessRequestService < ProcessRequestBase
       user_data = complete_user_data(params[:customer_name], params[:customer_email], stored_service.fetch(:username, ''), params[:sla_id])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"user_data=#{user_data}")
       message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], user_data, params[:flavor], params[:mapping])
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"instantiation_request['id']=#{instantiation_request['id']}")
-      published_response = MessagePublishingService.call(message, :create_service, instantiation_request['id'])
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"instantiation_request[:id]=#{instantiation_request[:id]}")
+      published_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"published_response=#{published_response}")
     rescue StandardError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
@@ -194,7 +194,7 @@ class ProcessRequestService < ProcessRequestBase
         LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Failled to create termination_request")
         return {error: "Failled to create termination request for service instance '#{params[:instance_uuid]}'"}
       end
-      published_response = MessagePublishingService.call({'service_instance_uuid'=> params[:instance_uuid]}.to_yaml.to_s, :terminate_service, termination_request['id'])
+      published_response = MessagePublishingService.call({'service_instance_uuid'=> params[:instance_uuid]}.to_yaml.to_s, :terminate_service, termination_request[:id])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"published_response=#{published_response.inspect}")
     rescue StandardError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"#{e.message} (#{e.class}): #{e.backtrace.split('\n\t')}")
