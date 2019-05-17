@@ -309,7 +309,7 @@ class ProcessRequestService < ProcessRequestBase
     #complement[:callback] = params.fetch(:callback, '')
     #complement[:sla_id] = params.fetch(:sla_id, '')
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"complement[:sla_id]='#{complement[:sla_id]}'")
-    complement[:flavor] = complement[:sla_id] == '' ? '' : FetchFlavourFromSLAService.call(params[:service_uuid], complement[:sla_id])
+    complement[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], complement[:sla_id]) if valid_sla_id?(complement[:sla_id]) 
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"complement[:flavor]='#{complement[:flavor]}'")
     #if params.key?(:mapping)
     #  begin
@@ -322,6 +322,10 @@ class ProcessRequestService < ProcessRequestBase
     #  complement[:mapping] = {network_functions:[], virtual_links:[]}
     #end
     params.merge(complement)
+  end
+  
+  def self.valid_sla_id?(uuid)
+    uuid.nil? || uuid.empty?
   end
   
   def self.complete_user_data(customer_name, customer_email, developer_name, sla_id)
