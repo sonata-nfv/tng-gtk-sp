@@ -57,4 +57,50 @@ class Request < ActiveRecord::Base
       []
     end
   end
+  
+  def from_json(field)
+    begin
+      JSON.parse(field)
+    rescue
+      []
+    end
+  end
+  
+  def as_json
+    {
+        blacklist: self[:blacklist],
+        callback: self[:callback],
+        created_at: self[:created_at],
+        vim_list: vim_from_json,
+        customer_email: self[:customer_email],
+        customer_name: self[:customer_name],
+        description: self[:description],
+        duration: self[:duration],
+        egresses: self[:egresses],
+        error: self[:error],
+        flavor: self[:flavor],
+        function_uuids: self[:function_uuids],
+        id: self[:id],
+        ingresses: self[:ingresses],
+        instance_id: self[:instance_uuid],
+        mapping: from_json(self[:mapping]),
+        name: self[:name],
+        number_of_instances: self[:number_of_instances],
+        request_type: self[:request_type],
+        scaling_type: self[:scaling_type],
+        service_uuid: self[:status],
+        #"service": {
+        #    "name": "communication-pilot",
+        #    "uuid": "0ebd49da-9db2-4418-8211-190a6d74ed2d",
+        #    "vendor": "quobis",
+        #    "version": "0.2"
+        #},
+        sla_id: self[:sla_id] ||= '',
+        status: self[:status],
+        updated_at: self[:updated_at],
+        vim_uuid: self[:vim_uuid] ||= '',
+        vnf_uuid: self[:vnf_uuid] ||= '',
+        vnfd_uuid: self[:vnfd_uuid] ||= ''
+    }
+  end
 end

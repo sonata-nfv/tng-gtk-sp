@@ -134,30 +134,33 @@ class ProcessRequestService < ProcessRequestBase
         LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"validation failled with error #{valid[:error]}")
         return valid
       end
-      completed_params = complete_params(params)
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"completed params=#{completed_params}")
-      stored_service = FetchNSDService.call(uuid: params[:service_uuid])
-      return stored_service if (!stored_service || stored_service.empty?)
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"stored_service=#{stored_service} (#{stored_service.class})")
-      functions_to_fetch = stored_service[:nsd][:network_functions]
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"functions_to_fetch=#{functions_to_fetch}")
-      stored_functions = fetch_functions(functions_to_fetch)
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"stored_functions=#{stored_functions}")
-      return nil if stored_functions == nil 
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params[:sla_id]=#{params[:sla_id]} (class #{params[:sla_id].class})")
+      
+      params[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], params[:sla_id]) if valid_sla_id?(params[:sla_id]) 
+      
+      # mapping is stored in JSON
+      params[:mapping] = params[:mapping].to_json if params.key?(:mapping)
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params=#{params}")
       begin
-        instantiation_request = Request.create(completed_params).as_json
+        instantiation_request = Request.create(params).as_json
       ensure
         ActiveRecord::Base.clear_active_connections!
       end
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"instantiation_request=#{instantiation_request} (class #{instantiation_request.class})")
       unless instantiation_request
         LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Failled to create instantiation_request for service '#{params[:service_uuid]}'")
         return {error: "Failled to create instantiation request for service '#{params[:service_uuid]}'"}
       end
-      user_data = complete_user_data(completed_params[:customer_name], completed_params[:customer_email], stored_service.fetch(:username, ''), completed_params[:sla_id])
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"instantiation_request=#{instantiation_request} ")
+
+      # fetch stuff to build message
+      stored_service = FetchNSDService.call(uuid: params[:service_uuid])
+      return stored_service if (!stored_service || stored_service.empty?)
+      stored_functions = fetch_functions(stored_service[:nsd][:network_functions])
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"stored_functions=#{stored_functions}")
+      return nil if stored_functions == nil 
+      user_data = complete_user_data(params[:customer_name], params[:customer_email], stored_service.fetch(:username, ''), params[:sla_id])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"user_data=#{user_data}")
-      message = build_message(stored_service, stored_functions, completed_params[:egresses], completed_params[:ingresses],
-                              completed_params[:blacklist], user_data, completed_params[:flavor], completed_params[:mapping])
+      message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], user_data, params[:flavor], params[:mapping])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"instantiation_request['id']=#{instantiation_request['id']}")
       published_response = MessagePublishingService.call(message, :create_service, instantiation_request['id'])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"published_response=#{published_response}")
@@ -298,32 +301,7 @@ class ProcessRequestService < ProcessRequestBase
       h
     end
   end
-  
-  def self.complete_params(params)
-    msg='.'+__method__.to_s
-    complement = {}
-    #[:egresses, :ingresses, :blacklist].each do |element|
-    #  complement[element] = [] unless params.key?(element)
-    #end
-    #complement[:request_type] = 'CREATE_SERVICE' unless params.key?(:request_type)
-    #complement[:callback] = params.fetch(:callback, '')
-    #complement[:sla_id] = params.fetch(:sla_id, '')
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"complement[:sla_id]='#{complement[:sla_id]}'")
-    complement[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], complement[:sla_id]) if valid_sla_id?(complement[:sla_id]) 
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"complement[:flavor]='#{complement[:flavor]}'")
-    #if params.key?(:mapping)
-    #  begin
-    #    complement[:mapping] = JSON.parse(params[:mapping]) #.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}'))
-    #  rescue JSON::ParserError
-    #    LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Could not parse '#{params[:mapping]}'")
-    #    complement[:mapping] = {network_functions:[], virtual_links:[]}
-    #  end
-    #else
-    #  complement[:mapping] = {network_functions:[], virtual_links:[]}
-    #end
-    params.merge(complement)
-  end
-  
+    
   def self.valid_sla_id?(uuid)
     uuid.nil? || uuid.empty?
   end

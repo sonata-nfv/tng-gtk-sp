@@ -93,6 +93,7 @@ RSpec.describe ProcessRequestService do
     }}
     it 'returns {} when no request is found' do
       allow(FetchNSDService).to receive(:call).with(uuid: uuid_2).and_return({})
+      allow(FetchFlavourFromSLAService).to receive(:call).with(uuid_2, nil).and_return('gold')
       expect(described_class.call({service_uuid: uuid_2})).to be_empty
     end
 #    it 'returns the stored request' do
