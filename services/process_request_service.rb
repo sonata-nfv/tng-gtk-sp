@@ -75,14 +75,14 @@ class ProcessRequestService < ProcessRequestBase
         return recursive_symbolize_keys(request) 
       end
     when 'TERMINATE_SERVICE'
-      request.delete 'service_uuid' if request.key? 'service_uuid'
-      if (!request['instance_uuid'] || request['instance_uuid'].empty?)
+      request.delete :service_uuid if request.key? :service_uuid
+      if (!request[:instance_uuid] || request[:instance_uuid].empty?)
         LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Network Service instance UUID is empty")
         return recursive_symbolize_keys(request) 
       end
-      service_record = FetchServiceRecordsService.call(uuid: request['instance_uuid'])
+      service_record = FetchServiceRecordsService.call(uuid: request[:instance_uuid])
       if (!service_record || service_record.empty?)
-        LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Problem fetching service record for instance UUID '#{request['instance_uuid']}")
+        LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Problem fetching service record for instance UUID '#{request[:instance_uuid]}")
         return recursive_symbolize_keys(request) 
       end
       if (!service_record[:descriptor_reference] || service_record[:descriptor_reference].empty?)
@@ -91,7 +91,7 @@ class ProcessRequestService < ProcessRequestBase
       end
       service_uuid = service_record[:descriptor_reference]
     else
-      LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"request type '#{request['request_type']}'")
+      LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"request type '#{request[:request_type]}'")
       return recursive_symbolize_keys(request) 
     end
     service = FetchNSDService.call(uuid: service_uuid)
