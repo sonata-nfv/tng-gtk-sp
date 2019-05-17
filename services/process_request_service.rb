@@ -69,7 +69,7 @@ class ProcessRequestService < ProcessRequestBase
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request=#{request.inspect} (class #{request.class})")
     case request[:request_type]
     when 'CREATE_SERVICE'
-      service_uuid = request.delete 'service_uuid'
+      service_uuid = request.delete :service_uuid
       if (!service_uuid || service_uuid.empty?)
         LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"service_uuid is blank")
         return recursive_symbolize_keys(request) 
