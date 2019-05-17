@@ -61,10 +61,10 @@ class FetchFlavourFromSLAService < Tng::Gtk::Utils::Fetch
       body = response.read_body
       LOGGER.debug(component:self.name, operation:msg, message:"body=#{body}", status: '200')
       result = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-      LOGGER.info(start_stop: 'STOP', component:self.name, operation:msg, message:"result=#{result} site=#{self.site}", time_elapsed: Time.now.utc - began_at)
+      LOGGER.debug(start_stop: 'STOP', component:self.name, operation:msg, message:"result=#{result} site=#{self.site}", time_elapsed: Time.now.utc - began_at)
       return result[:d_flavour_name]
     when Net::HTTPNotFound
-      LOGGER.info(start_stop: 'STOP', component:self.name, operation:msg, message:"body=#{body}", status:'404', time_elapsed: Time.now.utc - began_at)
+      LOGGER.debug(start_stop: 'STOP', component:self.name, operation:msg, message:"body=#{body}", status:'404', time_elapsed: Time.now.utc - began_at)
       return ''
     else
       LOGGER.error(start_stop: 'STOP', component:self.name, operation:msg, message:"#{response.message}", status:'404', time_elapsed: Time.now.utc - began_at)
