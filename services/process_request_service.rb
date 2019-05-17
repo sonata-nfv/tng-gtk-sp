@@ -306,26 +306,27 @@ class ProcessRequestService < ProcessRequestBase
       complement[element] = [] unless params.key?(element)
     end
     complement[:request_type] = 'CREATE_SERVICE' unless params.key?(:request_type)
-    #complement[:customer_name] = params.fetch(:customer_name, '')
-    #complement[:customer_email] = params.fetch(:customer_email, '')
     complement[:callback] = params.fetch(:callback, '')
     complement[:sla_id] = params.fetch(:sla_id, '')
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"complement[:sla_id]=#{complement[:sla_id]}")
-    complement[:flavor] = ''
-    complement[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], complement[:sla_id]) unless complement[:sla_id] == ''
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"complement[:flavor]=#{complement[:flavor]}")
-    begin
-      complement[:mapping] = JSON.parse(params.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}'))
-    rescue JSON::ParserError
-      LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Could not parse '#{params[:mapping]}'")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"complement[:sla_id]='#{complement[:sla_id]}'")
+    complement[:flavor] = complement[:sla_id] == '' ? '' : FetchFlavourFromSLAService.call(params[:service_uuid], complement[:sla_id])
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"complement[:flavor]='#{complement[:flavor]}'")
+    if params.key?(:mapping)
+      begin
+        complement[:mapping] = JSON.parse(params[:mapping]) #.fetch(:mapping, '{"network_functions":[], "virtual_links":[]}'))
+      rescue JSON::ParserError
+        LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Could not parse '#{params[:mapping]}'")
+        complement[:mapping] = {network_functions:[], virtual_links:[]}
+      end
+    else
       complement[:mapping] = {network_functions:[], virtual_links:[]}
-    end 
+    end
     params.merge(complement)
   end
   
   def self.complete_user_data(customer_name, customer_email, developer_name, sla_id)
     msg='.'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:'.'+__method__.to_s, message:"customer_name=#{customer_name}, developer_name=#{developer_name}, sla_id=#{sla_id}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"customer_name=#{customer_name}, developer_name=#{developer_name}, sla_id=#{sla_id}")
     {
       customer: { name: customer_name, email: customer_email, sla_id: sla_id}, 
       developer: { username: developer_name, email: '', phone: ''}
