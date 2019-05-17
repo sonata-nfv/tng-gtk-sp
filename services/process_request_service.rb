@@ -160,6 +160,7 @@ class ProcessRequestService < ProcessRequestBase
       return nil if stored_functions == nil 
       user_data = complete_user_data(params[:customer_name], params[:customer_email], stored_service.fetch(:username, ''), params[:sla_id])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"user_data=#{user_data}")
+
       message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], user_data, params[:flavor], params[:mapping])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"instantiation_request[:id]=#{instantiation_request[:id]}")
       published_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
@@ -220,7 +221,11 @@ class ProcessRequestService < ProcessRequestBase
     message['blacklist'] = blacklist
     message['user_data'] = user_data
     message['flavor'] = flavor
-    message['mapping'] = mapping
+    begin
+      message['mapping'] = JSON.parse(mapping)
+    rescue JSON::ParserError => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing mapping: '#{mapping}'")
+    end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"message=#{message}")
     recursive_stringify_keys(message).to_yaml.to_s
   end
