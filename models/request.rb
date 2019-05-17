@@ -82,7 +82,7 @@ class Request < ActiveRecord::Base
         function_uuids: self[:function_uuids],
         id: self[:id],
         ingresses: self[:ingresses],
-        instance_id: self[:instance_uuid],
+        instance_uuid: self[:instance_uuid],
         mapping: from_json(self[:mapping]),
         name: self[:name],
         number_of_instances: self[:number_of_instances],
