@@ -67,7 +67,7 @@ class ProcessRequestBase
       ActiveRecord::Base.clear_active_connections!
     end
     return request if request.empty?
-    strategies[request['request_type'].to_sym].enrich_one(request)
+    strategies[request[:request_type].to_sym].enrich_one(request)
   end
   
   def self.descendants
