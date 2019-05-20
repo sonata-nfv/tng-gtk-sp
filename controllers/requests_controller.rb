@@ -119,7 +119,6 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:ERROR_REQUEST_NOT_FOUND % params[:request_uuid], status: '404')
         halt_with_code_body(404, {error: ERROR_REQUEST_NOT_FOUND % params[:request_uuid]}.to_json) 
       end
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:single_request.to_json, status: '200')
       halt_with_code_body(200, single_request.to_json)
     rescue Exception => e
 			ActiveRecord::Base.clear_active_connections!
