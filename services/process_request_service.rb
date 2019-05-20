@@ -222,7 +222,7 @@ class ProcessRequestService < ProcessRequestBase
     message['user_data'] = user_data
     message['flavor'] = flavor
     begin
-      message['mapping'] = JSON.parse(mapping)
+      message['mapping'] = JSON.parse(mapping) if mapping
     rescue JSON::ParserError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing mapping: '#{mapping}'")
     end
