@@ -141,6 +141,7 @@ class ProcessRequestService < ProcessRequestBase
       # mapping is stored in JSON
       params[:mapping] = params[:mapping].to_json if params.key?(:mapping)
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params=#{params}")
+      instantiation_request = nil
       ActiveRecord::Base.connection_pool.with_connection do
         begin
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.create: #{ActiveRecord::Base.connection_pool.stat}")
