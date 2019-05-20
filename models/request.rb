@@ -43,10 +43,10 @@ class Request < ActiveRecord::Base
     database: ENV.fetch('DATABASE_NAME', 'gatekeeper'),
     pool:     64,
     timeout:  10000,
+    checkout_timeout: 30,
     encoding: 'unicode'
   )
-  STDERR.puts ">>> Request is Connected to #{Request.connection.current_database}"
-  STDERR.puts ">>> Request.configurations=:#{Request.configurations}"
+  STDERR.puts ">>> Request.configurations= #{Request.configurations}"
   STDERR.puts ">>> Request.connection_pool.stat=#{Request.connection_pool.stat}"
   serialize :mapping
   
