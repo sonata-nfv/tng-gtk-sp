@@ -142,8 +142,11 @@ class ProcessRequestService < ProcessRequestBase
       params[:mapping] = params[:mapping].to_json if params.key?(:mapping)
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params=#{params}")
       begin
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.create: #{ActiveRecord::Base.connection_pool.stat}")
         instantiation_request = Request.create(params).as_json
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> After Request.create: #{ActiveRecord::Base.connection_pool.stat}")
       ensure
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> No connections for Request.create: #{ActiveRecord::Base.connection_pool.stat}")
         ActiveRecord::Base.clear_active_connections!
       end
       unless instantiation_request
