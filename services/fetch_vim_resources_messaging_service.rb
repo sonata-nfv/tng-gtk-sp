@@ -43,6 +43,7 @@ class FetchVimResourcesMessagingService
   LOGGED_COMPONENT=self.name
   QUEUE_NAME = 'infrastructure.management.compute.list'
   @@message_service = MessagingService.build(QUEUE_NAME)
+  LOGGER.debug(component:LOGGED_COMPONENT, operation:'FetchVimResourcesMessagingService', message:"@@message_service=#{@@message_service.inspect}")
   
   def call(vims_request)
     msg='#'+__method__.to_s
