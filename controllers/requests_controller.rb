@@ -72,7 +72,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   set :environments, %w(development test pre-int integration demo qualification staging)
   register Sinatra::ActiveRecordExtension
   
-  #after  {ActiveRecord::Base.clear_active_connections!}
+  after  {ActiveRecord::Base.clear_reloadable_connections!}
   # after  {ActiveRecord::Base.clear_all_connections!}
 
   # Accept service instantiation requests
