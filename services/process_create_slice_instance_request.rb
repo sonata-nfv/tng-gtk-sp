@@ -88,7 +88,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params=#{enriched_params}")
       request = create_slice(enriched_params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
-      if (request && request.is_a?(Hash) && request.key?(:errorLog))
+      if (request && request.is_a?(Hash) && request.key?(:error))
         instantiation_request['status'] = 'ERROR'
         instantiation_request['error'] = request[:errorLog]
       else
