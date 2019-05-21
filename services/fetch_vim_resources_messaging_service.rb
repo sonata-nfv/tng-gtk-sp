@@ -60,7 +60,7 @@ class FetchVimResourcesMessagingService
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing: properties[:app_id]: #{properties[:app_id]}")
         parsed_payload = YAML.load(payload)
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-        if (parsed_payload['vim_list'] || parsed_payload['nep_list'])
+        if (parsed_payload['vim_list'] && parsed_payload['nep_list'])
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_list: #{parsed_payload['vim_list']}")
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"nep_list: #{parsed_payload['nep_list']}")
           begin
