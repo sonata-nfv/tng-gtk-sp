@@ -60,11 +60,11 @@ class FetchVimResourcesMessagingService
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing: properties[:app_id]: #{properties[:app_id]}")
         parsed_payload = YAML.load(payload)
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-        vim_request = SliceVimResourcesRequest.find_by(id: properties[:correlation_id])
         if (parsed_payload['vim_list'] || parsed_payload['nep_list'])
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_list: #{parsed_payload['vim_list']}")
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"nep_list: #{parsed_payload['nep_list']}")
           begin
+            vim_request = SliceVimResourcesRequest.find_by(id: properties[:correlation_id])
             vim_request['vim_list'] = parsed_payload['vim_list'].to_json
             vim_request['nep_list'] = parsed_payload['nep_list'].to_json
             vim_request['status'] = 'COMPLETED'

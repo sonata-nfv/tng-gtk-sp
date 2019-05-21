@@ -74,8 +74,8 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     times = NUMBER_OF_ITERATIONS
     result = nil
     loop do
-      #result = SliceVimResourcesRequest.find @vim_request.id
-      result = @vim_request.reload
+      result = SliceVimResourcesRequest.find @vim_request.id
+      #result = @vim_request.reload
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.vim_list=#{result.vim_list} result.nep_list=#{result.nep_list}")
       times -= 1
       break if (times == 0 || result.vim_list != '[]' || result.nep_list != '[]')
