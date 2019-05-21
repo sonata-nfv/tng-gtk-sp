@@ -248,7 +248,7 @@ class ProcessRequestService < ProcessRequestBase
   def self.valid_terminate_service_params?(params)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params=#{params}")
-    unless (params.key?(:instance_uuid) && !params[:instance_uuid].empty?)
+    unless (params.fetch(:instance_uuid) && params[:instance_uuid] != '')
       LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Termination of a service instance needs the instance UUID")
       return {error: "Termination of a service instance needs the instance UUID"} 
     end
