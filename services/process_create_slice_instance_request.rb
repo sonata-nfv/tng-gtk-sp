@@ -226,7 +226,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body=#{json_body}")
         return json_body
       else
-        return {error: "#{response.code} (#{response.message}): #{params}"}
+        return {error: "Creating the slice: #{response.code} (#{response.message}): #{params}"}
       end
     rescue Exception => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message}")
