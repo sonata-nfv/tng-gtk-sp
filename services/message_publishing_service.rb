@@ -105,7 +105,8 @@ class MessagePublishingService
             begin
               request = Request.find(properties[:correlation_id])
             ensure
-              ActiveRecord::Base.clear_active_connections!
+              Request.connection_pool.flush!
+              Request.clear_active_connections!
             end
             
             unless request
@@ -128,7 +129,12 @@ class MessagePublishingService
                   end
                 end
               end
-              request.save
+              begin
+                request.save
+              ensure
+                Request.connection_pool.flush!
+                Request.clear_active_connections!
+              end              
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving with request #{request.inspect}")
               notify_user(request.as_json) unless request['callback'].empty?
             end
@@ -170,7 +176,8 @@ class MessagePublishingService
             begin
               request = Request.find(properties[:correlation_id])
             ensure
-              ActiveRecord::Base.clear_active_connections!
+              Request.connection_pool.flush!
+              Request.clear_active_connections!
             end
             
             unless request
@@ -182,7 +189,12 @@ class MessagePublishingService
                 request['error'] = parsed_payload['error']
                 LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"recorded error '#{request['error']}'")
               end
-              request.save
+              begin
+                request.save
+              ensure
+                Request.connection_pool.flush!
+                Request.clear_active_connections!
+              end
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request #{request} saved")
               notify_user(request.as_json) unless request['callback'].empty?
             end
@@ -213,7 +225,8 @@ class MessagePublishingService
             begin
               request = Request.find(properties[:correlation_id])
             ensure
-              ActiveRecord::Base.clear_active_connections!
+              Request.connection_pool.flush!              
+              Request.clear_active_connections!
             end
             
             unless request
@@ -229,7 +242,12 @@ class MessagePublishingService
                 request['duration'] = parsed_payload['duration'] if parsed_payload.key?('duration')
                 request['function_uuids'] = parsed_payload['vnfrs'] if parsed_payload.key?('vnfrs')
               end
-              request.save
+              begin
+                request.save
+              ensure
+                Request.connection_pool.flush!
+                Request.clear_active_connections!
+              end
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving with request #{request.inspect}")
               notify_user(request.as_json) unless request['callback'].empty?
             end

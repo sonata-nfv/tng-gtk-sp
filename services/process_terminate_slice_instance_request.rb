@@ -65,14 +65,15 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       enriched_params = enrich_params(params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params params=#{enriched_params}")
       
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.create(#{enriched_params}'): #{ActiveRecord::Base.connection_pool.stat}")
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.create(#{enriched_params}'): #{Request.connection_pool.stat}")
       begin
         termination_request = Request.create(enriched_params)
       ensure
-        ActiveRecord::Base.clear_active_connections!
+        Request.connection_pool.flush!        
+        Request.clear_active_connections!
       end
         
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.create(#{enriched_params}'): #{ActiveRecord::Base.connection_pool.stat}")
+      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.create(#{enriched_params}'): #{Request.connection_pool.stat}")
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"termination_request=#{termination_request.inspect} (class #{termination_request.class})")
       unless termination_request
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to create termination request")
@@ -90,7 +91,12 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       else
         termination_request['status'] = request[:'nsi-status']
       end
-      termination_request.save
+      begin
+        termination_request.save
+      ensure
+        Request.connection_pool.flush!        
+        Request.clear_active_connections!
+      end      
       return termination_request.as_json
     rescue StandardError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
@@ -120,19 +126,25 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
   private  
   def self.save_result(event)
     msg='.'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find('#{event[:original_event_uuid]}'): #{ActiveRecord::Base.connection_pool.stat}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find('#{event[:original_event_uuid]}'): #{Request.connection_pool.stat}")
     begin
       original_request = Request.find(event[:original_event_uuid]) #.as_json
     ensure
-      ActiveRecord::Base.clear_active_connections!
+      Request.connection_pool.flush!
+      Request.clear_active_connections!
     end
       
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find('#{event[:original_event_uuid]}'): #{ActiveRecord::Base.connection_pool.stat}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find('#{event[:original_event_uuid]}'): #{Request.connection_pool.stat}")
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
     original_request['status'] = event[:nsiState]
     original_request['error'] = event[:error] # Pol to add it
-    original_request.save
-    original_request.as_json
+    begin
+      original_request.save
+      original_request.as_json
+    ensure
+      Request.connection_pool.flush!
+      Request.clear_active_connections!
+    end
   end
   
   def self.notify_user(result)

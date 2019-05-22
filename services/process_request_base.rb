@@ -47,7 +47,7 @@ class ProcessRequestBase
     begin
       requests = Request.order(updated_at: :desc).limit(page_size).offset(page_number).as_json
     ensure
-      ActiveRecord::Base.clear_active_connections!
+      Request.clear_active_connections!
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"requests=#{requests}")
     requests
@@ -64,7 +64,7 @@ class ProcessRequestBase
     begin
       request = Request.find(uuid).as_json
     ensure
-      ActiveRecord::Base.clear_active_connections!
+      Request.clear_active_connections!
     end
     return request if request.empty?
     strategies[request[:request_type].to_sym].enrich_one(request)

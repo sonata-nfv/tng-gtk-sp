@@ -142,15 +142,14 @@ class ProcessRequestService < ProcessRequestBase
       params[:mapping] = params[:mapping].to_json if params.key?(:mapping)
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params=#{params}")
       instantiation_request = nil
-      ActiveRecord::Base.connection_pool.with_connection do
-        begin
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.create: #{ActiveRecord::Base.connection_pool.stat}")
-          instantiation_request = Request.create(params).as_json
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> After Request.create: #{ActiveRecord::Base.connection_pool.stat}")
-        ensure
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> No connections for Request.create: #{ActiveRecord::Base.connection_pool.stat}")
-          ActiveRecord::Base.clear_active_connections!
-        end
+      begin
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.create: #{Request.connection_pool.stat}")
+        instantiation_request = Request.create(params).as_json
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> After Request.create: #{Request.connection_pool.stat}")
+      ensure
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> No connections for Request.create: #{Request.connection_pool.stat}")
+        Request.connection_pool.flush!
+        Request.clear_active_connections!
       end
       unless instantiation_request
         LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Failled to create instantiation_request for service '#{params[:service_uuid]}'")
@@ -194,7 +193,8 @@ class ProcessRequestService < ProcessRequestBase
       begin
         termination_request = Request.create(params).as_json
       ensure
-        ActiveRecord::Base.clear_active_connections!
+        Request.connection_pool.flush!
+        Request.clear_active_connections!
       end
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"termination_request=#{termination_request}")
       unless termination_request
@@ -258,13 +258,14 @@ class ProcessRequestService < ProcessRequestBase
       return {error: "Instance UUID '#{params[:instance_uuid]}' is not valid"} 
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params[:instance_uuid] has a valid UUID...")
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.where: #{ActiveRecord::Base.connection_pool.stat}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.where: #{Request.connection_pool.stat}")
     begin
       request = Request.where(instance_uuid: params[:instance_uuid], request_type: 'CREATE_SERVICE').as_json
     ensure
-      ActiveRecord::Base.clear_active_connections!
+      Request.connection_pool.flush!
+      Request.clear_active_connections!
     end
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.where: #{ActiveRecord::Base.connection_pool.stat}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.where: #{Request.connection_pool.stat}")
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request=#{request}")
     if request.is_a?(Array)
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request is an array, chosen #{request[0]}")

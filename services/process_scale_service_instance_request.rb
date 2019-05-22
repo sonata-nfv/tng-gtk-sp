@@ -63,7 +63,7 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     begin
       scaling_request = Request.create(completed_params).as_json
     ensure
-      ActiveRecord::Base.clear_active_connections!
+      Request.clear_active_connections!
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"scaling_request=#{scaling_request} (class #{scaling_request.class})")
     unless scaling_request
