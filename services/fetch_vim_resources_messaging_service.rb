@@ -65,7 +65,7 @@ class FetchVimResourcesMessagingService
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_list: #{parsed_payload['vim_list']}")
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"nep_list: #{parsed_payload['nep_list']}")
           begin
-            vim_request = SliceVimResourcesRequest.find(properties[:correlation_id])
+            vim_request = SliceVimResourcesRequest.find_by(id: properties[:correlation_id])
             LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_request=#{vim_request.inspect} (class #{vim_request.class})")
             if vim_request
               vim_request['vim_list'] = parsed_payload['vim_list'].to_json
@@ -77,6 +77,9 @@ class FetchVimResourcesMessagingService
             end
           rescue Exception => e
             LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"vims_request_error: #{e.message} #{e.backtrace.inspect} ")
+          ensure
+            InfrastructureRequest.connection_pool.flush!
+            InfrastructureRequest.clear_active_connections!
           end
         end
       end

@@ -177,10 +177,8 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
 
       event_data[:original_event_uuid] = params[:request_uuid]
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event_data=#{event_data}")
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.find: #{Request.connection_pool.stat}")
       begin
         original_request = Request.find_by(id: params[:request_uuid])
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.find: #{Request.connection_pool.stat}")
       rescue Exception => e
 			  Request.clear_active_connections!
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:e.message, status: '404')

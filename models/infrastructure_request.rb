@@ -68,6 +68,7 @@ class InfrastructureRequest < ActiveRecord::Base
       super
     rescue ActiveRecord::RecordNotFound => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record #{arg} wasn't found")
+      nil
     ensure
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"before clear=#{InfrastructureRequest.connection_pool.stat}")
       InfrastructureRequest.connection_pool.flush!

@@ -46,8 +46,6 @@ class Request < ActiveRecord::Base
     checkout_timeout: 30,
     encoding: 'unicode'
   )
-  STDERR.puts ">>> Request.configurations= #{Request.configurations}"
-  STDERR.puts ">>> Request.connection_pool.stat=#{Request.connection_pool.stat}"
   serialize :mapping
   
   def vim_from_json

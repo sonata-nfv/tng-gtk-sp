@@ -135,11 +135,9 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   def self.save_result(event)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find(#{event[:original_event_uuid]}): #{Request.connection_pool.stat}")
-    #Request.with_connection do
-        # your code here
-    #  end
+
     begin
-      original_request = Request.find(event[:original_event_uuid]) #.as_json
+      original_request = Request.find(event[:original_event_uuid])
     ensure
       Request.connection_pool.flush!
       Request.clear_active_connections!

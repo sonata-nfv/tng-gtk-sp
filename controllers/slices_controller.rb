@@ -47,10 +47,6 @@ NUMBER_OF_ITERATIONS = 40
 
 class SlicesController < Tng::Gtk::Utils::ApplicationController
   set :database_file, 'config/database.yml'
-  LOGGER.debug(component:LOGGED_COMPONENT, operation:'SlicesController', message:">>> SliceNetworksCreationRequest.configurations=:#{SliceNetworksCreationRequest.configurations}")
-  LOGGER.debug(component:LOGGED_COMPONENT, operation:'SlicesController', message:">>> SliceNetworksCreationRequest.connection_pool.stat=#{SliceNetworksCreationRequest.connection_pool.stat}")
-  
-  
   LOGGER=Tng::Gtk::Utils::Logger
   LOGGED_COMPONENT=self.name
 
