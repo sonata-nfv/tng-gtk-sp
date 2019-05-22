@@ -69,6 +69,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       begin
         termination_request = Request.create(enriched_params)
       ensure
+        Request.connection_pool.flush!        
         Request.clear_active_connections!
       end
         
@@ -90,7 +91,12 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       else
         termination_request['status'] = request[:'nsi-status']
       end
-      termination_request.save
+      begin
+        termination_request.save
+      ensure
+        Request.connection_pool.flush!        
+        Request.clear_active_connections!
+      end      
       return termination_request.as_json
     rescue StandardError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
@@ -124,6 +130,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     begin
       original_request = Request.find(event[:original_event_uuid]) #.as_json
     ensure
+      Request.connection_pool.flush!
       Request.clear_active_connections!
     end
       
@@ -131,8 +138,13 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
     original_request['status'] = event[:nsiState]
     original_request['error'] = event[:error] # Pol to add it
-    original_request.save
-    original_request.as_json
+    begin
+      original_request.save
+      original_request.as_json
+    ensure
+      Request.connection_pool.flush!
+      Request.clear_active_connections!
+    end
   end
   
   def self.notify_user(result)

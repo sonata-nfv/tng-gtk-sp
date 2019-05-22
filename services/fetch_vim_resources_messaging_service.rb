@@ -38,7 +38,7 @@ require 'bunny'
 require 'tng/gtk/utils/logger'
 require_relative './messaging_service'
 
-class FetchVimResourcesMessagingService  
+class FetchVimResourcesMessagingService
   LOGGER=Tng::Gtk::Utils::Logger
   LOGGED_COMPONENT=self.name
   QUEUE_NAME = 'infrastructure.management.compute.list'
@@ -71,7 +71,12 @@ class FetchVimResourcesMessagingService
               vim_request['vim_list'] = parsed_payload['vim_list'].to_json
               vim_request['nep_list'] = parsed_payload['nep_list'].to_json
               vim_request['status'] = 'COMPLETED'
-              vim_request.save
+              begin
+                vim_request.save
+              ensure
+                SliceVimResourcesRequest.connection_pool.flush!
+                SliceVimResourcesRequest.clear_active_connections!
+              end
             else
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Couldn't find VIMs request for id=#{properties[:correlation_id]}")
             end
@@ -84,6 +89,5 @@ class FetchVimResourcesMessagingService
     @@message_service.publish('', vims_request.id)
   end
 end
-
 
 

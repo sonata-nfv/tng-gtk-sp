@@ -66,6 +66,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       begin
         instantiation_request = Request.create(params)
       ensure
+        Request.connection_pool.flush!
         Request.clear_active_connections!
       end
       
@@ -94,7 +95,12 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       else
         instantiation_request['status'] = request[:"nsi-status"]
       end
-      instantiation_request.save
+      begin
+        instantiation_request.save
+      ensure
+        Request.connection_pool.flush!
+        Request.clear_active_connections!
+      end
       return instantiation_request.as_json
     rescue StandardError => e
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} (#{e.class}):#{e.backtrace.split('\n\t')}")
@@ -130,6 +136,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     begin
       original_request = Request.find(event[:original_event_uuid]) #.as_json
     ensure
+      Request.connection_pool.flush!
       Request.clear_active_connections!
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find(#{event[:original_event_uuid]}): #{Request.connection_pool.stat}")
@@ -137,7 +144,12 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     #body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
     #original_request['status'] = body[:status]
     original_request['status'] = event[:status]
-    original_request.save
+    begin
+      original_request.save
+    ensure
+      Request.connection_pool.flush!
+      Request.clear_active_connections!
+    end    
     [original_request.as_json, event[:callback]]
   end
   
