@@ -71,8 +71,8 @@ class InfrastructureRequest < ActiveRecord::Base
     rescue ActiveRecord::RecordInvalid  => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record #{self.inspect} isn't valid")
     ensure
-      self.connection_pool.flush!
-      self.clear_active_connections!
+      self.class.connection_pool.flush!
+      self.class.clear_active_connections!
     end
   end
 end
