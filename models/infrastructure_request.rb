@@ -35,33 +35,46 @@ require 'sinatra/activerecord'
 require 'tng/gtk/utils/logger'
 require_relative '../services/messaging_service'
 
-#LOGGER=Tng::Gtk::Utils::Logger
-
 class InfrastructureRequest < ActiveRecord::Base
-   serialize :vim_list
-   serialize :nep_list
-   self.establish_connection(
-     adapter:  "postgresql",
-     host:     ENV.fetch('DATABASE_HOST','son-postgres'),
-     port:     ENV.fetch('DATABASE_PORT', 5432),
-     username: ENV.fetch('POSTGRES_USER', 'postgres'),
-     password: ENV.fetch('POSTGRES_PASSWORD', 'sonatatest'),
-     database: ENV.fetch('DATABASE_NAME', 'gatekeeper'),
-     pool:     64,
-     timeout:  10000,
-     encoding: 'unicode'
-   )
-   STDERR.puts ">>> InfrastructureRequest is Connected to #{self.connection.current_database}"
-   STDERR.puts ">>> InfrastructureRequest.configurations=:#{InfrastructureRequest.configurations}"
-   STDERR.puts ">>> InfrastructureRequest.connection_pool.stat=#{InfrastructureRequest.connection_pool.stat}"
-   def vim_from_json
-     begin
-       JSON.parse self[:vim_list]
-     rescue
-       []
-     end
-   end
-
+  LOGGER=Tng::Gtk::Utils::Logger
+  LOGGED_COMPONENT=self.name
+  serialize :vim_list
+  serialize :nep_list
+  self.establish_connection(
+    adapter:  "postgresql",
+    host:     ENV.fetch('DATABASE_HOST','son-postgres'),
+    port:     ENV.fetch('DATABASE_PORT', 5432),
+    username: ENV.fetch('POSTGRES_USER', 'postgres'),
+    password: ENV.fetch('POSTGRES_PASSWORD', 'sonatatest'),
+    database: ENV.fetch('DATABASE_NAME', 'gatekeeper'),
+    pool:     64,
+    timeout:  10000,
+    encoding: 'unicode'
+  )
+  STDERR.puts ">>> InfrastructureRequest is Connected to #{self.connection.current_database}"
+  STDERR.puts ">>> InfrastructureRequest.configurations=:#{InfrastructureRequest.configurations}"
+  STDERR.puts ">>> InfrastructureRequest.connection_pool.stat=#{InfrastructureRequest.connection_pool.stat}"
+  def vim_from_json
+    begin
+      JSON.parse self[:vim_list]
+    rescue
+      []
+    end
+  end
+  
+  def save!
+    msg='#'+__method__.to_s
+    begin
+      super
+    rescue ActiveRecord::RecordNotSaved => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record #{self.inspect} wasn't saved")
+    rescue ActiveRecord::RecordInvalid  => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record #{self.inspect} isn't valid")
+    ensure
+      self.connection_pool.flush!
+      self.clear_active_connections!
+    end
+  end
 end
 
 class SliceVimResourcesRequest < InfrastructureRequest

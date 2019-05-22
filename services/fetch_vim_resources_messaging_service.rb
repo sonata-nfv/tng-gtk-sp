@@ -71,12 +71,16 @@ class FetchVimResourcesMessagingService
               vim_request['vim_list'] = parsed_payload['vim_list'].to_json
               vim_request['nep_list'] = parsed_payload['nep_list'].to_json
               vim_request['status'] = 'COMPLETED'
-              begin
-                vim_request.save
-              ensure
-                SliceVimResourcesRequest.connection_pool.flush!
-                SliceVimResourcesRequest.clear_active_connections!
-              end
+              #begin
+                vim_request.save!
+                #rescue ActiveRecord::RecordNotSaved => e
+                #LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record vim_request=#{vim_request.inspect} wasn't saved")
+                #rescue ActiveRecord::RecordInvalid  => e
+                #LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record vim_request=#{vim_request.inspect} isn't valid")
+                #ensure
+                #SliceVimResourcesRequest.connection_pool.flush!
+                #SliceVimResourcesRequest.clear_active_connections!
+                #end
             else
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Couldn't find VIMs request for id=#{properties[:correlation_id]}")
             end
