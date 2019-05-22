@@ -103,11 +103,9 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     times = NUMBER_OF_ITERATIONS
     result = nil
     loop do
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> [#{times}] Before SliceNetworksCreationRequest.find: #{SliceNetworksCreationRequest.connection_pool.stat}")
       result = SliceNetworksCreationRequest.find network_creation.id
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> [#{times}] After SliceNetworksCreationRequest.find: #{SliceNetworksCreationRequest.connection_pool.stat}")
       times -= 1
-      break if (times == 0 || result.status != '' || result.error != '')
+      break if (times == 0 || result.status == 'COMPLETED' || result.status == 'ERROR')
       sleep SLEEPING_TIME
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.as_json}")
@@ -137,7 +135,7 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     loop do
       result = SliceNetworksDeletionRequest.find network_deletion.id
       times -= 1
-      break if (times == 0 || result.status != '' || result.error != '')
+      break if (times == 0 || result.status == 'COMPLETED' || result.status == 'ERROR')
       sleep SLEEPING_TIME
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.inspect}")
