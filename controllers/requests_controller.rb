@@ -70,11 +70,15 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   }
 
   set :environments, %w(development test pre-int integration demo qualification staging)
-  register Sinatra::ActiveRecordExtension
-  
-  after  {ActiveRecord::Base.clear_reloadable_connections!}
-  # after  {ActiveRecord::Base.clear_all_connections!}
 
+  register Sinatra::ActiveRecordExtension
+
+  LOGGER.debug(component:LOGGED_COMPONENT, operation:"msg", message:"active_connection='#{Request.connection_pool.stat}'")
+  after { Request.connection_pool.flush!
+          Request.clear_active_connections!
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:"msg", message:"active_connection='#{Request.connection_pool.stat}'")
+        }
+  
   # Accept service instantiation requests
   post '/?' do
     msg='.'+__method__.to_s
@@ -121,7 +125,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
       end
       halt_with_code_body(200, single_request.to_json)
     rescue Exception => e
-			ActiveRecord::Base.clear_active_connections!
+			Request.clear_active_connections!
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:e.message, status: '404')
       halt_with_code_body(404, {error: e.message}.to_json)
       raise
@@ -147,8 +151,8 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:'[]', status: '200')
       halt 200, '[]'
     rescue Exception => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Exception caught, ActiveRecord::Base.clear_active_connections!\n#{e.message}\n#{e.backtrace.join("\n\t")}", status: '500')
-			ActiveRecord::Base.clear_active_connections!
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Exception caught, Request.clear_active_connections!\n#{e.message}\n#{e.backtrace.join("\n\t")}", status: '500')
+			Request.clear_active_connections!
       raise
     end
   end
@@ -173,12 +177,12 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
 
       event_data[:original_event_uuid] = params[:request_uuid]
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"event_data=#{event_data}")
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.find: #{ActiveRecord::Base.connection_pool.stat}")
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.find: #{Request.connection_pool.stat}")
       begin
         original_request = Request.find_by(id: params[:request_uuid])
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.find: #{ActiveRecord::Base.connection_pool.stat}")
+        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.find: #{Request.connection_pool.stat}")
       rescue Exception => e
-			  ActiveRecord::Base.clear_active_connections!
+			  Request.clear_active_connections!
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:e.message, status: '404')
         halt_with_code_body(404, {error: e.message}.to_json)
       end

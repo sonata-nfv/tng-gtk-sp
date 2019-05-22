@@ -105,7 +105,7 @@ class MessagePublishingService
             begin
               request = Request.find(properties[:correlation_id])
             ensure
-              ActiveRecord::Base.clear_active_connections!
+              Request.clear_active_connections!
             end
             
             unless request
@@ -170,7 +170,7 @@ class MessagePublishingService
             begin
               request = Request.find(properties[:correlation_id])
             ensure
-              ActiveRecord::Base.clear_active_connections!
+              Request.clear_active_connections!
             end
             
             unless request
@@ -213,7 +213,7 @@ class MessagePublishingService
             begin
               request = Request.find(properties[:correlation_id])
             ensure
-              ActiveRecord::Base.clear_active_connections!
+              Request.clear_active_connections!
             end
             
             unless request

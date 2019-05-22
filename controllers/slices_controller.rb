@@ -47,8 +47,8 @@ NUMBER_OF_ITERATIONS = 40
 
 class SlicesController < Tng::Gtk::Utils::ApplicationController
   set :database_file, 'config/database.yml'
-  LOGGER.debug(component:LOGGED_COMPONENT, operation:'SlicesController', message:">>> ActiveRecord::Base.configurations=:#{ActiveRecord::Base.configurations}")
-  LOGGER.debug(component:LOGGED_COMPONENT, operation:'SlicesController', message:">>> ActiveRecord::Base.connection_pool.stat=#{ActiveRecord::Base.connection_pool.stat}")
+  LOGGER.debug(component:LOGGED_COMPONENT, operation:'SlicesController', message:">>> SliceNetworksCreationRequest.configurations=:#{SliceNetworksCreationRequest.configurations}")
+  LOGGER.debug(component:LOGGED_COMPONENT, operation:'SlicesController', message:">>> SliceNetworksCreationRequest.connection_pool.stat=#{SliceNetworksCreationRequest.connection_pool.stat}")
   
   
   LOGGER=Tng::Gtk::Utils::Logger
@@ -107,9 +107,9 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     times = NUMBER_OF_ITERATIONS
     result = nil
     loop do
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> [#{times}] Before SliceNetworksCreationRequest.find: #{ActiveRecord::Base.connection_pool.stat}")
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> [#{times}] Before SliceNetworksCreationRequest.find: #{SliceNetworksCreationRequest.connection_pool.stat}")
       result = SliceNetworksCreationRequest.find network_creation.id
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> [#{times}] After SliceNetworksCreationRequest.find: #{ActiveRecord::Base.connection_pool.stat}")
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> [#{times}] After SliceNetworksCreationRequest.find: #{SliceNetworksCreationRequest.connection_pool.stat}")
       times -= 1
       break if (times == 0 || result.status != '' || result.error != '')
       sleep SLEEPING_TIME
