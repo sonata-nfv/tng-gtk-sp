@@ -34,6 +34,7 @@ require 'sinatra'
 require 'json'
 require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/application_controller'
+require_relative '../services/process_placement_policy_service'
 
 class PoliciesController < Tng::Gtk::Utils::ApplicationController
   LOGGER=Tng::Gtk::Utils::Logger
