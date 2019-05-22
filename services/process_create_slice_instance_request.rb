@@ -88,13 +88,18 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params=#{enriched_params}")
       request = create_slice(enriched_params)
+      unless request 
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to create slice instance for slice template '#{params[:nstId]}'")
+        return {error: "Failled to create slice instance for slice template '#{params[:service_uuid]}'"}
+      end
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
-      if (request && request.is_a?(Hash) && request.key?(:error))
+      if (request.is_a?(Hash) && request.key?(:error))
         instantiation_request['status'] = 'ERROR'
         instantiation_request['error'] = request[:error]
       else
         instantiation_request['status'] = request[:"nsi-status"]
       end
+
       begin
         instantiation_request.save
       ensure
