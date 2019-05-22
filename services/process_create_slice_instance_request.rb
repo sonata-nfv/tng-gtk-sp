@@ -235,7 +235,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       end
     rescue Exception => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message}")
+      return {error: "Creating the slice: #{e.message}\n#{e.backtrace.join("\n\t")}"}
     end
-    nil
   end
 end
