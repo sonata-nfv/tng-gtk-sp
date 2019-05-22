@@ -66,8 +66,8 @@ class FetchVimResourcesMessagingService
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"nep_list: #{parsed_payload['nep_list']}")
           begin
             vim_request = SliceVimResourcesRequest.find(properties[:correlation_id])
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_request=#{vim_request.inspect} (class #{vim_request.class})")
             if vim_request
-              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_request=#{vim_request.inspect}")
               vim_request['vim_list'] = parsed_payload['vim_list'].to_json
               vim_request['nep_list'] = parsed_payload['nep_list'].to_json
               vim_request['status'] = 'COMPLETED'
