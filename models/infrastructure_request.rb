@@ -51,9 +51,9 @@ class InfrastructureRequest < ActiveRecord::Base
     timeout:  10000,
     encoding: 'unicode'
   )
-  STDERR.puts ">>> InfrastructureRequest is Connected to #{self.connection.current_database}"
-  STDERR.puts ">>> InfrastructureRequest.configurations=:#{InfrastructureRequest.configurations}"
-  STDERR.puts ">>> InfrastructureRequest.connection_pool.stat=#{InfrastructureRequest.connection_pool.stat}"
+  LOGGER.debug(component:LOGGED_COMPONENT, operation:'initializing', message:"configurations=#{InfrastructureRequest.configurations}")
+  LOGGER.debug(component:LOGGED_COMPONENT, operation:'initializing', message:"connection_pool.stat=#{InfrastructureRequest.connection_pool.stat}")
+
   def vim_from_json
     begin
       JSON.parse self[:vim_list]
@@ -62,6 +62,20 @@ class InfrastructureRequest < ActiveRecord::Base
     end
   end
   
+  def self.find(arg)
+    msg='.'+__method__.to_s
+    begin
+      super
+    rescue ActiveRecord::RecordNotFound => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record #{arg} wasn't found")
+    ensure
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"before clear=#{InfrastructureRequest.connection_pool.stat}")
+      InfrastructureRequest.connection_pool.flush!
+      InfrastructureRequest.clear_active_connections!
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"after clear=#{InfrastructureRequest.connection_pool.stat}")
+    end
+  end
+
   def save!
     msg='#'+__method__.to_s
     begin
@@ -71,8 +85,10 @@ class InfrastructureRequest < ActiveRecord::Base
     rescue ActiveRecord::RecordInvalid  => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record #{self.inspect} isn't valid")
     ensure
-      self.class.connection_pool.flush!
-      self.class.clear_active_connections!
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"before clear=#{InfrastructureRequest.connection_pool.stat}")
+      InfrastructureRequest.connection_pool.flush!
+      InfrastructureRequest.clear_active_connections!
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"after clear=#{InfrastructureRequest.connection_pool.stat}")
     end
   end
 end

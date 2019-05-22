@@ -65,22 +65,13 @@ class FetchVimResourcesMessagingService
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_list: #{parsed_payload['vim_list']}")
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"nep_list: #{parsed_payload['nep_list']}")
           begin
-            vim_request = SliceVimResourcesRequest.find_by(id: vims_request.id) #properties[:correlation_id])
+            vim_request = SliceVimResourcesRequest.find(vims_request.id) #properties[:correlation_id])
             if vim_request
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"vim_request=#{vim_request.inspect}")
               vim_request['vim_list'] = parsed_payload['vim_list'].to_json
               vim_request['nep_list'] = parsed_payload['nep_list'].to_json
               vim_request['status'] = 'COMPLETED'
-              #begin
-                vim_request.save!
-                #rescue ActiveRecord::RecordNotSaved => e
-                #LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record vim_request=#{vim_request.inspect} wasn't saved")
-                #rescue ActiveRecord::RecordInvalid  => e
-                #LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record vim_request=#{vim_request.inspect} isn't valid")
-                #ensure
-                #SliceVimResourcesRequest.connection_pool.flush!
-                #SliceVimResourcesRequest.clear_active_connections!
-                #end
+              vim_request.save!
             else
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Couldn't find VIMs request for id=#{properties[:correlation_id]}")
             end
