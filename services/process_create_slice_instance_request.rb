@@ -91,7 +91,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request=#{request}")
       if (request && request.is_a?(Hash) && request.key?(:error))
         instantiation_request['status'] = 'ERROR'
-        instantiation_request['error'] = request[:errorLog]
+        instantiation_request['error'] = request[:error]
       else
         instantiation_request['status'] = request[:"nsi-status"]
       end
