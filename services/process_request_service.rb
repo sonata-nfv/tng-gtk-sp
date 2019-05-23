@@ -258,14 +258,12 @@ class ProcessRequestService < ProcessRequestBase
       return {error: "Instance UUID '#{params[:instance_uuid]}' is not valid"} 
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params[:instance_uuid] has a valid UUID...")
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.where: #{Request.connection_pool.stat}")
     begin
       request = Request.where(instance_uuid: params[:instance_uuid], request_type: 'CREATE_SERVICE').as_json
     ensure
       Request.connection_pool.flush!
       Request.clear_active_connections!
     end
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.where: #{Request.connection_pool.stat}")
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request=#{request}")
     if request.is_a?(Array)
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"request is an array, chosen #{request[0]}")
