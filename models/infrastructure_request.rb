@@ -70,10 +70,8 @@ class InfrastructureRequest < ActiveRecord::Base
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Record #{arg} wasn't found")
       nil
     ensure
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"before clear=#{InfrastructureRequest.connection_pool.stat}")
       InfrastructureRequest.connection_pool.flush!
       InfrastructureRequest.clear_active_connections!
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"after clear=#{InfrastructureRequest.connection_pool.stat}")
     end
   end
 
