@@ -69,7 +69,7 @@ class FetchServiceRecordsService < Tng::Gtk::Utils::Fetch
     msg=self.name+'#'+__method__.to_s
     request = Request.where("instance_uuid = ? AND request_type = 'CREATE_SERVICE'", record[:uuid]).as_json
     return record if request.empty?
-    record[:instance_name] = request[0]['name']
+    record[:instance_name] = request[0][:name]
     record
   end
 end
