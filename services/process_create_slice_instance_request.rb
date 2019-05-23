@@ -61,8 +61,6 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
         return valid
       end
       params[:service_uuid] = params.delete(:nst_id)
-      STDERR.puts ">>>>> Request.configurations=:#{Request.configurations}"
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.create(#{params}): #{Request.connection_pool.stat}")
       begin
         instantiation_request = Request.create(params)
       ensure
@@ -70,7 +68,6 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
         Request.clear_active_connections!
       end
       
-      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.create(#{params}): #{Request.connection_pool.stat}")
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"instantiation_request=#{instantiation_request.inspect}")
       unless instantiation_request
         LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to create instantiation_request for slice template '#{params[:nstId]}'")
@@ -134,7 +131,6 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   private  
   def self.save_result(event)
     msg='.'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"before Request.find(#{event[:original_event_uuid]}): #{Request.connection_pool.stat}")
 
     begin
       original_request = Request.find(event[:original_event_uuid])
@@ -142,7 +138,6 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       Request.connection_pool.flush!
       Request.clear_active_connections!
     end
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"after Request.find(#{event[:original_event_uuid]}): #{Request.connection_pool.stat}")
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
     #body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
     #original_request['status'] = body[:status]
