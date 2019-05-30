@@ -47,6 +47,9 @@ class Request < ActiveRecord::Base
     encoding: 'unicode'
   )
   serialize :mapping
+  serialize :blacklist
+  serialize :egresses
+  serialize :ingresses
   
   def vim_from_json
     begin
@@ -66,7 +69,7 @@ class Request < ActiveRecord::Base
   
   def as_json
     {
-        blacklist: self[:blacklist],
+        blacklist: from_json(self[:blacklist]),
         callback: self[:callback],
         created_at: self[:created_at],
         vim_list: vim_from_json,
@@ -74,12 +77,12 @@ class Request < ActiveRecord::Base
         customer_name: self[:customer_name],
         description: self[:description],
         duration: self[:duration],
-        egresses: self[:egresses],
+        egresses: from_json(self[:egresses]),
         error: self[:error],
         flavor: self[:flavor],
         function_uuids: self[:function_uuids],
         id: self[:id],
-        ingresses: self[:ingresses],
+        ingresses: from_json(self[:ingresses]),
         instance_uuid: self[:instance_uuid],
         mapping: from_json(self[:mapping]),
         name: self[:name],
