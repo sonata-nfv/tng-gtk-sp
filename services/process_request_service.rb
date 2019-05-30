@@ -138,7 +138,10 @@ class ProcessRequestService < ProcessRequestBase
       
       params[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], params[:sla_id]) unless invalid_sla_id?(params[:sla_id]) 
       
-      # mapping is stored in JSON
+      # blacklist, ingresses, egresses and mapping are stored in JSON
+      params[:blacklist] = params[:blacklist].to_json if params.key?(:blacklist)
+      params[:ingresses] = params[:ingresses].to_json if params.key?(:ingresses)
+      params[:egresses] = params[:egresses].to_json if params.key?(:egresses)
       params[:mapping] = params[:mapping].to_json if params.key?(:mapping)
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params=#{params}")
       instantiation_request = nil
@@ -222,15 +225,15 @@ class ProcessRequestService < ProcessRequestBase
       vnfd[:uuid] = functions[index][:uuid]
       message["VNFD#{index}"]=vnfd 
     end
-    message['egresses'] = egresses
-    message['ingresses'] = ingresses
-    message['blacklist'] = blacklist
     message['user_data'] = user_data
     message['flavor'] = flavor
     begin
+      message['blacklist'] = JSON.parse(blacklist) if blacklist
+      message['egresses'] = JSON.parse(egresses) if egresses
+      message['ingresses'] = JSON.parse(ingresses) if ingresses
       message['mapping'] = JSON.parse(mapping) if mapping
     rescue JSON::ParserError => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing mapping: '#{mapping}'")
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing blacklist ('#{blacklist}'), egresses ('#{egresses}'), ingresses ('#{ingresses}'), or mapping ('#{mapping}')")
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"message=#{message}")
     recursive_stringify_keys(message).to_yaml.to_s
