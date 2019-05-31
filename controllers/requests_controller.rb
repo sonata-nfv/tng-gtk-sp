@@ -168,7 +168,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   # Callback for the tng-slice-mngr to notify the result of processing
   post '/:request_uuid/on-change/?' do
     msg='.'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered, request_uuid=#{params[:request_uuid]}, params=#{params}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered, request_uuid=#{params[:request_uuid]}")
     
     begin
       body = request.body.read
@@ -264,8 +264,8 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     
     body = JSON.parse(json_body, quirks_mode: true, symbolize_names: true).deep_symbolize_keys
     body[:request_type] = 'CREATE_SERVICE' unless body.key?(:request_type)
-    body[:customer_name] = request.env.fetch('5gtango.user.name', '')
-    body[:customer_email] = request.env.fetch('5gtango.user.email', '')
+    body[:customer_name] = request.env.fetch('HTTP_X_USER_NAME', '')
+    body[:customer_email] = request.env.fetch('HTTP_X_USER_EMAIL', '')
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
     body
   end
