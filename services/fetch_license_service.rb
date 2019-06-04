@@ -36,33 +36,61 @@ require 'json'
 require 'tng/gtk/utils/logger'
 require 'tng/gtk/utils/fetch'
 
-class FetchFlavourFromSLAService < Tng::Gtk::Utils::Fetch
+class FetchLicenseService < Tng::Gtk::Utils::Fetch
   SLA_MNGR_URL = ENV.fetch('SLA_MNGR_URL', '')
   NO_SLA_MNGR_URL_DEFINED_ERROR='The SLA_MNGR_URL ENV variable needs to defined and pointing to the SLA Manager'  
   if SLA_MNGR_URL == ''
-    LOGGER.error(component:'FetchFlavourFromSLAService', operation:'fetching SLA_MNGR_URL ENV variable', message:NO_SLA_MNGR_URL_DEFINED_ERROR)
+    LOGGER.error(component:'FetchLicenseService', operation:'fetching SLA_MNGR_URL ENV variable', message:NO_SLA_MNGR_URL_DEFINED_ERROR)
     raise ArgumentError.new(NO_SLA_MNGR_URL_DEFINED_ERROR) 
   end  
-  self.site=SLA_MNGR_URL+'/mgmt/deploymentflavours'
-  LOGGER.info(component:self.name, operation:'site definition', message:"self.site=#{self.site}")
+  # curl GET http://localhost:8080/tng-sla-mgmt/api/slas/v1/licenses/status/{sla_uuid}/{ns_uuid}
+  self.site=SLA_MNGR_URL+'/licenses'
   def self.call(service_uuid, sla_uuid)
     msg=self.name+'#'+__method__.to_s
     began_at=Time.now.utc
-    LOGGER.info(start_stop: 'START', component:self.name, operation:msg, message:"service_uuid=#{service_uuid} sla_uuid=#{sla_uuid}")
-    #curl -v -H "Content-type:application/json" http://int-sp-ath.5gtango.eu:8080/tng-sla-mgmt/api/slas/v1/mgmt/deploymentflavours/{nsd_uuid}/{sla_uuid}
+    LOGGER.info(start_stop: 'START', component:self.name, operation:msg, message:"Checking license status: service_uuid=#{service_uuid} sla_uuid=#{sla_uuid}")
     
-    uri = URI.parse("#{self.site}/#{service_uuid}/#{sla_uuid}")
+    uri = URI.parse("#{self.site}/status/#{sla_uuid}/#{service_uuid}")
     request = Net::HTTP::Get.new(uri)
     request['content-type'] = 'application/json'
     response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
     LOGGER.debug(component:self.name, operation:msg, message:"response=#{response.inspect}")
     case response
     when Net::HTTPSuccess
+      #{ "current_instances": "0", "allowed_instances": "20", "allowed_to_instantiate": "false",
+      #  "license_type": "private", "license_status": "test", "license_expiration_date": "2020-12-01T00:00:00Z"}
       body = response.read_body
-      LOGGER.debug(component:self.name, operation:msg, message:"body=#{body}", status: '200')
-      result = JSON.parse(body, quirks_mode: true, symbolize_names: true)
-      LOGGER.debug(start_stop: 'STOP', component:self.name, operation:msg, message:"result=#{result} site=#{self.site}", time_elapsed: Time.now.utc - began_at)
-      return result[:d_flavour_name]
+      return JSON.parse(body, quirks_mode: true, symbolize_names: true)
+    when Net::HTTPNotFound
+      LOGGER.debug(start_stop: 'STOP', component:self.name, operation:msg, message:"body=#{body}", status:'404', time_elapsed: Time.now.utc - began_at)
+      return ''
+    else
+      LOGGER.error(start_stop: 'STOP', component:self.name, operation:msg, message:"#{response.message}", status:'404', time_elapsed: Time.now.utc - began_at)
+      return nil
+    end
+  end
+  def self.buy(service_uuid, sla_uuid, license)
+    msg=self.name+'#'+__method__.to_s
+    began_at=Time.now.utc
+    LOGGER.info(start_stop: 'START', component:self.name, operation:msg, message:"Buying license: service_uuid=#{service_uuid} sla_uuid=#{sla_uuid}")
+    # curl -X POST -H "Content-type:application/x-www-form-urlencoded" -d "ns_uuid=<>&sla_uuid=<>&license_type=<>&license_exp_date=<>&license_period=<>&allowed_instances=<>" http://localhost:8080/tng-sla-mgmt/api/slas/v1/licenses/buy
+    #{ "current_instances": "0", "allowed_instances": "20", "allowed_to_instantiate": "false",
+    #  "license_type": "private", "license_status": "test", "license_expiration_date": "2020-12-01T00:00:00Z"}
+    uri = URI.parse("#{self.site}/buy")
+    request = Net::HTTP::Post.new(uri) #url.path
+    #request['content-type'] = 'application/x-www-form-urlencoded'
+    data = {
+      ns_uuid: service_uuid, sla_uuid: sla_uuid, 
+      license_type: license[:license_type], license_exp_date: license[:license_expiration_date], 
+      license_period: license[:license_expiration_date], allowed_instances: license[:allowed_instances]
+    }
+    request.set_form_data(data.to_json)
+    response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
+    LOGGER.debug(component:self.name, operation:msg, message:"response=#{response.inspect}")
+    case response
+    when Net::HTTPSuccess
+      body = response.read_body
+      return JSON.parse(body, quirks_mode: true, symbolize_names: true)
     when Net::HTTPNotFound
       LOGGER.debug(start_stop: 'STOP', component:self.name, operation:msg, message:"body=#{body}", status:'404', time_elapsed: Time.now.utc - began_at)
       return ''
