@@ -39,6 +39,7 @@ require_relative './fetch_nsd_service'
 require_relative './fetch_vnfds_service'
 require_relative './fetch_service_records_service'
 require_relative './fetch_flavour_from_sla_service'
+require_relative './fetch_license_service'
 require_relative './message_publishing_service'
 require_relative '../models/request'
 require_relative './process_request_base'
@@ -136,7 +137,25 @@ class ProcessRequestService < ProcessRequestBase
       end
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params[:sla_id]=#{params[:sla_id]} (class #{params[:sla_id].class})")
       
-      params[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], params[:sla_id]) unless invalid_sla_id?(params[:sla_id]) 
+      unless invalid_sla_id?(params[:sla_id])
+        #{ "current_instances": "0", "allowed_instances": "20", "allowed_to_instantiate": "false",
+        #  "license_type": "private", "license_status": "test", "license_expiration_date": "2020-12-01T00:00:00Z"}
+        license = FetchLicenseService.call(params[:service_uuid], params[:sla_id])
+        return license if (license == nil || license == '')
+        unless license[:allowed_to_instantiate]
+          case license[:license_type]
+          when 'private'
+            bought_license = FetchLicenseService.buy(params[:service_uuid], params[:sla_id], license)
+          when 'public', 'trial'
+            LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Instantiation not allowed for service '#{params[:service_uuid]}' and SLA '#{params[:sla_id]}'. NS instances reached the maximum allowed number")
+            return {error: "Instantiation not allowed for service '#{params[:service_uuid]}' and SLA '#{params[:sla_id]}'. NS instances reached the maximum allowed number"}
+          else
+            LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"License type '#{license[:license_type]}' no supported")
+            return {error: "License type '#{license[:license_type]}' no supported"}
+          end
+        end
+        params[:flavor] = FetchFlavourFromSLAService.call(params[:service_uuid], params[:sla_id])  
+      end
       
       # blacklist, ingresses, egresses and mapping are stored in JSON
       params[:blacklist] = params[:blacklist].to_json if params.key?(:blacklist)
@@ -146,9 +165,9 @@ class ProcessRequestService < ProcessRequestBase
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params=#{params}")
       instantiation_request = nil
       begin
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.create: #{Request.connection_pool.stat}")
+        #LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> Before Request.create: #{Request.connection_pool.stat}")
         instantiation_request = Request.create(params).as_json
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> After Request.create: #{Request.connection_pool.stat}")
+        #LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> After Request.create: #{Request.connection_pool.stat}")
       ensure
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>> No connections for Request.create: #{Request.connection_pool.stat}")
         Request.connection_pool.flush!
