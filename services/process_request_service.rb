@@ -142,7 +142,7 @@ class ProcessRequestService < ProcessRequestBase
         #  "license_type": "private", "license_status": "test", "license_expiration_date": "2020-12-01T00:00:00Z"}
         license = FetchLicenseService.call(params[:service_uuid], params[:sla_id])
         if (license == nil || license == '')
-          error = "License not found for service '#{params[:service_uuid]}' and SLA '#{params[:sla_id]}'")
+          error = "License not found for service '#{params[:service_uuid]}' and SLA '#{params[:sla_id]}'"
           LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:error)
           return {error: error}
         end
