@@ -149,7 +149,12 @@ class ProcessRequestService < ProcessRequestBase
         unless license[:allowed_to_instantiate]
           case license[:license_type]
           when 'private'
-            bought_license = FetchLicenseService.buy(params[:service_uuid], params[:sla_id], license)
+            bought_license = FetchLicenseService.buy(params[:service_uuid], params[:sla_id])
+            if (bought_license == nil || bought_license == '')
+              error = "Could not buy license for service '#{params[:service_uuid]}' and SLA '#{params[:sla_id]}'"
+              LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:error)
+              return {error: error}
+            end
           when 'public', 'trial'
             LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"Instantiation not allowed for service '#{params[:service_uuid]}' and SLA '#{params[:sla_id]}'. NS instances reached the maximum allowed number")
             return {error: "Instantiation not allowed for service '#{params[:service_uuid]}' and SLA '#{params[:sla_id]}'. NS instances reached the maximum allowed number"}
