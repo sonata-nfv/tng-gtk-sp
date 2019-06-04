@@ -86,15 +86,11 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     reject_non_json_content(request)
     begin
       json_body = complete_body(request)  
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"json_body='#{json_body}'")
       reject_unsupported_request_type(json_body[:request_type])
       saved_request = strategy(json_body[:request_type]).call(json_body)
-      reject_unsaved_requests(saved_request)
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"saved_request='#{saved_request.inspect}'")
-      
+      reject_unsaved_requests(saved_request)      
       reject_errored_saved_requests(saved_request)
       result = strategy(json_body[:request_type]).enrich_one(saved_request)
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}", status: '201')
       halt_with_code_body(201, result.to_json)
     rescue KeyError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Missing code to treat the '#{json_body[:request_type]}' request type", status: '404')

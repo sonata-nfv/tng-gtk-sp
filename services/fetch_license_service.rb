@@ -69,18 +69,13 @@ class FetchLicenseService < Tng::Gtk::Utils::Fetch
       return nil
     end
   end
-  def self.buy(service_uuid, sla_uuid, license)
+  def self.buy(service_uuid, sla_uuid)
     msg='#'+__method__.to_s
     began_at=Time.now.utc
     LOGGER.info(start_stop: 'START', component:self.name, operation:msg, message:"Buying license: service_uuid=#{service_uuid} sla_uuid=#{sla_uuid}")
-    # curl -X POST -H "Content-type:application/x-www-form-urlencoded" -d "ns_uuid=<>&sla_uuid=<>&license_type=<>&license_exp_date=<>&license_period=<>&allowed_instances=<>" http://localhost:8080/tng-sla-mgmt/api/slas/v1/licenses/buy
-    #{ "current_instances": "0", "allowed_instances": "20", "allowed_to_instantiate": "false",
-    #  "license_type": "private", "license_status": "test", "license_expiration_date": "2020-12-01T00:00:00Z"}
+    # curl -X POST -H "Content-type:application/x-www-form-urlencoded" -d "ns_uuid=<>&sla_uuid=<>" http://localhost:8080/tng-sla-mgmt/api/slas/v1/licenses/buy
     uri = URI.parse("#{self.site}/buy")
-    request = Net::HTTP::Post.new(uri) #url.path
-    #request['content-type'] = 'application/x-www-form-urlencoded'
-    response = Net::HTTP.post_form(uri, 'ns_uuid' => service_uuid, 'sla_uuid' => 'sla_uuid')
-    #response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
+    response = Net::HTTP.post_form(uri, 'ns_uuid' => service_uuid, 'sla_uuid' => sla_uuid)
     LOGGER.debug(component:self.name, operation:msg, message:"response=#{response.inspect}")
     case response
     when Net::HTTPSuccess
