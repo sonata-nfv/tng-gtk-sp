@@ -70,7 +70,7 @@ class FetchLicenseService < Tng::Gtk::Utils::Fetch
     end
   end
   def self.buy(service_uuid, sla_uuid, license)
-    msg=self.name+'#'+__method__.to_s
+    msg='#'+__method__.to_s
     began_at=Time.now.utc
     LOGGER.info(start_stop: 'START', component:self.name, operation:msg, message:"Buying license: service_uuid=#{service_uuid} sla_uuid=#{sla_uuid}")
     # curl -X POST -H "Content-type:application/x-www-form-urlencoded" -d "ns_uuid=<>&sla_uuid=<>&license_type=<>&license_exp_date=<>&license_period=<>&allowed_instances=<>" http://localhost:8080/tng-sla-mgmt/api/slas/v1/licenses/buy
