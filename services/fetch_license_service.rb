@@ -79,13 +79,8 @@ class FetchLicenseService < Tng::Gtk::Utils::Fetch
     uri = URI.parse("#{self.site}/buy")
     request = Net::HTTP::Post.new(uri) #url.path
     #request['content-type'] = 'application/x-www-form-urlencoded'
-    data = {
-      ns_uuid: service_uuid, sla_uuid: sla_uuid, 
-      license_type: license[:license_type], license_exp_date: license[:license_expiration_date], 
-      license_period: license[:license_expiration_date], allowed_instances: license[:allowed_instances]
-    }
-    request.set_form_data(data.to_json)
-    response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
+    response = Net::HTTP.post_form(uri, 'ns_uuid' => service_uuid, 'sla_uuid' => 'sla_uuid')
+    #response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
     LOGGER.debug(component:self.name, operation:msg, message:"response=#{response.inspect}")
     case response
     when Net::HTTPSuccess
