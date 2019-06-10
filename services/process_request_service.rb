@@ -106,6 +106,12 @@ class ProcessRequestService < ProcessRequestBase
     enriched[:service][:vendor] = service[:nsd][:vendor]
     enriched[:service][:name] = service[:nsd][:name]
     enriched[:service][:version] = service[:nsd][:version]
+    slas = FetchSLAsForService.call(uuid: service_uuid)
+    if (!slas || slas.empty?)
+      LOGGER.info(component:LOGGED_COMPONENT, operation: msg, message:"Network Service Descriptor '#{service_uuid}' does not have an SLA")
+      return recursive_symbolize_keys(request) 
+    end
+    enriched[:slas] = slas
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"enriched='#{enriched}'")
     recursive_symbolize_keys(enriched)
   end
