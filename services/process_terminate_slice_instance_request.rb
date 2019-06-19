@@ -131,7 +131,9 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
       
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
     original_request['status'] = event[:status]
-    original_request['error'] = event[:error] # Pol to add it
+    original_request['error'] = event[:error]
+    original_request['name'] = event[:name]
+    original_request['instance_uuid'] = event[:instance_uuid] 
     begin
       original_request.save
       original_request.as_json
