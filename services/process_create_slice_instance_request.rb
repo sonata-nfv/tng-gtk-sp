@@ -142,6 +142,8 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     #body = JSON.parse(request.body.read, quirks_mode: true, symbolize_names: true)
     #original_request['status'] = body[:status]
     original_request['status'] = event[:status]
+    original_request['name'] = event[:name]
+    original_request['instance_uuid'] = event[:instance_uuid] 
     begin
       original_request.save
     ensure
