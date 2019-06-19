@@ -110,7 +110,6 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     result = save_result(event)
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result=#{result}")
     notify_user(result) unless result[:callback].to_s.empty?
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"after notify user (#{result[:callback]})")
     result
   end
   
@@ -131,7 +130,7 @@ class ProcessTerminateSliceInstanceRequest < ProcessRequestBase
     end
       
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"original request = #{original_request.inspect}")
-    original_request['status'] = event[:nsiState]
+    original_request['status'] = event[:status]
     original_request['error'] = event[:error] # Pol to add it
     begin
       original_request.save
