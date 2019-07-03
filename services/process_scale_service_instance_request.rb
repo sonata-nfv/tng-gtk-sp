@@ -73,7 +73,7 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"scaling_request=#{scaling_request}")
     message = build_message(completed_params[:scaling_type], completed_params[:instance_uuid], completed_params[:vnfd_uuid], completed_params[:number_of_instances], completed_params[:vim_uuid])
     begin
-     published_response = MessagePublishingService.call(message, :scale_service, scaling_request['id'])
+     published_response = MessagePublishingService.call(message, :scale_service, scaling_request[:id])
      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"published_response=#{published_response}")
     rescue StandardError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation: msg, message:"(#{e.class}) #{e.message}\n#{e.backtrace.split('\n\t')}")
