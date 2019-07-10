@@ -269,7 +269,7 @@ class ProcessRequestService < ProcessRequestBase
       message['mapping'] = JSON.parse(mapping) if mapping
       message['params'] = JSON.parse(params) if params
     rescue JSON::ParserError => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing blacklist ('#{blacklist}'), egresses ('#{egresses}'), ingresses ('#{ingresses}'), or mapping ('#{mapping}')")
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing blacklist ('#{blacklist}'), egresses ('#{egresses}'), ingresses ('#{ingresses}'), mapping ('#{mapping}') or params ('#{params})")
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"message=#{message}")
     recursive_stringify_keys(message).to_yaml.to_s

@@ -50,6 +50,7 @@ class Request < ActiveRecord::Base
   serialize :blacklist
   serialize :egresses
   serialize :ingresses
+  serialize :params
   
   def vim_from_json
     begin
@@ -87,6 +88,7 @@ class Request < ActiveRecord::Base
         mapping: from_json(self[:mapping]),
         name: self[:name],
         number_of_instances: self[:number_of_instances],
+        params: from_json(self[:params]),
         request_type: self[:request_type],
         scaling_type: self[:scaling_type],
         service_uuid: self[:service_uuid],
