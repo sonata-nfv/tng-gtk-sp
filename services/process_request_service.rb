@@ -204,7 +204,7 @@ class ProcessRequestService < ProcessRequestBase
       user_data = complete_user_data(params[:customer_name], params[:customer_email], stored_service.fetch(:username, ''), params[:sla_id])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"user_data=#{user_data}")
 
-      message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], user_data, params[:flavor], params[:mapping])
+      message = build_message(stored_service, stored_functions, params[:egresses], params[:ingresses], params[:blacklist], user_data, params[:flavor], params[:mapping], params[:params])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"instantiation_request[:id]=#{instantiation_request[:id]}")
       published_response = MessagePublishingService.call(message, :create_service, instantiation_request[:id])
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"published_response=#{published_response}")
@@ -248,7 +248,7 @@ class ProcessRequestService < ProcessRequestBase
     termination_request
   end
   
-  def self.build_message(service, functions, egresses, ingresses, blacklist, user_data, flavor, mapping)
+  def self.build_message(service, functions, egresses, ingresses, blacklist, user_data, flavor, mapping, params)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"service=#{service}\nfunctions=#{functions}")
     message = {}
@@ -267,6 +267,7 @@ class ProcessRequestService < ProcessRequestBase
       message['egresses'] = JSON.parse(egresses) if egresses
       message['ingresses'] = JSON.parse(ingresses) if ingresses
       message['mapping'] = JSON.parse(mapping) if mapping
+      message['params'] = JSON.parse(params) if params
     rescue JSON::ParserError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing blacklist ('#{blacklist}'), egresses ('#{egresses}'), ingresses ('#{ingresses}'), or mapping ('#{mapping}')")
     end
