@@ -71,7 +71,7 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
       return {error: "Failled to create the scale request #{params}"}
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"scaling_request=#{scaling_request}")
-    message = build_message(completed_params[:scaling_type], completed_params[:instance_uuid], completed_params[:vnfd_uuid], completed_params[:number_of_instances], completed_params[:vim_uuid])
+    message = build_message(completed_params[:scaling_type], completed_params[:instance_uuid], completed_params[:vnfd_uuid], completed_params[:vnf_uuid], completed_params[:number_of_instances], completed_params[:vim_uuid])
     begin
      published_response = MessagePublishingService.call(message, :scale_service, scaling_request[:id])
      LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"published_response=#{published_response}")
@@ -116,17 +116,16 @@ class ProcessScaleServiceInstanceRequest < ProcessRequestBase
     new_params
   end
   
-  def build_message(scaling_type, instance_uuid, vnfd_uuid, number_of_instances, vim_uuid)
+  def build_message(scaling_type, instance_uuid, vnfd_uuid, vnf_uuid, number_of_instances, vim_uuid)
     msg='.'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"scaling_type=#{scaling_type} instance_uuid=#{instance_uuid} vnfd_uuid=#{vnfd_uuid}")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"scaling_type=#{scaling_type} instance_uuid=#{instance_uuid} vnfd_uuid=#{vnfd_uuid} vnf_uuid=#{vnf_uuid}")
     message = {}
     message['scaling_type'] = scaling_type
     message['service_instance_uuid'] = instance_uuid
-    message['vnfd_uuid'] = vnfd_uuid
+    message['vnfd_uuid'] = vnfd_uuid if vnfd_uuid
+    message['vnf_uuid'] = vnf_uuid if vnf_uuid
     message['number_of_instances'] = number_of_instances.to_i
-    if vim_uuid
-      message['constraints'] = {'vim_uuid'=>vim_uuid}
-    end
+    message['constraints'] = {'vim_uuid'=>vim_uuid} if vim_uuid
     LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"message=#{message}")
     message.to_yaml.to_s
   end  
