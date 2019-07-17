@@ -48,4 +48,45 @@ class FetchFunctionRecordsService < Tng::Gtk::Utils::Fetch
   end
   self.site=REPOSITORY_URL+'/vnfrs'
   LOGGER.info(component:LOGGED_COMPONENT, operation:'site definition', message:"self.site=#{self.site}")
+  
+  def self.call(params)
+    msg=self.name+'#'+__method__.to_s
+    began_at=Time.now.utc
+    original_params = params.dup
+    begin
+      if params.key?(:uuid)        
+        uuid = params.delete :uuid
+        uri = URI.parse("#{self.site}/#{uuid}")
+        # mind that there cany be more params, so we might need to pass params as well
+      else
+        uri = URI.parse(self.site)
+        uri.query = URI.encode_www_form(sanitize(params))
+      end
+      request = Net::HTTP::Get.new(uri)
+      request['content-type'] = 'application/json'
+      response = Net::HTTP.start(uri.hostname, uri.port) {|http| http.request(request)}
+      case response
+      when Net::HTTPSuccess
+        body = response.read_body
+        result = JSON.parse(body, quirks_mode: true, symbolize_names: true)
+        return result
+      when Net::HTTPNotFound
+        return {} unless uuid.nil?
+        return []
+      else
+         LOGGER.error(start_stop: 'STOP', component:LOGGED_COMPONENT, operation:msg, message:"#{response.message}", status:'404', time_elapsed: Time.now.utc - began_at)
+        return nil
+      end
+    rescue Exception => e
+       LOGGER.error(start_stop: 'STOP', component:LOGGED_COMPONENT, operation:msg, message:"#{e.message}", time_elapsed: Time.now.utc - began_at)
+    end
+    nil
+  end
+  
+  private
+  def self.sanitize(params)
+    params[:page_number] ||= ENV.fetch('DEFAULT_PAGE_NUMBER', 0)
+    params[:page_size]   ||= ENV.fetch('DEFAULT_PAGE_SIZE', 100)
+    params
+  end
 end
