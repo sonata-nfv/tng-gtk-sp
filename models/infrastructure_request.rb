@@ -175,8 +175,8 @@ class SliceWANNetworksCreationRequest < InfrastructureRequest
       qos: from_json(self[:qos]),
       status: self[:status],
       updated_at: self[:updated_at],
-      vim_list: from_json(self[:vim_list])
-      wim_uuid: self[:wim_uuid]
+      vim_list: from_json(self[:vim_list]),
+      wim_uuid: self[:wim_uuid],
       vl_id: self[:vl_id]
     }
   end
