@@ -24,7 +24,7 @@ class AddWimUuidAndVlId < ActiveRecord::Migration[5.2]
     add_column :infrastructure_requests, :bidirectional, :boolean
     add_column :infrastructure_requests, :egress, :string
     add_column :infrastructure_requests, :ingress, :string
-    add_column :infrastructure_requests, :qos, :string, default: default: ''
+    add_column :infrastructure_requests, :qos, :string, default: ''
     add_column :infrastructure_requests, :vl_id, :string
     add_column :infrastructure_requests, :wim_uuid, :string
   end
