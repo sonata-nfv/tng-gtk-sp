@@ -41,6 +41,7 @@ require_relative '../services/messaging_service'
 require_relative '../services/fetch_vim_resources_messaging_service'
 require_relative '../services/create_networks_messaging_service'
 require_relative '../services/delete_networks_messaging_service'
+require_relative '../services/create_wan_networks_messaging_service'
 
 SLEEPING_TIME = 2 # seconds
 NUMBER_OF_ITERATIONS = 40
@@ -92,7 +93,6 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing network creation request #{original_body}")
       halt 404, {}, {error:"Error parsing network creation request #{original_body}"}.to_json
     end
-    body 
     network_creation = SliceNetworksCreationRequest.new
     network_creation['instance_uuid']= body.delete 'instance_id'
     network_creation['vim_list']= body['vim_list'].to_json
@@ -146,6 +146,54 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   post '/wan-networks/?' do
     msg='#'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Creating WAN networks...")
+    original_body = request.body.read
+    begin
+      body = JSON.parse(original_body)
+    rescue JSON::ParserError => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing WAN network creation request #{original_body}")
+      halt 404, {}, {error:"Error parsing WAN network creation request #{original_body}"}.to_json
+    end
+    network_creation = SliceWANNetworksCreationRequest.new
+    network_creation['instance_uuid']= body['instance_uuid']
+    network_creation['wim_uuid']= body['wim_uuid']
+    network_creation['vl_id']= body['vl_id']
+    network_creation['qos']= body['qos']
+    network_creation['egress']= body['egress']
+    network_creation['ingress']= body['ingress']
+    network_creation['bidirectional']= body['bidirectional']
+    halt 500, {}, {error: "Problem saving request #{original_body} with errors #{network_creation.errors.messages}"}.to_json unless network_creation.save
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Saved network_creation=#{network_creation.as_json}")
+    CreateWANNetworksMessagingService.new.call network_creation
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_creation.status=#{network_creation.status}")
+    times = NUMBER_OF_ITERATIONS
+    result = nil
+    loop do
+      result = SliceWANNetworksCreationRequest.find network_creation.id
+      times -= 1
+      break if (times == 0 || result.status == 'COMPLETED' || result.status == 'ERROR')
+      sleep SLEEPING_TIME
+    end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.as_json}")
+    halt 201, {}, result.as_json.to_json 
+  end
+  get '/wan-networks/?' do
+    msg='#'+__method__.to_s
+    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Geting WAN resources...")
+    @vim_request=SliceVimResourcesRequest.create
+    FetchVimResourcesMessagingService.new.call @vim_request
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"@vim_request.vim_list=#{@vim_request.vim_list} @vim_request.nep_list=#{@vim_request.nep_list}")
+    times = NUMBER_OF_ITERATIONS
+    result = nil
+    loop do
+      result = SliceVimResourcesRequest.find @vim_request.id
+      #result = @vim_request.reload
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.vim_list=#{result.vim_list} result.nep_list=#{result.nep_list}")
+      times -= 1
+      break if (times == 0 || result.vim_list != '[]' || result.nep_list != '[]')
+      sleep SLEEPING_TIME
+    end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.inspect}")
+    halt 200, {}, "{\"vim_list\":#{result.vim_list}, \"nep_list\":#{result.nep_list}}"
   end
   
   delete '/wan-networks/?' do
