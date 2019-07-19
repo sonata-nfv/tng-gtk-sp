@@ -165,7 +165,7 @@ class SliceWANNetworksCreationRequest < InfrastructureRequest
     
   def as_json
     {
-      bidirectional: self[:bidirectional]
+      bidirectional: self[:bidirectional],
       created_at: self[:created_at],
       egress: from_json(self[:egress]),
       error: self[:error],
