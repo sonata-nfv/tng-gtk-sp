@@ -40,6 +40,7 @@ require_relative '../services/process_request_service'
 require_relative '../services/process_create_slice_instance_request'
 require_relative '../services/process_terminate_slice_instance_request'
 require_relative '../services/process_scale_service_instance_request'
+require_relative '../services/process_migrate_function_instance_request'
 
 class RequestsController < Tng::Gtk::Utils::ApplicationController
   LOGGER=Tng::Gtk::Utils::Logger
@@ -66,7 +67,8 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     'TERMINATE_SERVICE': ProcessRequestService,
     'CREATE_SLICE': ProcessCreateSliceInstanceRequest,
     'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest,
-    'SCALE_SERVICE': ProcessScaleServiceInstanceRequest
+    'SCALE_SERVICE': ProcessScaleServiceInstanceRequest,
+    'MIGRATE_FUNCTION': ProcessMigrateFunctionInstanceRequest
   }
 
   set :environments, %w(development test pre-int integration demo qualification staging)
@@ -93,7 +95,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
       result = strategy(json_body[:request_type]).enrich_one(saved_request)
       halt_with_code_body(201, result.to_json)
     rescue KeyError => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Missing code to treat the '#{json_body[:request_type]}' request type", status: '404')
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Missing code to treat the '#{json_body[:request_type]}' request type: #{e..backtrace.join("\n\t")}", status: '404')
       halt_with_code_body(404, {error: "Missing code to treat the '#{json_body[:request_type]}' request type"}.to_json)
     rescue ArgumentError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} for #{params}\n#{e.backtrace.join("\n\t")}", status: '404')
