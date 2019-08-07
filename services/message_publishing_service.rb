@@ -129,6 +129,10 @@ class MessagePublishingService
                   end
                 end
               end
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request updated_at: #{request[:updated_at]}")
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request created_at: #{request[:created_at]}")
+              request['duration'] = Time.now.utc.to_f - request['created_at'].to_f
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Gatekeeper]Instantiation-time: #{request[:duration]}")
               begin
                 request.save
               ensure
@@ -179,7 +183,7 @@ class MessagePublishingService
               Request.connection_pool.flush!
               Request.clear_active_connections!
             end
-            
+
             unless request
               LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"request '#{properties[:correlation_id]}' not found")
             else
@@ -189,6 +193,11 @@ class MessagePublishingService
                 request['error'] = parsed_payload['error']
                 LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"recorded error '#{request['error']}'")
               end
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request updated_at: #{request[:updated_at]}")
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request created_at: #{request[:created_at]}")
+              request['duration'] = Time.now.utc.to_f - request['created_at'].to_f
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"[Gatekeeper]Termination-time: #{request[:duration]}")
+              
               begin
                 request.save
               ensure
