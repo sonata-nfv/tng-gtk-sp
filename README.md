@@ -14,6 +14,19 @@ You might also be interested in the following related repositories:
 * [V&V and Service Platforms common component](https://github.com/sonata-nfv/tng-gtk-common);
 * [V&V Platform specific component](https://github.com/sonata-nfv/tng-gtk-vnv).
 
+## Supported endpoints
+Supported endpoints, alphabetically sorted, are described next. These endpoints are internal, only the ones exposed by the [router](https://github.com/sonata-nfv/tng-api-gtw/blob/master/tng-router) in the [Service Platform's](https://github.com/sonata-nfv/tng-api-gtw/blob/master/tng-router/config/sp_routes.yml) and [V&V Platform's](https://github.com/sonata-nfv/tng-api-gtw/blob/master/tng-router/config/vnv_routes.yml) routing files are available from the outside.
+
+**Endpoints**|**Description**
+:----|:----
+`/`|The root of the API.
+`/pings`|[The module's `readiness` and `liveness` endpoint](https://github.com/sonata-nfv/tng-api-gtw/wiki/readiness-liveliness-probe)
+`/policies`|[Manages placement and run-time policies](https://github.com/sonata-nfv/tng-api-gtw/wiki/Policies-usage)
+`/records/functions`|[Lists function records available in the Repository](https://github.com/sonata-nfv/tng-gtk-sp/wiki/function-records-queries)
+`/records/services`|[Lists service records available in the Repository](https://github.com/sonata-nfv/tng-gtk-sp/wiki/service-records-queries)
+`/requests`|[Manages services' and slices' lifecycle events](https://github.com/sonata-nfv/tng-api-gtw/wiki/Requests-management) (creation, scaling, deletion, etc.)
+`/slices`|[Manages slice templates](https://github.com/sonata-nfv/tng-slice-mngr)
+
 ## Installing / Getting started
 
 This component is implemented in [ruby](https://www.ruby-lang.org/en/), version **2.4.3**. 
