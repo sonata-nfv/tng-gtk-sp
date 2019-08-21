@@ -27,6 +27,7 @@ Supported endpoints, alphabetically sorted, are described next. These endpoints 
 `/requests`|[Manages services' and slices' lifecycle events](https://github.com/sonata-nfv/tng-api-gtw/wiki/Requests-management) (creation, scaling, deletion, etc.)
 `/slices`|[Manages slice templates](https://github.com/sonata-nfv/tng-slice-mngr)
 
+
 ## Installing / Getting started
 
 This component is implemented in [ruby](https://www.ruby-lang.org/en/), version **2.4.3**. 
