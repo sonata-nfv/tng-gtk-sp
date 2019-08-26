@@ -74,6 +74,7 @@ class FetchWimResourcesMessagingService
               wim_request['qos'] = parsed_payload['qos'].to_json
               wim_request['status'] = 'COMPLETED'
               wim_request.save!
+              @@message_service.publish('', wim_request.id)
             else
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Couldn't find WIMs request for id=#{properties[:correlation_id]}")
             end
@@ -86,7 +87,6 @@ class FetchWimResourcesMessagingService
         end
       end
     end
-    @@message_service.publish('', wim_request.id)
   end
 end
 
