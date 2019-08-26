@@ -107,27 +107,20 @@ end
 class SliceWimResourcesRequest < InfrastructureRequest
   def as_json
     {
+      attached_endpoints: from_json(self[:attached_endpoints]),
+      attached_vims: from_json(self[:attached_vims]),
       created_at: self[:created_at],
       error: self[:error],
       id: self[:id],
-      nep_list: self[:nep_list] ||= '[]',
+      name: self[:name],
+      qos: from_json(self[:qos]),
       status: self[:status],
       updated_at: self[:updated_at],
-      vim_list: from_json(self[:vim_list])
+      uuid: self[:wim_uuid]
     }
   end
 end
-=begin
-{
-  uuid: String, 
-  name: String, 
-  attached_vims: [Strings], 
-  attached_endpoints: [Strings], 
-  qos: [
-    {node_1: String, node_2: String, latency: int, latency_unit: String, bandwidth: int, bandwidth_unit: String}
-  ]
-}
-=end
+
 class SliceNetworksCreationRequest < InfrastructureRequest
   validates :instance_uuid, presence: true
     
@@ -176,13 +169,8 @@ class SliceWANNetworksCreationRequest < InfrastructureRequest
       status: self[:status],
       updated_at: self[:updated_at],
       vim_list: from_json(self[:vim_list]),
-      wim_uuid: self[:wim_uuid],
-      vl_id: self[:vl_id]
+      vl_id: self[:vl_id],
+      wim_uuid: self[:wim_uuid]
     }
   end
 end
-=begin
-topic: infrastructure.service.wan.configure
-data: {service_instance_id: String, wim_uuid: String, vl_id: String, ingress: {location: String, nap: String}, egress: {location: String, nap: String}, qos: {latency: int: latency_unit: String, bandwidth: int, bandwidth_unit: String}, bidirectional: bool }
-return: {request_status: String, message: String}, when request_status is "COMPLETED", message field is empty, when request_status is "ERROR" or "fail" or "FAILED", message field carries a string with the error message.
-=end
