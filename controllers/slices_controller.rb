@@ -176,18 +176,18 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.as_json}")
     halt 201, {}, result.as_json.to_json 
   end
+  
   get '/wan-networks/?' do
     msg='#'+__method__.to_s
     LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Geting WAN resources...")
-    @vim_request=SliceVimResourcesRequest.create
-    FetchVimResourcesMessagingService.new.call @vim_request
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"@vim_request.vim_list=#{@vim_request.vim_list} @vim_request.nep_list=#{@vim_request.nep_list}")
+    @wim_request=SliceWimResourcesRequest.create
+    FetchWimResourcesMessagingService.new.call @wim_request
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"@wim_request.attached_vims=#{@wim_request.attached_vims} @wim_request.attached_vims=#{@wim_request.attached_vims} @wim_request.qos=#{@wim_request.qos}")
     times = NUMBER_OF_ITERATIONS
     result = nil
     loop do
-      result = SliceVimResourcesRequest.find @vim_request.id
-      #result = @vim_request.reload
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.vim_list=#{result.vim_list} result.nep_list=#{result.nep_list}")
+      result = SliceWimResourcesRequest.find @wim_request.id
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result.attached_vims=#{result.attached_vims} result.attached_vims=#{result.attached_vims} @wim_request.qos=#{@wim_request.qos}")
       times -= 1
       break if (times == 0 || result.vim_list != '[]' || result.nep_list != '[]')
       sleep SLEEPING_TIME
