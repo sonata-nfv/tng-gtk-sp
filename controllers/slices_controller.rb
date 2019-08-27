@@ -190,7 +190,7 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
       result = SliceWimResourcesRequest.find_by(id: @wim_request.id).as_json
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"times=#{times} result['wim_list']=#{result['wim_list']}")
       times -= 1
-      break if (times == 0 || result.wim_list != '[]')
+      break if (times == 0 || result['wim_list'] != '[]')
       sleep SLEEPING_TIME
     end
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.inspect}")
