@@ -178,9 +178,9 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     halt 201, {}, result.as_json.to_json 
   end
   
-  get '/wan-networks/?' do
+  get '/wims/?' do
     msg='#'+__method__.to_s
-    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Geting WAN resources...")
+    LOGGER.info(component:LOGGED_COMPONENT, operation:msg, message:"Geting WIM resources...")
     @wim_request=SliceWimResourcesRequest.create
     FetchWimResourcesMessagingService.new.call @wim_request
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"@wim_request.attached_vims=#{@wim_request.attached_vims} @wim_request.attached_vims=#{@wim_request.attached_vims} @wim_request.qos=#{@wim_request.qos}")

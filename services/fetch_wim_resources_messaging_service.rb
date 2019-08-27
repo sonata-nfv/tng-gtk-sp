@@ -41,6 +41,7 @@ require_relative './messaging_service'
 class FetchWimResourcesMessagingService
   LOGGER=Tng::Gtk::Utils::Logger
   LOGGED_COMPONENT=self.name
+  # from https://github.com/sonata-nfv/tng-sp-ia/wiki/RabbitMQ-API-Reference#list-wims
   QUEUE_NAME = 'infrastructure.management.wan.list'
   @@message_service = MessagingService.build(QUEUE_NAME)
   LOGGER.debug(component:LOGGED_COMPONENT, operation:'starting', message:"@@message_service=#{@@message_service.inspect}")
@@ -59,22 +60,20 @@ class FetchWimResourcesMessagingService
       # We know our own messages, so just skip them
       unless properties[:app_id] == 'tng-gtk-sp'
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing: properties[:app_id]: #{properties[:app_id]}")
+        # {wim_list: [{uuid: String, name: String, attached_vims: [Strings], attached_endpoints: [Strings], qos: [{node_1: String, node_2: String, latency: int: latency_unit: String, bandwidth: int, bandwidth_unit: String}]}]}
         parsed_payload = YAML.load(payload)
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-        if (parsed_payload['attached_vims'] && parsed_payload['attached_endpoints'] && parsed_payload['qos'])
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"attached_vims: #{parsed_payload['attached_vims']}")
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"attached_endpoints: #{parsed_payload['attached_endpoints']}")
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"qos: #{parsed_payload['qos']}")
+        #if (parsed_payload['attached_vims'] && parsed_payload['attached_endpoints'] && parsed_payload['qos'])
+        if (parsed_payload['wim_list'])
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"wim_list: #{parsed_payload['wim_list']}")
           begin
             wim_request = SliceWimResourcesRequest.find_by(id: properties[:correlation_id])
             LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"wim_request=#{wim_request.inspect}")
             if wim_request
-              wim_request['attached_vims'] = parsed_payload['attached_vims'].to_json
-              wim_request['attached_endpoints'] = parsed_payload['attached_endpoints'].to_json
-              wim_request['qos'] = parsed_payload['qos'].to_json
+              wim_request['wim_list'] = parsed_payload['wim_list'].to_json
               wim_request['status'] = 'COMPLETED'
+              wim_request['error'] = ''
               wim_request.save!
-              @@message_service.publish('', wim_request.id)
             else
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Couldn't find WIMs request for id=#{properties[:correlation_id]}")
             end
@@ -86,6 +85,7 @@ class FetchWimResourcesMessagingService
           end
         end
       end
+      @@message_service.publish('', wims_request.id)
     end
   end
 end
