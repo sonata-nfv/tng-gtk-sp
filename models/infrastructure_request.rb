@@ -107,16 +107,12 @@ end
 class SliceWimResourcesRequest < InfrastructureRequest
   def as_json
     {
-      attached_endpoints: from_json(self[:attached_endpoints]),
-      attached_vims: from_json(self[:attached_vims]),
       created_at: self[:created_at],
       error: self[:error],
       id: self[:id],
-      name: self[:name],
-      qos: from_json(self[:qos]),
       status: self[:status],
       updated_at: self[:updated_at],
-      uuid: self[:wim_uuid]
+      wim_list: from_json(self[:wim_list])
     }
   end
 end
