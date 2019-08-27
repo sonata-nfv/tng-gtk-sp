@@ -85,8 +85,8 @@ class FetchWimResourcesMessagingService
           end
         end
       end
-      @@message_service.publish('', wims_request.id)
     end
+    @@message_service.publish('', wims_request.id)
   end
 end
 
