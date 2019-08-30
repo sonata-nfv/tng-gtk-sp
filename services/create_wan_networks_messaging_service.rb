@@ -95,22 +95,26 @@ class CreateWANNetworksMessagingService
     message['wim_uuid'] = obj.wim_uuid
     message['vl_id'] = obj.vl_id
     message['bidirectional'] = obj.bidirectional
-    begin
-      message['qos'] = JSON.parse(obj.qos)
-    rescue JSON::ParserError => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing QOS '#{obj.qos}'")
+    if obj.qos
+      begin
+        message['qos'] = JSON.parse(obj.qos)
+      rescue JSON::ParserError => e
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing QOS '#{obj.qos}'")
+        message['qos'] = ''
+      end
+    else
       message['qos'] = ''
     end
     begin
-      message['ingress'] = JSON.parse(obj.ingresses).first
+      message['ingress'] = JSON.parse(obj.ingress)
     rescue JSON::ParserError => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing ingresses '#{obj.ingresses}'")
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing ingress '#{obj.ingress}'")
       message['ingress'] = '{}'
     end
     begin
-      message['egress'] = JSON.parse(obj.egresses).first
+      message['egress'] = JSON.parse(obj.egress)
     rescue JSON::ParserError => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing egresses '#{obj.egresses}'")
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing egress '#{obj.egress}'")
       message['egress'] = '{}'
     end
     return message.to_yaml
