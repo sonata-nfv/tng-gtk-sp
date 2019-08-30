@@ -169,7 +169,7 @@ We have specified this micro-service's API in a [swagger](https://github.com/son
 
 This 5GTANGO component is published under Apache 2.0 license. Please see the [LICENSE](https://github.com/sonata-nfv/tng-gtk-sp/blob/master/LICENSE) file for more details.
 
-#### Feedback-Chanel
+#### Feedback-Channel
 
 * Please use the GitHub issues to report bugs.
 * You may use the mailing list [sonata-dev@lists.atosresearch.eu](mailto:sonata-dev@lists.atosresearch.eu)
