@@ -160,7 +160,7 @@ class SliceWANNetworksCreationRequest < InfrastructureRequest
       error: self[:error],
       id: self[:id],
       ingress: from_json(self[:ingress]),
-      instance_id: self[:instance_uuid],
+      instance_uuid: self[:instance_uuid],
       qos: from_json(self[:qos]),
       status: self[:status],
       updated_at: self[:updated_at],
