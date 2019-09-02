@@ -60,27 +60,25 @@ class CreateWANNetworksMessagingService
       if properties[:app_id] == 'sonata.kernel.InfrAdaptor'
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing: properties[:app_id]: #{properties[:app_id]}")
         begin
-          parsed_payload = JSON.parse(payload)
-        rescue JSON::ParserError => e
-          LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing answer '#{payload}'")
-          parsed_payload['request_status'] = 'ERROR'
-          parsed_payload['message'] = "Error parsing answer '#{payload}'"
-        end
-          
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-        if parsed_payload['request_status']
+          networks_request = SliceNetworksCreationRequest.find properties[:correlation_id]
           begin
-            networks_request = SliceNetworksCreationRequest.find properties[:correlation_id]
-          rescue => e
-            LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Netwrok Creation record with id #{properties[:correlation_id]}")
+            parsed_payload = JSON.parse(payload)
+          rescue JSON::ParserError => e
+            LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing answer '#{payload}'")
+            networks_request['status'] = 'ERROR'
+            networks_request['error'] = "Error parsing answer '#{payload}'"
           end
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request_status: #{parsed_payload['request_status']}")
-          networks_request['status'] = parsed_payload['request_status']
-          if parsed_payload['request_status'] == 'ERROR'
-            networks_request['error'] = parsed_payload['message']
-          end
-          networks_request.save
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
+          if parsed_payload['request_status']
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request_status: #{parsed_payload['request_status']}")
+            networks_request['status'] = parsed_payload['request_status']
+            if parsed_payload['request_status'] == 'ERROR'
+              networks_request['error'] = parsed_payload['message']
+            end
+            networks_request.save
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
+        rescue => e
+          LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Netwrok Creation record with id #{properties[:correlation_id]}")
         end
       end
     end
