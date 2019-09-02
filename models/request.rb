@@ -87,6 +87,7 @@ class Request < ActiveRecord::Base
         instance_uuid: self[:instance_uuid],
         mapping: from_json(self[:mapping]),
         name: self[:name],
+        nsr: self[:nsr],
         number_of_instances: self[:number_of_instances],
         params: from_json(self[:params]),
         request_type: self[:request_type],

@@ -46,7 +46,8 @@ class MessagePublishingService
   @@queues = {
     create_service: 'service.instances.create',
     terminate_service: 'service.instance.terminate',
-    scale_service: 'service.instance.scale'
+    scale_service: 'service.instance.scale',
+    migrate_function: 'service.instance.migrate'
   }
   if MQSERVER_URL == ''
     LOGGER.error(component:LOGGED_COMPONENT, operation:'starting', message:"No MQServer URL has been defined")
@@ -249,6 +250,65 @@ class MessagePublishingService
                 request['instance_uuid'] = parsed_payload['nsr']['id'] if (parsed_payload.key?('nsr') && !parsed_payload['nsr'].empty? && parsed_payload['nsr']['id'])
                 request['scaling_type'] = parsed_payload['scaling_type'] if parsed_payload.key?('scaling_type')
                 request['duration'] = parsed_payload['duration'] if parsed_payload.key?('duration')
+                request['function_uuids'] = parsed_payload['vnfrs'] if parsed_payload.key?('vnfrs')
+              end
+              begin
+                request.save
+              ensure
+                Request.connection_pool.flush!
+                Request.clear_active_connections!
+              end
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"leaving with request #{request.inspect}")
+              notify_user(request.as_json) unless request['callback'].empty?
+            end
+          end
+        end
+      rescue Exception => e
+        LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"#{e.message} (#{e.class}):#{e.backtrace.split('\n\t')}")
+      end
+    end
+  end
+  
+=begin
+status: `READY` | `ERROR`
+error: null | <string indicating error>
+duration: <float indicating how long the migration took>
+nsr: <nsr, just like in instantiation message>
+vnfrs: <list of vnfrs, just like in instantiation message>
+=end  
+  def self.service_instance_migrate(queue:)
+    msg='.'+__method__.to_s
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered")
+    queue.subscribe do |delivery_info, properties, payload|
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"delivery_info: #{delivery_info}\nproperties: #{properties}\npayload: #{payload}")
+      begin
+        # We know our own messages, so just skip them
+        unless properties[:app_id] == 'tng-gtk-sp'
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"properties[:app_id]: #{properties[:app_id]}")
+      
+          # We're interested in app_id == 'son-plugin.slm'
+          parsed_payload = YAML.load(payload)
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
+          status = parsed_payload['status']
+          if status
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status: #{status}")
+            begin
+              request = Request.find(properties[:correlation_id])
+            ensure
+              Request.connection_pool.flush!              
+              Request.clear_active_connections!
+            end
+            
+            unless request
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request #{properties[:correlation_id]} not found")
+            else
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"status #{request['status']} updated to #{status}")
+              request['status']=status
+              if parsed_payload['error']
+                request['error'] = parsed_payload['error']
+              else
+                request['duration'] = parsed_payload['duration'].to_f if parsed_payload.key?('duration')
+                request['nsr'] = parsed_payload['nsr'] if parsed_payload.key?('nsr')
                 request['function_uuids'] = parsed_payload['vnfrs'] if parsed_payload.key?('vnfrs')
               end
               begin
