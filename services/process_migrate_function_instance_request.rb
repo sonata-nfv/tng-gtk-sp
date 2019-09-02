@@ -130,7 +130,7 @@ data = {
     message['service_instance_uuid'] = instance_uuid
     message['vnf_uuid'] = vnf_uuid
     message['vim_uuid'] = vim_uuid
-    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"message=#{message}"
+    LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"message=#{message}")
     message.to_yaml.to_s
   end  
   
