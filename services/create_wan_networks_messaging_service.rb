@@ -77,8 +77,9 @@ class CreateWANNetworksMessagingService
             end
             networks_request.save
             LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
+          end
         rescue => e
-          LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Netwrok Creation record with id #{properties[:correlation_id]}")
+          LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Network Creation record with id #{properties[:correlation_id]}")
         end
       end
     end
