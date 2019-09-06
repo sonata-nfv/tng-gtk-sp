@@ -102,7 +102,8 @@ RSpec.describe RequestsController, type: :controller do
       'TERMINATE_SERVICE': ProcessRequestService,
       'CREATE_SLICE': ProcessCreateSliceInstanceRequest,
       'TERMINATE_SLICE': ProcessTerminateSliceInstanceRequest,
-      'SCALE_SERVICE': ProcessScaleServiceInstanceRequest
+      'SCALE_SERVICE': ProcessScaleServiceInstanceRequest,
+      'MIGRATE_FUNCTION': ProcessMigrateFunctionInstanceRequest
     }}
   
     context 'with UUID given' do
@@ -110,6 +111,7 @@ RSpec.describe RequestsController, type: :controller do
         allow(ProcessRequestBase).to receive(:find).with(request_1[:id], strategies).and_return(request_1)
         allow(FetchServiceRecordsService).to receive(:call).with(uuid: request_1[:instance_uuid]).and_return({})
         get '/'+request_1[:id]
+        STDERR.puts ">>> last_response=#{last_response.inspect}"
         expect(last_response).to be_ok
         expect(last_response.body).to eq(request_1.to_json)
       end

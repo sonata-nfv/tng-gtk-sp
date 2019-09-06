@@ -201,6 +201,37 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
   delete '/wan-networks/?' do
     msg='#'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Deleting WAN networks...")
+    begin
+      original_body = request.body.read
+      body = JSON.parse(original_body)
+    rescue JSON::ParserError => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing network deletion request #{original_body}")
+      hast 404, {}, {error:"Error parsing network deletion request #{original_body}"}.to_json
+    end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"body=#{body}")
+    network_deletion = SliceWANNetworksDeletionRequest.new
+    # {
+    #  "instance_uuid": "8153866f-d0d5-445a-b85c-7ca35314a208",
+    #  "vl_id": "subnet2_2_subnet3",
+    #  "wim_uuid": "373df903-da67-45d2-9906-d77a9bf5c4dc"
+    #}
+    network_deletion['instance_uuid']= body.delete 'instance_id'
+    network_deletion['vl_id']= body['vl_id']
+    network_deletion['wim_uuid']= body['wim_uuid']
+    halt 500, {}, {error: "Problem saving request #{original_body} with errors #{network_deletion.errors.messages}"}.to_json unless network_deletion.save
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Saved network_deletion=#{network_deletion.as_json}")
+    DeleteWANNetworksMessagingService.new.call network_deletion
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"network_deletion.status=#{network_deletion.status}")
+    times = NUMBER_OF_ITERATIONS
+    result = nil
+    loop do
+      result = SliceWANNetworksDeletionRequest.find network_deletion.id
+      times -= 1
+      break if (times == 0 || result.status == 'COMPLETED' || result.status == 'ERROR')
+      sleep SLEEPING_TIME
+    end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"result: #{result.inspect}")
+    halt 201, {}, result.as_json.to_json 
   end
   
   private

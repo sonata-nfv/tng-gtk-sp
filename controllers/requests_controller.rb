@@ -89,6 +89,7 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
     begin
       json_body = complete_body(request)  
       reject_unsupported_request_type(json_body[:request_type])
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Supported request type='#{json_body[:request_type]}'")
       saved_request = strategy(json_body[:request_type]).call(json_body)
       reject_unsaved_requests(saved_request)      
       reject_errored_saved_requests(saved_request)
@@ -227,9 +228,11 @@ class RequestsController < Tng::Gtk::Utils::ApplicationController
   end
   def reject_unsupported_request_type(request_type)
     msg='.'+__method__.to_s
-    if RequestsController::STRATEGIES.key?(request_type)
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Unsupported request type, just accepting #{supported_request_types}")
-      halt_with_code_body(415, ERROR_REQUEST_CONTENT_TYPE.to_json) 
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request type='#{request_type}' (class #{request_type.class})")
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"RequestsController::STRATEGIES=#{RequestsController::STRATEGIES}")
+    unless RequestsController::STRATEGIES.key?(request_type.to_sym)
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Unsupported request type #{request_type}, just accepting #{supported_request_types}")
+      halt_with_code_body(404, "Unsupported request type #{request_type}, just accepting #{supported_request_types}") 
     end
   end
   
