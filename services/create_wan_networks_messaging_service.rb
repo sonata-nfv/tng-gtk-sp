@@ -60,7 +60,7 @@ class CreateWANNetworksMessagingService
       if properties[:app_id] == 'sonata.kernel.InfrAdaptor'
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing: properties[:app_id]: #{properties[:app_id]}")
         begin
-          networks_request = SliceNetworksCreationRequest.find properties[:correlation_id]
+          networks_request = SliceWANNetworksCreationRequest.find properties[:correlation_id]
           begin
             parsed_payload = JSON.parse(payload)
           rescue JSON::ParserError => e
