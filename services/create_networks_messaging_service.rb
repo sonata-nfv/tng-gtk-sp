@@ -61,29 +61,29 @@ class CreateNetworksMessagingService
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing: properties[:app_id]: #{properties[:app_id]}")
         begin
           parsed_payload = JSON.parse(payload)
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
+          if parsed_payload['request_status']
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request_status: #{parsed_payload['request_status']}")
+            begin
+              networks_request = SliceNetworksCreationRequest.find properties[:correlation_id]
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"networks_request: #{networks_request}")
+              networks_request.status = parsed_payload['request_status']
+              networks_request.error = parsed_payload['message'] if parsed_payload['request_status'] == 'ERROR'
+              networks_request.save
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
+            rescue ActiveRecord::RecordNotFound => e
+              LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Network creation record with id #{properties[:correlation_id]}")
+            end
+          else
+            LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No request_status in #{payload}")
+          end
         rescue JSON::ParserError => e
           LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing answer '#{payload}'")
           parsed_payload['request_status'] = 'ERROR'
-          parsed_payload['message'] = "Error parsing answer '#{payload}'"
-        end
-          
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-        if parsed_payload['request_status']
-          begin
-            networks_request = SliceNetworksCreationRequest.find properties[:correlation_id]
-          rescue => e
-            LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Netwrok Creation record with id #{properties[:correlation_id]}")
-          end
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request_status: #{parsed_payload['request_status']}")
-          networks_request['status'] = parsed_payload['request_status']
-          if parsed_payload['request_status'] == 'ERROR'
-            networks_request['error'] = parsed_payload['message']
-          end
-          networks_request.save
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
-        end
-      end
-    end
+          parsed_payload['message'] = "Error parsing answer '#{payload}'"          
+        end # begin
+      end # if properties[:app_id]
+    end # queue.subscribe
     message_service.publish( build_message(networks_request), networks_request.id)
   end
   
