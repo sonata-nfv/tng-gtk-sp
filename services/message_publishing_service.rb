@@ -277,6 +277,21 @@ nsr: <nsr, just like in instantiation message>
 vnfrs: <list of vnfrs, just like in instantiation message>
 =end  
   def self.service_instance_migrate(queue:)
+=begin
+Immediate intermediate response by the MANO with same corr_id
+
+topic: service.instance.migrate
+status: 'MIGRATING' | 'ERROR'
+error: null | <error message>
+final response by MANO with same corr_id
+
+topic: service.instance.migrate
+    status: `READY` | `ERROR`
+    error: null | <string indicating error>
+    duration: <float indicating how long the scaling took>
+    nsr: <nsr, just like in instantiation message>
+    vnfrs: <list of vnfrs, just like in instantiation message>
+=end
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"entered")
     queue.subscribe do |delivery_info, properties, payload|

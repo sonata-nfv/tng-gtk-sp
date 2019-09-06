@@ -178,6 +178,7 @@ class ProcessRequestService < ProcessRequestBase
       params[:ingresses] = params[:ingresses].to_json if params.key?(:ingresses)
       params[:egresses] = params[:egresses].to_json if params.key?(:egresses)
       params[:mapping] = params[:mapping].to_json if params.key?(:mapping)
+      params[:params] = params[:params].to_json if params.key?(:params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation: msg, message:"params=#{params}")
       instantiation_request = nil
       begin

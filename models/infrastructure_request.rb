@@ -171,3 +171,25 @@ class SliceWANNetworksCreationRequest < InfrastructureRequest
     }
   end
 end
+
+class SliceWANNetworksDeletionRequest < InfrastructureRequest
+  validates :instance_uuid, presence: true
+  # {
+  #  "instance_uuid": "8153866f-d0d5-445a-b85c-7ca35314a208",
+  #  "vl_id": "subnet2_2_subnet3",
+  #  "wim_uuid": "373df903-da67-45d2-9906-d77a9bf5c4dc"
+  #}
+  def as_json
+    {
+      created_at: self[:created_at],
+      error: self[:error],
+      id: self[:id],
+      instance_id: self[:instance_uuid],
+      status: self[:status],
+      updated_at: self[:updated_at],
+      vl_id: self[:vl_id],
+      wim_uuid: self[:wim_uuid]
+    }
+  end
+end
+
