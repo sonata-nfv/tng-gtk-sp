@@ -178,7 +178,9 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     network_creation['vl_id']= body['vl_id']
     network_creation['qos']= body['qos']
     network_creation['egress']= body['egress']
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>>>> egress=#{network_creation['egress']}")
     network_creation['ingress']= body['ingress']
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:">>>>> ingress=#{network_creation['ingress']}")
     network_creation['bidirectional']= body['bidirectional']
     halt 500, {}, {error: "Problem saving request #{original_body} with errors #{network_creation.errors.messages}"}.to_json unless network_creation.save
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Saved network_creation=#{network_creation.as_json}")
