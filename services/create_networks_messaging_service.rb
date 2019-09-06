@@ -64,14 +64,14 @@ class CreateNetworksMessagingService
           LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
           if parsed_payload['request_status']
             LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request_status: #{parsed_payload['request_status']}")
-            begin
-              networks_request = SliceNetworksCreationRequest.find properties[:correlation_id]
+            networks_request = SliceNetworksCreationRequest.find properties[:correlation_id]
+            if networks_request
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"networks_request: #{networks_request}")
               networks_request.status = parsed_payload['request_status']
               networks_request.error = parsed_payload['message'] if parsed_payload['request_status'] == 'ERROR'
               networks_request.save
               LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
-            rescue ActiveRecord::RecordNotFound => e
+            else
               LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Network creation record with id #{properties[:correlation_id]}")
             end
           else
