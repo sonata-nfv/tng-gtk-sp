@@ -61,24 +61,25 @@ class DeleteWANNetworksMessagingService
         LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Processing: properties[:app_id]: #{properties[:app_id]}")
         begin
           parsed_payload = JSON.parse(payload)
+          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
+          if parsed_payload['request_status']
+            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request_status: #{parsed_payload['request_status']}")
+            networks_request = SliceWANNetworksDeletionRequest.find properties[:correlation_id]
+            if networks_request
+              networks_request['status'] = parsed_payload['request_status']
+              networks_request['error'] = parsed_payload['message'] if parsed_payload['request_status'] == 'ERROR'
+              networks_request.save
+              LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
+            else
+              LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Network deletion record with id #{properties[:correlation_id]}")
+            end
+          else
+            LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"No request_status in payload '#{payload}")
+          end
         rescue JSON::ParserError => e
           LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing answer '#{payload}'")
           parsed_payload['request_status'] = 'ERROR'
           parsed_payload['message'] = "Error parsing answer '#{payload}'"
-        end
-          
-        LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"parsed_payload: #{parsed_payload}")
-        if parsed_payload['request_status']
-          LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"request_status: #{parsed_payload['request_status']}")
-          networks_request = SliceWANNetworksDeletionRequest.find properties[:correlation_id]
-          if networks_request
-            networks_request['status'] = parsed_payload['request_status']
-            networks_request['error'] = parsed_payload['message'] if parsed_payload['request_status'] == 'ERROR'
-            networks_request.save
-            LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"Just updated networks_request: #{networks_request.status}")
-          else
-            LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Could not find any Network deletion record with id #{properties[:correlation_id]}")
-          end
         end
       end
     end
@@ -90,15 +91,9 @@ class DeleteWANNetworksMessagingService
     msg='#'+__method__.to_s
     message = {}
     message['instance_id'] = obj.instance_uuid
-    begin
-      vim_list = JSON.parse(obj.vim_list)
-      message['vim_list'] = vim_list
-      return message.to_yaml
-    rescue JSON::ParserError => e
-      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Error parsing VIM list '#{obj.vim_list}'")
-      message['vim_list'] = ''
-      return message.to_yaml
-    end
+    message['vl_id'] = obj.vl_id
+    message['wim_uuid'] = obj.wim_uuid
+    message.to_yaml
   end
 end
 
