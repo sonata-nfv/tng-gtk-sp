@@ -58,7 +58,8 @@ class InfrastructureRequest < ActiveRecord::Base
     begin
       JSON.parse(field)
     rescue
-      []
+      LOGGER.error(component:LOGGED_COMPONENT, operation:'from_json', message:"Error parsing '#{field}'")
+      ''
     end
   end
   
