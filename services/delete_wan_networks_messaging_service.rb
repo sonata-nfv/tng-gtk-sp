@@ -41,7 +41,7 @@ require_relative './messaging_service'
 class DeleteWANNetworksMessagingService  
   LOGGER=Tng::Gtk::Utils::Logger
   LOGGED_COMPONENT=self.name
-  QUEUE_NAME = 'infrastructure.service.network.delete'
+  QUEUE_NAME = 'infrastructure.service.wan.deconfigure'
 
   def call(networks_request)
     msg='#'+__method__.to_s
