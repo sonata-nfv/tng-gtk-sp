@@ -215,7 +215,7 @@ class SlicesController < Tng::Gtk::Utils::ApplicationController
     #  "vl_id": "subnet2_2_subnet3",
     #  "wim_uuid": "373df903-da67-45d2-9906-d77a9bf5c4dc"
     #}
-    network_deletion['instance_uuid']= body.delete 'instance_id'
+    network_deletion['instance_uuid']= body['instance_uuid']
     network_deletion['vl_id']= body['vl_id']
     network_deletion['wim_uuid']= body['wim_uuid']
     halt 500, {}, {error: "Problem saving request #{original_body} with errors #{network_deletion.errors.messages}"}.to_json unless network_deletion.save
