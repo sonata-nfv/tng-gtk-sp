@@ -43,6 +43,7 @@ require_relative '../services/fetch_wim_resources_messaging_service'
 require_relative '../services/create_networks_messaging_service'
 require_relative '../services/delete_networks_messaging_service'
 require_relative '../services/create_wan_networks_messaging_service'
+require_relative '../services/delete_wan_networks_messaging_service'
 
 SLEEPING_TIME = 2 # seconds
 NUMBER_OF_ITERATIONS = 40
