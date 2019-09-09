@@ -90,7 +90,7 @@ class DeleteWANNetworksMessagingService
   def build_message(obj)
     msg='#'+__method__.to_s
     message = {}
-    message['instance_id'] = obj.instance_uuid
+    message['service_instance_uuid'] = obj.instance_uuid
     message['vl_id'] = obj.vl_id
     message['wim_uuid'] = obj.wim_uuid
     message.to_yaml
