@@ -51,7 +51,8 @@ class Request < ActiveRecord::Base
   serialize :egresses
   serialize :ingresses
   serialize :params
-  
+  serialize :instantiation_params
+
   def vim_from_json
     begin
       JSON.parse self[:vim_list]
@@ -85,6 +86,7 @@ class Request < ActiveRecord::Base
         id: self[:id],
         ingresses: from_json(self[:ingresses]),
         instance_uuid: self[:instance_uuid],
+        instantiation_params: from_json(self[:instantiation_params]),
         mapping: from_json(self[:mapping]),
         name: self[:name],
         nsr: self[:nsr],
