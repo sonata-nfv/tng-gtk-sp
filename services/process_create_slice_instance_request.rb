@@ -80,9 +80,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       params.delete(:customer_name)
       params.delete(:customer_email)
       
-      enriched_params = params #enrich_params(params)
-      enriched_params[:nstId] = params.delete(:service_uuid)
-      enriched_params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"
+      enriched_params = enrich_params(params)
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params=#{enriched_params}")
       request = create_slice(enriched_params)
       unless request 
@@ -196,13 +194,15 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   
   def self.enrich_params(params)
     msg='.'+__method__.to_s
-    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
+    params[:nstId] = params.delete(:service_uuid)
+    params[:callback] = "#{SLICE_INSTANCE_CHANGE_CALLBACK_URL}/#{instantiation_request['id']}/on-change"
     begin 
       params[:instantiation_params] = JSON.parse(params.fetch(:instantiation_params, '[]'))
-      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params[:instantiation_params]=#{params[:instantiation_params]}")
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params[:instantiation_params]=#{params[:instantiation_params]  }")
     rescue JSON::ParserError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to parse slice instantiation parameters '#{instantiation_params}'")
     end
+    LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params=#{params}")
     params
   end
   
