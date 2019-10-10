@@ -197,6 +197,11 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
   def self.enrich_params(params)
     msg='.'+__method__.to_s
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
+    begin 
+      params[:instantiation_params] = JSON.parse(params.fetch(:instantiation_params, '[]'))
+    rescue JSON::ParserError => e
+      LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to parse slice instantiation parameters '#{instantiation_params}'")
+    end
     params
   end
   
