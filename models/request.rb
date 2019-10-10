@@ -51,7 +51,7 @@ class Request < ActiveRecord::Base
   serialize :egresses
   serialize :ingresses
   serialize :params
-  serialize :instantiation_params
+  serialize :instantiation_params, JSON
 
   def vim_from_json
     begin
