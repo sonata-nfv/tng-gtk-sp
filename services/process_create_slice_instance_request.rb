@@ -80,6 +80,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
       params.delete(:customer_name)
       params.delete(:customer_email)
       
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"instantiation_request['id']=#{instantiation_request['id']}")
       enriched_params = enrich_params(params, instantiation_request['id'])
       LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"enriched_params=#{enriched_params}")
       request = create_slice(enriched_params)
