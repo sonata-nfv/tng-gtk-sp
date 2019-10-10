@@ -199,6 +199,7 @@ class ProcessCreateSliceInstanceRequest < ProcessRequestBase
     LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params=#{params}")
     begin 
       params[:instantiation_params] = JSON.parse(params.fetch(:instantiation_params, '[]'))
+      LOGGER.debug(component:LOGGED_COMPONENT, operation:msg, message:"params[:instantiation_params]=#{params[:instantiation_params]}")
     rescue JSON::ParserError => e
       LOGGER.error(component:LOGGED_COMPONENT, operation:msg, message:"Failled to parse slice instantiation parameters '#{instantiation_params}'")
     end
